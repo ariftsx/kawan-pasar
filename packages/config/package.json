@@ -1,0 +1,37 @@
+{
+  "name": "@kawan-pasar/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared TypeScript, ESLint, Prettier, and Vitest configuration for the Kawan Pasar monorepo.",
+  "license": "Apache-2.0",
+  "exports": {
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/library.json": "./tsconfig/library.json",
+    "./eslint": "./eslint/base.js",
+    "./prettier": "./prettier/index.js",
+    "./vitest": "./vitest/preset.js"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-import-resolver-typescript": "^4.4.5",
+    "eslint-plugin-import-x": "^4.17.1",
+    "eslint-plugin-security": "^4.2.0",
+    "globals": "^17.13.0",
+    "typescript-eslint": "^8.70.0"
+  },
+  "peerDependencies": {
+    "eslint": "^10.13.0",
+    "prettier": "^3.9.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0"
+  }
+}

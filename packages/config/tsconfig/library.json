@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Kawan Pasar library package (emits dist/ with declarations)",
+  "extends": "./base.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "${configDir}/dist",
+    "rootDir": "${configDir}/src"
+  }
+}
