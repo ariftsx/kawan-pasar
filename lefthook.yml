@@ -1,0 +1,10 @@
+# Git hooks (docs 14 §2). Pre-commit formatting and linting arrive with packages/config (PR 02).
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpm exec commitlint --edit {1}
+
+pre-push:
+  commands:
+    check:
+      run: pnpm run check
