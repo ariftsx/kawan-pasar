@@ -30,6 +30,17 @@ Model perkiraan dikembangkan di repo riset [ARIF-Net](https://github.com/ariftsx
 | Data | PostgreSQL, Valkey |
 | Infrastruktur | VPS Linux + Dokploy (Docker), Cloudflare |
 
+## Pengembangan lokal
+
+Prasyarat: Node.js 24 LTS (lihat `.nvmrc`) dan pnpm 12. Versi pnpm dikunci di `packageManager`; pnpm ≥ 9.7 otomatis beralih ke versi itu.
+
+```bash
+pnpm install        # memasang dependensi dan git hooks (lefthook)
+pnpm run check      # lint, typecheck, dan test di semua paket (Turborepo)
+```
+
+Commit memakai format [Conventional Commits](https://www.conventionalcommits.org/), diperiksa oleh commitlint. Dependensi hanya dipasang bila versinya sudah terbit ≥ 3 hari (`minimumReleaseAge`).
+
 ## Lisensi
 
 Dilisensikan di bawah [Apache License 2.0](LICENSE).
