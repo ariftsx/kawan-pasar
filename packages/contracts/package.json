@@ -1,0 +1,31 @@
+{
+  "name": "@kawan-pasar/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Wire contracts for Kawan Pasar (docs 08): zod schemas and types for the API envelope, entities, errors, and the ARIF-Net artifact bundle.",
+  "license": "Apache-2.0",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "zod": "^4.6.0"
+  },
+  "devDependencies": {
+    "@kawan-pasar/config": "workspace:*",
+    "@vitest/coverage-v8": "^5.0.0"
+  }
+}
