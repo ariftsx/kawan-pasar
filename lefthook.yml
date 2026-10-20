@@ -1,4 +1,17 @@
-# Git hooks (docs 14 §2). Pre-commit formatting and linting arrive with packages/config (PR 02).
+# Git hooks (docs 14 §2).
+pre-commit:
+  piped: true
+  commands:
+    format:
+      priority: 1
+      glob: '*.{js,mjs,cjs,ts,tsx,json,md,yml,yaml,css}'
+      run: pnpm exec prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true
+    lint:
+      priority: 2
+      glob: '*.{js,mjs,cjs,ts,tsx}'
+      run: pnpm exec turbo run lint --affected
+
 commit-msg:
   commands:
     commitlint:

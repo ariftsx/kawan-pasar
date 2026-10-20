@@ -6,7 +6,7 @@
 
 ## Apa itu Kawan Pasar
 
-Kawan Pasar membantu pemilik warung menjawab satu pertanyaan sederhana: *"Berapa modal per porsi menu saya hari ini dan minggu depan?"*
+Kawan Pasar membantu pemilik warung menjawab satu pertanyaan sederhana: _"Berapa modal per porsi menu saya hari ini dan minggu depan?"_
 
 - **Rencana Menu**: modal per porsi dan modal harian, berdasarkan harga bahan terbaru.
 - **Pantau Harga**: harga terkini, riwayat, dan perubahan bahan pangan. Data bukan real-time; tanggal observasi selalu ditampilkan.
@@ -22,13 +22,13 @@ Model perkiraan dikembangkan di repo riset [ARIF-Net](https://github.com/ariftsx
 
 ## Rencana teknologi
 
-| Lapisan | Teknologi |
-| --- | --- |
-| Web (UI + BFF) | Next.js, React, TypeScript |
-| Backend inti | NestJS (modular monolith) |
-| Layanan model | FastAPI (internal) |
-| Data | PostgreSQL, Valkey |
-| Infrastruktur | VPS Linux + Dokploy (Docker), Cloudflare |
+| Lapisan        | Teknologi                                |
+| -------------- | ---------------------------------------- |
+| Web (UI + BFF) | Next.js, React, TypeScript               |
+| Backend inti   | NestJS (modular monolith)                |
+| Layanan model  | FastAPI (internal)                       |
+| Data           | PostgreSQL, Valkey                       |
+| Infrastruktur  | VPS Linux + Dokploy (Docker), Cloudflare |
 
 ## Pengembangan lokal
 
