@@ -4,7 +4,8 @@ from fastapi.testclient import TestClient
 def test_probes_answer_without_a_signature(client: TestClient) -> None:
     assert client.get("/healthz").json() == {"status": "ok"}
     ready = client.get("/readyz")
-    assert ready.json() == {"status": "ok", "outlook": "missing"}
+    # Development mode serves the packaged DATA DEMO bundle (docs 08 §12.5).
+    assert ready.json() == {"status": "ok", "outlook": "in_development"}
     assert ready.headers["cache-control"] == "no-store"
 
 

@@ -2,7 +2,7 @@
 
 Model service Kawan Pasar: menyajikan bundle artefak ARIF-Net yang sudah dipublikasikan, **hanya** di jaringan internal (docs 13 Bagian B). Service ini tidak melakukan training, tidak mengakses DB produk, dan tidak punya route publik.
 
-Saat ini berisi konfigurasi, verifikasi HMAC, log JSON, envelope error, probe, serta **loader bundle** dan **bundle demo** (DH-03). Route `/internal/*` yang menyajikan bundle menyusul di PR berikutnya.
+Saat ini service menyajikan **bundle demo** dalam mode pengembangan (DH-03) lewat route `/internal/*` yang dilindungi HMAC. Inference live dan `/internal/thresholds` belum ada: peringatan memakai Q95 statistik produk (D-22), dan inference menunggu artefak ARIF-Net.
 
 ## Menjalankan
 
@@ -40,6 +40,23 @@ X-KP-Signature: hex(HMAC-SHA256(secret, "<timestamp>\n<METHOD>\n<path?query>\n<s
 ```
 
 Request ditolak (`401 UNAUTHENTICATED`) bila salah satu header tidak ada, timestamp di luar ±60 detik, atau tanda tangan tidak cocok. Perbandingan memakai `hmac.compare_digest`. Method dan path ikut ditandatangani, sehingga tanda tangan yang tertangkap tidak bisa dipakai ulang ke route lain. `/healthz` dan `/readyz` tidak memerlukan tanda tangan.
+
+## Route internal
+
+| Method | Path                                      | Isi                                                                                                 |
+| ------ | ----------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| GET    | `/internal/forecasts/{commodity}?origin=` | Forecast (docs 08 §5.3) + `provenance`, `availability`, `limitations`, `outlook_status`             |
+| GET    | `/internal/artifacts/manifest`            | Manifest bundle yang sedang disajikan                                                               |
+| POST   | `/internal/artifacts/reload`              | Memuat ulang setelah promosi. Bila gagal, bundle lama tetap dipakai (`422 SCHEMA_INVALID` + alasan) |
+
+Komoditas di luar bundle → `404 ARTIFACT_NOT_FOUND`. Origin berbeda atau belum ada bundle → `503 FORECAST_UNAVAILABLE`.
+
+| `OUTLOOK_MODE` | Sumber                                            | `outlook_status`                                                    |
+| -------------- | ------------------------------------------------- | ------------------------------------------------------------------- |
+| `development`  | `demo/demo__2026-10-18/` (ikut di repo)           | `in_development`                                                    |
+| `live`         | `$ARTIFACTS_DIR/current` → `releases/<bundle_id>` | `candidate` atau `available`; `missing` bila tidak ada bundle valid |
+
+Bundle dimuat saat start dan ditukar secara atomik saat reload. Verifikasi berjalan di thread terpisah dan reload diserialkan dengan lock. Start tanpa bundle valid tidak menghentikan service: `/readyz` tetap 200 dengan `outlook = missing` (AP-08).
 
 ## Bundle
 
