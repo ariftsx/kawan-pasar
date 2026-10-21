@@ -18,7 +18,11 @@
     "check": "turbo run lint typecheck test",
     "prepare": "lefthook install",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "stack:env": "node infra/scripts/dev-env.mjs",
+    "stack:up": "docker compose -f infra/compose.dev.yaml up -d --build --wait",
+    "stack:down": "docker compose -f infra/compose.dev.yaml down",
+    "stack:logs": "docker compose -f infra/compose.dev.yaml logs -f"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.0",
