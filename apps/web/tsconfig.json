@@ -1,0 +1,24 @@
+{
+  "extends": "@kawan-pasar/config/tsconfig/base.json",
+  "compilerOptions": {
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "preserve",
+    "allowJs": true,
+    "incremental": true,
+    "types": ["node"],
+    "plugins": [{ "name": "next" }],
+    "paths": { "@/*": ["./src/*"] }
+  },
+  "include": [
+    "next-env.d.ts",
+    "src",
+    ".next/types/**/*.ts",
+    "next.config.ts",
+    "postcss.config.js",
+    "eslint.config.js",
+    "vitest.config.js"
+  ],
+  "exclude": ["node_modules", ".next"]
+}
