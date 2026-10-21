@@ -1,0 +1,23 @@
+# Commodities ingested daily (docs 08 §4.1, decision D-19). Adding a commodity is a config change,
+# not a code change; the rest of the PIHPS catalog waits for HOLD-DEV DH-01.
+
+[[commodity]]
+slug = "cabai-merah-keriting"
+pihps_name = "Cabai Merah Keriting"
+comcat_id = "com_14"
+market = "PIKJ"
+unit = "kg"
+
+[[commodity]]
+slug = "bawang-merah"
+pihps_name = "Bawang Merah Ukuran Sedang"
+comcat_id = "com_11"
+market = "PIKJ"
+unit = "kg"
+
+[[commodity]]
+slug = "beras-medium-1"
+pihps_name = "Beras Kualitas Medium I"
+comcat_id = "com_3"
+market = "PIKJ"
+unit = "kg"
