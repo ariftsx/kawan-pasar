@@ -1,0 +1,51 @@
+// Dependency updates (docs 18 version policy, docs 15 §8 supply chain).
+// Requires the free Renovate GitHub App to be installed on this repository.
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: ['config:recommended', ':dependencyDashboard', ':semanticCommits'],
+  timezone: 'Asia/Jakarta',
+  // Same cooldown as pnpm minimumReleaseAge and uv exclude-newer.
+  minimumReleaseAge: '3 days',
+  internalChecksFilter: 'strict',
+  // Images and actions are pinned by digest/SHA; Renovate keeps the pins fresh.
+  pinDigests: true,
+  // Weekly batches keep the private-repo Actions minutes (CI-01) under control.
+  schedule: ['before 9am on monday'],
+  prConcurrentLimit: 5,
+  lockFileMaintenance: { enabled: true, schedule: ['before 9am on monday'] },
+  vulnerabilityAlerts: { schedule: ['at any time'], minimumReleaseAge: null },
+  packageRules: [
+    {
+      description: 'Research-artifact compatibility beats freshness for ML packages (docs 18 §4).',
+      matchManagers: ['pep621'],
+      matchPackageNames: ['numpy', 'torch', 'scikit-learn'],
+      enabled: false,
+    },
+    {
+      description: 'One PR per framework family.',
+      groupName: 'nestjs',
+      matchPackageNames: ['@nestjs/**', 'fastify'],
+    },
+    {
+      groupName: 'next',
+      matchPackageNames: ['next', '@next/**', 'react', 'react-dom', '@types/react**'],
+    },
+    {
+      groupName: 'typescript-eslint',
+      matchPackageNames: ['typescript-eslint', '@typescript-eslint/**'],
+    },
+    {
+      description: 'fastify must equal the version @nestjs/platform-fastify depends on.',
+      matchPackageNames: ['fastify'],
+      rangeStrategy: 'pin',
+    },
+    {
+      groupName: 'github actions',
+      matchManagers: ['github-actions'],
+    },
+    {
+      groupName: 'docker base images',
+      matchManagers: ['dockerfile', 'docker-compose'],
+    },
+  ],
+}
