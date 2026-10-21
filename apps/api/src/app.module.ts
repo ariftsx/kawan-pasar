@@ -8,6 +8,7 @@ import { SERVICE_TOKEN_HEADER, ServiceTokenGuard } from './common/service-token.
 import { ConfigModule } from './config/config.module.js';
 import { InfraModule } from './infra/infra.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { OutlookModule } from './modules/outlook/outlook.module.js';
 
 import type { Env } from './config/env.js';
 
@@ -40,6 +41,7 @@ export class AppModule {
         }),
         InfraModule,
         HealthModule,
+        OutlookModule,
       ],
       providers: [
         { provide: APP_GUARD, useClass: ServiceTokenGuard },
