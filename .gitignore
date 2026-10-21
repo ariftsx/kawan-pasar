@@ -28,6 +28,7 @@ __pycache__/
 .ruff_cache/
 .mypy_cache/
 htmlcov/
+.coverage
 
 # Environment & secrets (only templates are committed)
 .env
