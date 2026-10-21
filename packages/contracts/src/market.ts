@@ -33,7 +33,8 @@ export const ForecastRun = z.strictObject({
   dataset_version: z.string().min(1),
   preprocessing_version: z.string().min(1),
   data_cutoff: Timestamp,
-  status: z.union([ForecastStatus, z.literal('candidate')]),
+  /** Pipeline state of the run. Publication state lives in `provenance.artifact_status`. */
+  status: ForecastStatus,
 });
 
 export const ForecastPoint = z.strictObject({

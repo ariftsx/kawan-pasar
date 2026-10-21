@@ -38,6 +38,11 @@ describe('docs 08 §5 examples parse', () => {
     expect(MovementThreshold.safeParse(insufficient).success).toBe(true);
   });
 
+  it('keeps publication state out of the run status', () => {
+    const run = { ...FORECAST.run, status: 'candidate' };
+    expect(Forecast.safeParse({ ...FORECAST, run }).success).toBe(false);
+  });
+
   it('rejects a price observation without a positive price', () => {
     expect(PriceObservation.safeParse({ ...PRICE_OBSERVATION, price_idr: 0 }).success).toBe(false);
   });

@@ -85,7 +85,7 @@ export const FORECAST = {
     dataset_version: 'food-price-0.4.0',
     preprocessing_version: 'prep-0.4.0',
     data_cutoff: '2026-10-14T12:00:00+07:00',
-    status: 'candidate',
+    status: 'published',
   },
   reference_price_idr: 52_400,
   points: [
