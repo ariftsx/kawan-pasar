@@ -12,4 +12,9 @@ export default [
       ],
     },
   },
+  {
+    // Build script: reads and writes fixed files inside this package only.
+    files: ['scripts/**/*.js'],
+    rules: { 'security/detect-non-literal-fs-filename': 'off' },
+  },
 ];
