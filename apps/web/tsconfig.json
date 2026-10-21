@@ -14,8 +14,10 @@
   "include": [
     "next-env.d.ts",
     "src",
+    "e2e",
     ".next/types/**/*.ts",
     "next.config.ts",
+    "playwright.config.ts",
     "postcss.config.js",
     "eslint.config.js",
     "vitest.config.js"
