@@ -1,0 +1,58 @@
+{
+  "$description": "Tier 1 primitives (docs 10 §3.1, §5). Never referenced by components; only by semantic tokens.",
+  "color": {
+    "$type": "color",
+    "green": {
+      "50": { "$value": "#EEF6F1" },
+      "100": { "$value": "#D5EADD" },
+      "200": { "$value": "#A9D4BA" },
+      "300": { "$value": "#74B793" },
+      "400": { "$value": "#43966E" },
+      "500": { "$value": "#237A54" },
+      "600": { "$value": "#1A6344" },
+      "700": { "$value": "#154F37" },
+      "800": { "$value": "#113E2C" },
+      "900": { "$value": "#0C2E21" },
+      "950": { "$value": "#071C14" }
+    },
+    "neutral": {
+      "0": { "$value": "#FFFFFF" },
+      "25": { "$value": "#FBFAF7" },
+      "50": { "$value": "#F6F5F1" },
+      "100": { "$value": "#ECEAE4" },
+      "200": { "$value": "#DDDAD2" },
+      "300": { "$value": "#C4C0B6" },
+      "400": { "$value": "#9C978C" },
+      "500": { "$value": "#757067" },
+      "600": { "$value": "#57534C" },
+      "700": { "$value": "#403D38" },
+      "800": { "$value": "#2E2C28" },
+      "850": { "$value": "#23211E" },
+      "900": { "$value": "#1B1A18" },
+      "950": { "$value": "#121110" }
+    },
+    "red": {
+      "50": { "$value": "#FCEEEB" },
+      "300": { "$value": "#F09A88" },
+      "600": { "$value": "#B83A25" },
+      "950": { "$value": "#3A140D" }
+    },
+    "blue": {
+      "50": { "$value": "#EAF2FB" },
+      "300": { "$value": "#8DB8E8" },
+      "600": { "$value": "#2563A6" },
+      "950": { "$value": "#0F2236" }
+    },
+    "amber": {
+      "50": { "$value": "#FBF3E2" },
+      "300": { "$value": "#E7BC6A" },
+      "600": { "$value": "#9A6510" },
+      "700": { "$value": "#8A5A0E" },
+      "950": { "$value": "#33230A" }
+    },
+    "purple": { "300": { "$value": "#C3A6EA" }, "600": { "$value": "#7A4FB5" } },
+    "slate": { "300": { "$value": "#A9B6C8" }, "600": { "$value": "#56657A" } },
+    "orange": { "300": { "$value": "#EFA77A" }, "600": { "$value": "#B85A22" } },
+    "teal": { "300": { "$value": "#7CC9C2" }, "600": { "$value": "#1D7A73" } }
+  }
+}

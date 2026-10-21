@@ -1,0 +1,50 @@
+{
+  "$description": "Spacing, radius, layout, elevation, motion, and z-index scales (docs 10 §5). Theme-independent.",
+  "space": {
+    "$type": "dimension",
+    "0": { "$value": "0px" },
+    "4": { "$value": "4px" },
+    "8": { "$value": "8px" },
+    "12": { "$value": "12px" },
+    "16": { "$value": "16px" },
+    "24": { "$value": "24px" },
+    "32": { "$value": "32px" },
+    "48": { "$value": "48px" },
+    "64": { "$value": "64px" },
+    "96": { "$value": "96px" }
+  },
+  "radius": {
+    "$type": "dimension",
+    "none": { "$value": "0px" },
+    "sm": { "$value": "4px" },
+    "md": { "$value": "8px" },
+    "lg": { "$value": "12px" },
+    "xl": { "$value": "16px" },
+    "full": { "$value": "999px" }
+  },
+  "layout": {
+    "$type": "dimension",
+    "page-margin": { "$value": "80px" },
+    "page-margin-mobile": { "$value": "16px" },
+    "max-content": { "$value": "1280px" }
+  },
+  "elevation": {
+    "$description": "CSS box-shadow shorthand strings.",
+    "1": { "$value": "0 1px 2px 0 rgb(26 23 18 / 0.06)" },
+    "2": { "$value": "0 8px 24px -4px rgb(26 23 18 / 0.08)" }
+  },
+  "motion": {
+    "$description": "CSS duration + easing shorthand strings; reduced motion sets durations to 0.",
+    "fast": { "$value": "120ms ease-out" },
+    "base": { "$value": "200ms cubic-bezier(0.2, 0, 0, 1)" },
+    "slow": { "$value": "320ms cubic-bezier(0.2, 0, 0, 1)" }
+  },
+  "z": {
+    "$type": "number",
+    "base": { "$value": 0 },
+    "sticky": { "$value": 100 },
+    "overlay": { "$value": 200 },
+    "sheet": { "$value": 300 },
+    "toast": { "$value": 400 }
+  }
+}

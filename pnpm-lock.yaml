@@ -284,6 +284,15 @@ importers:
         specifier: ^5.0.0
         version: 5.0.5(vitest@5.0.5)
 
+  packages/tokens:
+    devDependencies:
+      '@kawan-pasar/config':
+        specifier: workspace:*
+        version: link:../config
+      '@vitest/coverage-v8':
+        specifier: ^5.0.0
+        version: 5.0.5(vitest@5.0.5)
+
 packages:
 
   '@babel/code-frame@7.29.7':

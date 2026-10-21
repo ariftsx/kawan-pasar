@@ -1,0 +1,68 @@
+{
+  "$description": "Tier 2 semantic colours (docs 10 §3.2). `$value` is Light; `$extensions.kp.theme.dark` is Dark.",
+  "color": {
+    "$type": "color",
+    "bg": {
+      "canvas": { "$value": "{color.neutral.25}", "$extensions": { "kp.theme": { "dark": "{color.neutral.950}" } } },
+      "surface": { "$value": "{color.neutral.0}", "$extensions": { "kp.theme": { "dark": "{color.neutral.900}" } } },
+      "elevated": { "$value": "{color.neutral.0}", "$extensions": { "kp.theme": { "dark": "{color.neutral.850}" } } },
+      "subtle": { "$value": "{color.neutral.50}", "$extensions": { "kp.theme": { "dark": "{color.neutral.850}" } } },
+      "muted": { "$value": "{color.neutral.100}", "$extensions": { "kp.theme": { "dark": "{color.neutral.800}" } } },
+      "brand": { "$value": "{color.green.700}", "$extensions": { "kp.theme": { "dark": "{color.green.400}" } } },
+      "brand-hover": { "$value": "{color.green.800}", "$extensions": { "kp.theme": { "dark": "{color.green.300}" } } },
+      "brand-subtle": { "$value": "{color.green.50}", "$extensions": { "kp.theme": { "dark": "{color.green.950}" } } },
+      "inverse": { "$value": "{color.neutral.900}", "$extensions": { "kp.theme": { "dark": "{color.neutral.50}" } } }
+    },
+    "border": {
+      "default": { "$value": "{color.neutral.200}", "$extensions": { "kp.theme": { "dark": "{color.neutral.800}" } } },
+      "strong": { "$value": "{color.neutral.300}", "$extensions": { "kp.theme": { "dark": "{color.neutral.700}" } } },
+      "control": { "$value": "{color.neutral.500}", "$extensions": { "kp.theme": { "dark": "{color.neutral.500}" } } },
+      "brand": { "$value": "{color.green.600}", "$extensions": { "kp.theme": { "dark": "{color.green.400}" } } },
+      "focus": { "$value": "{color.green.500}", "$extensions": { "kp.theme": { "dark": "{color.green.300}" } } }
+    },
+    "text": {
+      "primary": { "$value": "{color.neutral.900}", "$extensions": { "kp.theme": { "dark": "{color.neutral.50}" } } },
+      "secondary": { "$value": "{color.neutral.600}", "$extensions": { "kp.theme": { "dark": "{color.neutral.300}" } } },
+      "muted": { "$value": "{color.neutral.500}", "$extensions": { "kp.theme": { "dark": "{color.neutral.400}" } } },
+      "brand": { "$value": "{color.green.700}", "$extensions": { "kp.theme": { "dark": "{color.green.300}" } } },
+      "on-brand": { "$value": "{color.neutral.0}", "$extensions": { "kp.theme": { "dark": "{color.neutral.950}" } } },
+      "inverse": { "$value": "{color.neutral.0}", "$extensions": { "kp.theme": { "dark": "{color.neutral.900}" } } }
+    },
+    "status": {
+      "up-fg": { "$value": "{color.red.600}", "$extensions": { "kp.theme": { "dark": "{color.red.300}" } } },
+      "up-bg": { "$value": "{color.red.50}", "$extensions": { "kp.theme": { "dark": "{color.red.950}" } } },
+      "down-fg": { "$value": "{color.blue.600}", "$extensions": { "kp.theme": { "dark": "{color.blue.300}" } } },
+      "down-bg": { "$value": "{color.blue.50}", "$extensions": { "kp.theme": { "dark": "{color.blue.950}" } } },
+      "available-fg": { "$value": "{color.green.600}", "$extensions": { "kp.theme": { "dark": "{color.green.300}" } } },
+      "available-bg": { "$value": "{color.green.50}", "$extensions": { "kp.theme": { "dark": "{color.green.950}" } } },
+      "partial-fg": { "$value": "{color.amber.700}", "$extensions": { "kp.theme": { "dark": "{color.amber.300}" } } },
+      "partial-bg": { "$value": "{color.amber.50}", "$extensions": { "kp.theme": { "dark": "{color.amber.950}" } } },
+      "missing-fg": { "$value": "{color.neutral.600}", "$extensions": { "kp.theme": { "dark": "{color.neutral.400}" } } },
+      "missing-bg": { "$value": "{color.neutral.100}", "$extensions": { "kp.theme": { "dark": "{color.neutral.800}" } } },
+      "error-fg": { "$value": "{color.red.600}", "$extensions": { "kp.theme": { "dark": "{color.red.300}" } } },
+      "error-bg": { "$value": "{color.red.50}", "$extensions": { "kp.theme": { "dark": "{color.red.950}" } } },
+      "info-fg": { "$value": "{color.blue.600}", "$extensions": { "kp.theme": { "dark": "{color.blue.300}" } } },
+      "info-bg": { "$value": "{color.blue.50}", "$extensions": { "kp.theme": { "dark": "{color.blue.950}" } } }
+    },
+    "chart": {
+      "observed": { "$value": "{color.neutral.900}", "$extensions": { "kp.theme": { "dark": "{color.neutral.100}" } } },
+      "forecast": { "$value": "{color.green.500}", "$extensions": { "kp.theme": { "dark": "{color.green.300}" } } },
+      "forecast-band": { "$value": "{color.green.100}", "$extensions": { "kp.theme": { "dark": "{color.green.900}" } } },
+      "grid": { "$value": "{color.neutral.100}", "$extensions": { "kp.theme": { "dark": "{color.neutral.800}" } } },
+      "origin": { "$value": "{color.amber.600}", "$extensions": { "kp.theme": { "dark": "{color.amber.300}" } } }
+    },
+    "modality": {
+      "price": { "$value": "{color.green.500}", "$extensions": { "kp.theme": { "dark": "{color.green.300}" } } },
+      "climate": { "$value": "{color.blue.600}", "$extensions": { "kp.theme": { "dark": "{color.blue.300}" } } },
+      "news": { "$value": "{color.purple.600}", "$extensions": { "kp.theme": { "dark": "{color.purple.300}" } } },
+      "supply": { "$value": "{color.amber.600}", "$extensions": { "kp.theme": { "dark": "{color.amber.300}" } } },
+      "macro": { "$value": "{color.slate.600}", "$extensions": { "kp.theme": { "dark": "{color.slate.300}" } } },
+      "logistics": { "$value": "{color.orange.600}", "$extensions": { "kp.theme": { "dark": "{color.orange.300}" } } },
+      "calendar": { "$value": "{color.teal.600}", "$extensions": { "kp.theme": { "dark": "{color.teal.300}" } } }
+    },
+    "demo": {
+      "fg": { "$value": "{color.amber.700}", "$extensions": { "kp.theme": { "dark": "{color.amber.300}" } } },
+      "bg": { "$value": "{color.amber.50}", "$extensions": { "kp.theme": { "dark": "{color.amber.950}" } } }
+    }
+  }
+}
