@@ -1,0 +1,26 @@
+@import 'tailwindcss';
+@import '@kawan-pasar/tokens/tokens.css';
+@import '@kawan-pasar/tokens/theme.css';
+
+@theme inline {
+  --font-sans: var(--font-inter), system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+
+@layer base {
+  html {
+    color-scheme: light dark;
+  }
+
+  html[data-theme='light'] {
+    color-scheme: light;
+  }
+
+  html[data-theme='dark'] {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-bg-canvas text-text-primary font-sans antialiased;
+  }
+}
