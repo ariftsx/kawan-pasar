@@ -2,7 +2,7 @@
 
 Model service Kawan Pasar: menyajikan bundle artefak ARIF-Net yang sudah dipublikasikan, **hanya** di jaringan internal (docs 13 Bagian B). Service ini tidak melakukan training, tidak mengakses DB produk, dan tidak punya route publik.
 
-Saat ini berupa **skeleton**: konfigurasi, log JSON, envelope error, dan probe. Verifikasi HMAC, loader bundle, bundle demo, dan `/internal/*` menyusul di PR berikutnya.
+Saat ini berupa **skeleton**: konfigurasi, verifikasi HMAC, log JSON, envelope error, dan probe. Loader bundle, bundle demo, dan `/internal/*` menyusul di PR berikutnya.
 
 ## Menjalankan
 
@@ -29,6 +29,17 @@ Image produksi nanti memakai `--workers 1 --proxy-headers` (docs 13 §B3). Uvico
 | `LOG_LEVEL`             | tidak | `info`        | `debug` · `info` · `warning` · `error`           |
 
 Settings divalidasi pydantic-settings saat start. Bila ada yang salah, proses berhenti dengan nama field, tanpa menampilkan nilainya (`hide_input_in_errors`).
+
+## Tanda tangan HMAC
+
+Setiap route `/internal/*` mewajibkan dua header:
+
+```text
+X-KP-Timestamp: <detik Unix>
+X-KP-Signature: hex(HMAC-SHA256(secret, "<timestamp>\n<METHOD>\n<path?query>\n<sha256_hex(body)>"))
+```
+
+Request ditolak (`401 UNAUTHENTICATED`) bila salah satu header tidak ada, timestamp di luar ±60 detik, atau tanda tangan tidak cocok. Perbandingan memakai `hmac.compare_digest`. Method dan path ikut ditandatangani, sehingga tanda tangan yang tertangkap tidak bisa dipakai ulang ke route lain. `/healthz` dan `/readyz` tidak memerlukan tanda tangan.
 
 ## Perilaku lain
 
