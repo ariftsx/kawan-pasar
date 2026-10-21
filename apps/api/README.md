@@ -1,6 +1,6 @@
 # @kawan-pasar/api
 
-Core API Kawan Pasar: NestJS 12 di atas Fastify, gaya _modular monolith_ (docs 13 Bagian A). Saat ini berupa **skeleton**: konfigurasi, logging, header keamanan, health probe, dan entrypoint worker. Modul domain menyusul per fitur.
+Core API Kawan Pasar: NestJS 12 di atas Fastify, gaya _modular monolith_ (docs 13 Bagian A). Saat ini berupa **skeleton**: konfigurasi, logging, envelope error, guard service token, health probe, dan entrypoint worker. Modul domain menyusul per fitur.
 
 ## Menjalankan
 
@@ -24,7 +24,9 @@ Env divalidasi zod saat boot (`src/config/env.ts`, satu-satunya tempat membaca `
 
 ## Perilaku yang dijamin
 
-- **Service token.** `SERVICE_TOKEN` sudah wajib dan divalidasi. Guard yang menegakkannya di setiap route menyusul di PR berikutnya.
+- **Service token.** Semua route mewajibkan header `X-Service-Token`, kecuali probe yang ditandai `@Probe()` (`/healthz`, `/readyz`). Token dibandingkan dalam waktu konstan (SHA-256 + `timingSafeEqual`).
+- **Request ID.** `X-Request-Id` dari BFF dipakai bila aman (`[A-Za-z0-9_-]{1,64}`). Bila tidak ada, dibuat `req_<ULID>`. Nilai yang sama muncul di log, header respons, dan body error.
+- **Error.** `AllExceptionsFilter` mengubah setiap kegagalan menjadi envelope docs 08 §8 (`{ data: null, error: { code, message, request_id } }`). Stack hanya masuk log. Pesan framework tidak diteruskan ke klien. Error domain dilempar sebagai `AppError(code, pesan)`.
 - **Header.** `@fastify/helmet` aktif tanpa CSP (respons JSON). CORS mati karena API hanya dipanggil oleh BFF.
 - **Batas.** Body 64 KB. `trustProxy` hanya untuk subnet di `TRUSTED_PROXY_CIDRS`, tidak pernah `true`.
 - **Log.** pino JSON lewat nestjs-pino. Header `authorization`, `cookie`, `x-service-token`, dan `set-cookie` disensor. Probe tidak dicatat.
@@ -49,5 +51,6 @@ src/
 ├── app.factory.ts     susunan Fastify + Nest, dipakai main.ts dan test
 ├── app.module.ts      logger, guard & filter global, modul
 ├── config/            skema env (zod) + ConfigModule (token ENV)
+├── common/            AppError, AllExceptionsFilter, ServiceTokenGuard, request id
 └── modules/health/    /healthz, /readyz
 ```

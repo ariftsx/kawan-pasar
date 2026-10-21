@@ -1,5 +1,7 @@
 import { Controller, Get, Header } from '@nestjs/common';
 
+import { Probe } from '../../common/service-token.guard.js';
+
 type ProbeResult = { status: 'ok'; checks: Record<string, 'ok'> };
 
 /**
@@ -7,6 +9,7 @@ type ProbeResult = { status: 'ok'; checks: Record<string, 'ok'> };
  * model-svc checks (1 s timeout each) once those clients exist in local dev (F0 PR 10).
  */
 @Controller()
+@Probe()
 export class HealthController {
   @Get('healthz')
   @Header('cache-control', 'no-store')
