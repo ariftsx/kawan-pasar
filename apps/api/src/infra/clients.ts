@@ -1,5 +1,6 @@
 // Connections to the data stores (docs 13 §A8). Both clients connect lazily, so the app boots
 // even when a store is down; /readyz reports it instead.
+import { Logger } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import postgres from 'postgres';
 
@@ -24,14 +25,21 @@ export function createSql(env: Env): Sql {
   });
 }
 
+const logger = new Logger('Valkey');
+
 export function createValkey(url: string): Redis {
-  return new Redis(url, {
+  const client = new Redis(url, {
     lazyConnect: true,
     // Fail fast instead of queueing commands while disconnected.
     enableOfflineQueue: false,
     maxRetriesPerRequest: 1,
     connectTimeout: 2000,
   });
+  // Without a listener ioredis prints "Unhandled error event"; /readyz reports the outage.
+  client.on('error', (error: Error) => {
+    logger.warn(`connection error: ${error.message}`);
+  });
+  return client;
 }
 
 /** With lazyConnect and no offline queue, the first command must open the connection itself. */
