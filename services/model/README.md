@@ -2,7 +2,7 @@
 
 Model service Kawan Pasar: menyajikan bundle artefak ARIF-Net yang sudah dipublikasikan, **hanya** di jaringan internal (docs 13 Bagian B). Service ini tidak melakukan training, tidak mengakses DB produk, dan tidak punya route publik.
 
-Saat ini berupa **skeleton**: konfigurasi, verifikasi HMAC, log JSON, envelope error, dan probe. Loader bundle, bundle demo, dan `/internal/*` menyusul di PR berikutnya.
+Saat ini berisi konfigurasi, verifikasi HMAC, log JSON, envelope error, probe, serta **loader bundle** dan **bundle demo** (DH-03). Route `/internal/*` yang menyajikan bundle menyusul di PR berikutnya.
 
 ## Menjalankan
 
@@ -40,6 +40,20 @@ X-KP-Signature: hex(HMAC-SHA256(secret, "<timestamp>\n<METHOD>\n<path?query>\n<s
 ```
 
 Request ditolak (`401 UNAUTHENTICATED`) bila salah satu header tidak ada, timestamp di luar ±60 detik, atau tanda tangan tidak cocok. Perbandingan memakai `hmac.compare_digest`. Method dan path ikut ditandatangani, sehingga tanda tangan yang tertangkap tidak bisa dipakai ulang ke route lain. `/healthz` dan `/readyz` tidak memerlukan tanda tangan.
+
+## Bundle
+
+`app/artifacts/loader.py` memverifikasi satu folder bundle (docs 08 §12) sebelum dipakai:
+
+- skema manifest valid, dan nama folder sama dengan `bundle_id`;
+- setiap file tercantum di manifest, berada di dalam bundle, dengan ukuran dan SHA-256 yang cocok (maks 5 MB per file);
+- identitas run sama dengan manifest, `origin ≤ data_cutoff`, dan horizon termasuk yang didukung;
+- `predicted_price_idr` = rekonstruksi `reference × (1 + change)`, dibulatkan setengah ke atas seperti di `packages/domain`;
+- mode `development` hanya menerima bundle `model_version = demo` berstatus `draft`; mode `live` menolak bundle demo dan status di bawah `candidate`.
+
+Pesan penolakan hanya menyebut lokasi field. Nilai dari bundle tidak pernah ditampilkan.
+
+**Bundle demo** (`demo/demo__2026-10-18/`) dibangun ulang dengan `uv run python -m scripts.build_demo_bundle`. Hasilnya deterministik, jadi git harus tetap bersih setelah dijalankan. Semua angkanya **DATA DEMO**, sama dengan kartu demo di `apps/web` (perubahan 7 hari: cabai +2,8%, bawang +0,9%, beras 0%). Horizon lain hanya diskalakan `sqrt(h / 7)` agar grafik punya bentuk, **bukan** hasil model. Folder `demo/` dikecualikan dari Prettier karena isinya dichecksum.
 
 ## Perilaku lain
 
