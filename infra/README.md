@@ -53,7 +53,21 @@ docker build -t kp-model:dev services/model
 - **pnpm 12** dipasang dengan `npm install -g pnpm@12.14.0` karena Corepack di Node 24.11 belum bisa menjalankan pnpm 12.
 - Image api memakai `pnpm deploy --prod --legacy`, sehingga hanya dependensi produksi yang ikut.
 - `NEXT_PUBLIC_*` adalah build arg karena nilainya ditanam saat build. Variabel ini bukan secret.
-- Scan Trivy dan push ke GHCR menyusul di F0 PR 12.
+- Stage runtime tidak membawa npm, Corepack, Yarn, atau pip. Alat build itu membawa dependensinya sendiri yang ditandai Trivy, padahal tidak dipakai saat runtime.
+
+## CI image (`.github/workflows/images.yml`)
+
+| Event                                                      | Build | Trivy | SBOM | Push GHCR              |
+| ---------------------------------------------------------- | ----- | ----- | ---- | ---------------------- |
+| PR yang mengubah Dockerfile, lockfile, atau `.trivyignore` | ✓     | ✓     | ✓    | —                      |
+| Push ke `main`                                             | ✓     | ✓     | ✓    | —                      |
+| Tag `vX.Y.Z` pada commit di `main`                         | ✓     | ✓     | ✓    | ✓ `:sha` dan `:vX.Y.Z` |
+
+- Trivy (image dipin by digest) menggagalkan build bila ada temuan **HIGH/CRITICAL yang sudah punya perbaikan**, termasuk secret di image.
+- Pengecualian ditulis di `.trivyignore`, masing-masing dengan alasan, pemilik, dan tanggal review.
+- Image yang di-push adalah image yang sama persis dengan yang sudah di-scan. Deploy memakai digest, bukan tag.
+- SBOM CycloneDX disimpan sebagai artifact selama 30 hari.
+- Status saat PR 12 (21 Okt 2026): web, api, dan model **0** temuan HIGH/CRITICAL yang bisa diperbaiki.
 
 ## Secret
 

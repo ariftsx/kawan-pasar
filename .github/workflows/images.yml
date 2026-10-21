@@ -1,0 +1,98 @@
+# Container images (docs 17 §6, docs 20 PR 12): build every image and gate it with Trivy.
+# Images reach GHCR only from release tags on main (CI-01: private GHCR storage is limited);
+# pull requests and main only build and scan.
+name: images
+
+on:
+  pull_request:
+    paths:
+      - '**/Dockerfile'
+      - .dockerignore
+      - pnpm-lock.yaml
+      - services/*/uv.lock
+      - .trivyignore
+      - .github/workflows/images.yml
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+
+concurrency:
+  group: images-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  TRIVY_IMAGE: aquasec/trivy@sha256:2416d1f74045b57274df1a340eee6b510cacd73c66a6ccb8da092b117eb7d222 # 0.76.0
+
+jobs:
+  image:
+    name: image (${{ matrix.name }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: web, context: ., dockerfile: apps/web/Dockerfile }
+          - { name: api, context: ., dockerfile: apps/api/Dockerfile }
+          - { name: model, context: services/model, dockerfile: services/model/Dockerfile }
+    env:
+      IMAGE: ghcr.io/${{ github.repository_owner }}/kp-${{ matrix.name }}
+      # Only a version tag pushes; the tag must point at a commit already on main.
+      PUBLISH: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: tag must be on main
+        if: env.PUBLISH == 'true'
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: build (local, not pushed)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          load: true
+          tags: ${{ env.IMAGE }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+          provenance: false
+      - name: trivy (fail on fixable HIGH/CRITICAL)
+        run: >-
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/src" -w /src
+          "$TRIVY_IMAGE" image --scanners vuln,secret --severity HIGH,CRITICAL --ignore-unfixed
+          --ignorefile .trivyignore --exit-code 1 --no-progress "$IMAGE:$GITHUB_SHA"
+      - name: sbom (CycloneDX)
+        run: >-
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/src" -w /src
+          "$TRIVY_IMAGE" image --format cyclonedx --output "sbom-${{ matrix.name }}.cdx.json"
+          --no-progress "$IMAGE:$GITHUB_SHA"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom-${{ matrix.name }}
+          path: sbom-${{ matrix.name }}.cdx.json
+          retention-days: 30
+      - name: login to GHCR
+        if: env.PUBLISH == 'true'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: push the scanned image
+        if: env.PUBLISH == 'true'
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          docker tag "$IMAGE:$GITHUB_SHA" "$IMAGE:$VERSION"
+          docker push "$IMAGE:$GITHUB_SHA"
+          docker push "$IMAGE:$VERSION"
+          # Deploys reference the digest, never a tag (docs 17 §6).
+          docker image inspect --format '{{index .RepoDigests 0}}' "$IMAGE:$VERSION" >> "$GITHUB_STEP_SUMMARY"

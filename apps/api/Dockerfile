@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1.7
 # Core API and worker share this image; the worker runs with CMD ["node", "dist/worker.js"].
 # Build from the repo root: docker build -f apps/api/Dockerfile .
-FROM node:24.11-bookworm-slim@sha256:48abc13a19400ca3985071e287bd405a1d99306770eb81d61202fb6b65cf0b57 AS base
-# Corepack in Node 24.11 cannot run pnpm 12, so the pinned version is installed directly.
+FROM node:24.22-bookworm-slim@sha256:91acba91b842bec0bf7ea6f5e09c644c7ccad72c4996ed9616d861d1c7cd60d4 AS base
+# Corepack cannot run pnpm 12 yet, so the pinned version is installed directly.
 RUN npm install --global --no-fund --no-audit pnpm@12.14.0
 WORKDIR /repo
 
@@ -13,8 +13,10 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 RUN pnpm --filter @kawan-pasar/api... run build
 RUN pnpm --filter @kawan-pasar/api deploy --prod --legacy /out
 
-FROM node:24.11-bookworm-slim@sha256:48abc13a19400ca3985071e287bd405a1d99306770eb81d61202fb6b65cf0b57
+FROM node:24.22-bookworm-slim@sha256:91acba91b842bec0bf7ea6f5e09c644c7ccad72c4996ed9616d861d1c7cd60d4
 ENV NODE_ENV=production
+# npm, Corepack, and Yarn are build tools; dropping them removes their bundled dependencies.
+RUN rm -rf /usr/local/lib/node_modules /opt/yarn-*     /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg
 WORKDIR /app
 COPY --from=build --chown=node:node /out ./
 USER node
