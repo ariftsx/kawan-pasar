@@ -19,6 +19,13 @@ const Env = z.strictObject({
   TRUSTED_PROXY_CIDRS: CsvList.pipe(z.array(z.union([z.cidrv4(), z.cidrv6()])).min(1)).default([
     '10.0.0.0/8',
   ]),
+  DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
+  /** Two Valkey instances (P-05): an evicting cache and a never-evicting BullMQ queue. */
+  VALKEY_CACHE_URL: z.url({ protocol: /^rediss?$/ }),
+  VALKEY_QUEUE_URL: z.url({ protocol: /^rediss?$/ }),
+  /** Internal model service; reached only over kp-internal with HMAC (docs 08 §7). */
+  MODEL_URL: z.url({ protocol: /^https?$/ }),
+  MODEL_HMAC_SECRET: z.string().min(32),
 });
 
 export type Env = z.infer<typeof Env>;

@@ -12,13 +12,16 @@ node --env-file=.env apps/api/dist/worker.js  # worker BullMQ (belum ada antrean
 pnpm --filter @kawan-pasar/api test           # Vitest: unit + boot via fastify.inject
 ```
 
-| Env                   | Wajib | Default            | Isi                                                              |
-| --------------------- | ----- | ------------------ | ---------------------------------------------------------------- |
-| `SERVICE_TOKEN`       | ya    | —                  | Secret bersama dengan BFF, ≥ 32 karakter, dirotasi 90 hari       |
-| `PORT` · `HOST`       | tidak | `4000` · `0.0.0.0` | Alamat listen                                                    |
-| `LOG_LEVEL`           | tidak | `info`             | Level pino                                                       |
-| `TRUSTED_PROXY_CIDRS` | tidak | `10.0.0.0/8`       | Subnet proxy (Traefik) yang header `X-Forwarded-*`-nya dipercaya |
-| `NODE_ENV`            | tidak | `development`      | `development` · `test` · `production`                            |
+| Env                                     | Wajib | Default            | Isi                                                              |
+| --------------------------------------- | ----- | ------------------ | ---------------------------------------------------------------- |
+| `SERVICE_TOKEN`                         | ya    | —                  | Secret bersama dengan BFF, ≥ 32 karakter, dirotasi 90 hari       |
+| `PORT` · `HOST`                         | tidak | `4000` · `0.0.0.0` | Alamat listen                                                    |
+| `LOG_LEVEL`                             | tidak | `info`             | Level pino                                                       |
+| `TRUSTED_PROXY_CIDRS`                   | tidak | `10.0.0.0/8`       | Subnet proxy (Traefik) yang header `X-Forwarded-*`-nya dipercaya |
+| `NODE_ENV`                              | tidak | `development`      | `development` · `test` · `production`                            |
+| `DATABASE_URL`                          | ya    | —                  | `postgres://…`                                                   |
+| `VALKEY_CACHE_URL` · `VALKEY_QUEUE_URL` | ya    | —                  | `redis://…`, dua instance terpisah (P-05)                        |
+| `MODEL_URL` · `MODEL_HMAC_SECRET`       | ya    | —                  | Model service internal dan secret HMAC (≥ 32 karakter)           |
 
 Env divalidasi zod saat boot (`src/config/env.ts`, satu-satunya tempat membaca `process.env`). Bila ada yang salah, proses berhenti dan menyebut nama key-nya tanpa menampilkan nilainya.
 
@@ -32,7 +35,15 @@ Env divalidasi zod saat boot (`src/config/env.ts`, satu-satunya tempat membaca `
 - **Log.** pino JSON lewat nestjs-pino. Header `authorization`, `cookie`, `x-service-token`, dan `set-cookie` disensor. Probe tidak dicatat.
 - **Shutdown.** `SIGTERM` menutup aplikasi dengan rapi; request baru saat penutupan mendapat 503.
 
-`/readyz` belum memeriksa dependensi. Cek DB, Valkey, dan model-svc (timeout 1 s) ditambahkan saat klien-kliennya dibuat (F0 PR 10).
+`/readyz` memeriksa Postgres, kedua Valkey, dan `/readyz` model-svc secara paralel (timeout 1 s per dependensi). Hanya Postgres yang kritis:
+
+| Kondisi                | HTTP | `status`                                                                                       |
+| ---------------------- | ---- | ---------------------------------------------------------------------------------------------- |
+| Semua sehat            | 200  | `ok`                                                                                           |
+| Valkey atau model mati | 200  | `degraded`: replika tetap menerima trafik, karena harga dan modal masih bisa disajikan (AP-08) |
+| Postgres mati          | 503  | `down`                                                                                         |
+
+Klien Postgres (postgres.js, pool 10) dan Valkey (ioredis, tanpa antrean offline) tersambung secara lazy. Aplikasi tetap bisa boot saat dependensi mati, dan koneksi ditutup rapi saat shutdown.
 
 ## TypeScript 7 dan decorator (TS-01)
 

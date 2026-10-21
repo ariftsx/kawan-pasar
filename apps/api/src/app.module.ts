@@ -6,6 +6,7 @@ import { AllExceptionsFilter } from './common/all-exceptions.filter.js';
 import { resolveRequestId } from './common/request-id.js';
 import { SERVICE_TOKEN_HEADER, ServiceTokenGuard } from './common/service-token.guard.js';
 import { ConfigModule } from './config/config.module.js';
+import { InfraModule } from './infra/infra.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 
 import type { Env } from './config/env.js';
@@ -37,6 +38,7 @@ export class AppModule {
             autoLogging: { ignore: (request) => PROBE_PATHS.has(String(request.url)) },
           },
         }),
+        InfraModule,
         HealthModule,
       ],
       providers: [
