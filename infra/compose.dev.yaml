@@ -87,6 +87,11 @@ services:
       SERVICE_TOKEN: ${SERVICE_TOKEN:?run pnpm stack:env}
       # Docker's default bridge range stands in for the Traefik overlay subnet locally.
       TRUSTED_PROXY_CIDRS: 172.16.0.0/12
+      DATABASE_URL: postgres://kp:${POSTGRES_PASSWORD}@postgres:5432/kawan_pasar
+      VALKEY_CACHE_URL: redis://:${VALKEY_PASSWORD}@valkey-cache:6379
+      VALKEY_QUEUE_URL: redis://:${VALKEY_PASSWORD}@valkey-queue:6379
+      MODEL_URL: http://model:8000
+      MODEL_HMAC_SECRET: ${MODEL_HMAC_SECRET}
     networks: [kp-internal]
     depends_on:
       postgres: { condition: service_healthy }

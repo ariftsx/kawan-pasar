@@ -22,11 +22,20 @@ const inject = (url: string, headers: Record<string, string> = {}) =>
   app.getHttpAdapter().getInstance().inject({ method: 'GET', url, headers });
 
 describe('core API boot', () => {
-  it.each(['/healthz', '/readyz'])('answers %s without a service token', async (url) => {
-    const response = await inject(url);
+  it('answers /healthz without a service token', async () => {
+    const response = await inject('/healthz');
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({ status: 'ok' });
+    expect(response.json()).toEqual({ status: 'ok' });
     expect(response.headers['cache-control']).toBe('no-store');
+  });
+
+  it('reports unreachable dependencies on /readyz with 503', async () => {
+    const response = await inject('/readyz');
+    expect(response.statusCode).toBe(503);
+    expect(response.json()).toEqual({
+      status: 'down',
+      checks: { postgres: 'down', valkey_cache: 'down', valkey_queue: 'down', model: 'down' },
+    });
   });
 
   it('mints a request id and echoes it in the response header', async () => {
