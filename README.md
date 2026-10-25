@@ -67,7 +67,7 @@ pnpm --filter @kawan-pasar/web test:e2e                  # golden path desktop +
 (cd services/ingest && uv sync && uv run pytest)         # ingest
 ```
 
-CI (`.github/workflows/ci.yml`) menjalankan semua cek ini di setiap PR. Image Docker di-scan Trivy lewat `.github/workflows/images.yml`.
+CI (`.github/workflows/ci.yml`) menjalankan semua cek ini di setiap PR, dan setiap job hanya berjalan bila path terkait berubah. Image Docker di-scan Trivy lewat `.github/workflows/images.yml`, lalu di-push ke GHCR hanya dari tag `vX.Y.Z`. Pembaruan dependensi diatur Renovate (`.github/renovate.json5`); aplikasi Renovate perlu dipasang di repo.
 
 ## Struktur repo
 

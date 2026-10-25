@@ -7,6 +7,11 @@
 3. Buka PR ke `main`. Satu PR = satu perubahan yang koheren, idealnya **≤ 400 baris** di luar lockfile dan file generated. Pekerjaan besar dipecah menjadi beberapa PR.
 4. CI harus hijau. PR digabung dengan **squash merge** oleh pemilik produk.
 
+**PR bertumpuk** (PR B dibangun di atas branch PR A):
+
+- Sebelum PR A di-merge, ubah base PR B ke `main` (`gh pr edit <B> --base main`). Bila base branch PR B terhapus lebih dulu, GitHub menutup PR B dan PR itu tidak bisa dibuka lagi.
+- Setelah PR A di-squash merge, rebase PR B dengan `git rebase --onto origin/main <tip lama A> <branch B>`, lalu push dengan `--force-with-lease`.
+
 Git hooks (lefthook) dipasang otomatis oleh `pnpm install`:
 
 | Hook       | Isi                                       |
@@ -76,3 +81,4 @@ Bug yang ditemukan di UI diberi test regresi. Contohnya test nilai stepper di `g
 - **Folder bundle demo** `services/model/demo/` dikecualikan dari Prettier karena isinya dichecksum. Bundle dibangun ulang dengan `uv run python -m scripts.build_demo_bundle`.
 - **Corepack di Node 24.11** belum bisa menjalankan pnpm 12. Dockerfile dan CI memasang pnpm dengan `npm i -g pnpm@12.14.0`.
 - **Git Bash di Windows:** pakai `MSYS_NO_PATHCONV=1` untuk path `docker -v` dan `--tmpfs`.
+- **Turbo dan Next:** `next typegen` (typecheck) dan `next build` sama-sama menulis ke `.next`, jadi build web dibuat menunggu typecheck web di `turbo.json`. Tanpa itu, CI kadang gagal dengan `ENOENT .next/types/routes.d.ts`.
