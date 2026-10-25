@@ -14,7 +14,9 @@ COPY demo ./demo
 
 FROM python:3.14-slim-bookworm@sha256:48b13b003dda20b16f9442b8475aa05fe21bf6579a8c881db92ffb4d8fd20f83
 ENV PATH=/app/.venv/bin:$PATH PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
-RUN useradd --system --uid 10001 --no-create-home kp
+# pip is only needed to build; removing it (and the wheels ensurepip bundles) drops its vendored
+# certifi, urllib3, msgpack, and setuptools from the runtime image.
+RUN python -m pip uninstall --yes pip     && rm -rf /usr/local/lib/python3.14/ensurepip/_bundled     && useradd --system --uid 10001 --no-create-home kp
 WORKDIR /app
 COPY --from=build --chown=root:root /app /app
 USER kp
