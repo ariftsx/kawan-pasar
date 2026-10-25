@@ -1,6 +1,6 @@
 # @kawan-pasar/web
 
-Aplikasi web Kawan Pasar: UI, BFF, dan PWA di Next.js 16 (docs 12). Saat ini berupa **skeleton**: satu halaman contoh DATA DEMO, health check, dan seluruh fondasi keamanan.
+Aplikasi web Kawan Pasar: UI, BFF, dan PWA di Next.js 16 (docs 12). Saat ini berisi golden path **mode tamu** (F1): Atur Warung → Beranda → Rencana Menu → Rincian Menu. Data disimpan di perangkat (IndexedDB), tanpa login.
 
 ## Menjalankan
 
@@ -9,7 +9,9 @@ cp .env.example .env.local
 pnpm --filter @kawan-pasar/web dev        # http://localhost:3000
 pnpm --filter @kawan-pasar/web build
 pnpm --filter @kawan-pasar/web test       # Vitest (src/lib)
-pnpm --filter @kawan-pasar/web test:e2e   # Playwright smoke (butuh build)
+pnpm --filter @kawan-pasar/web exec playwright install chromium   # sekali
+pnpm --filter @kawan-pasar/web test:e2e   # Playwright: smoke + golden path (butuh build)
+E2E_BASE_URL=http://localhost:3000 pnpm --filter @kawan-pasar/web test:e2e  # terhadap stack yang sedang jalan
 ```
 
 | Env                     | Wajib       | Isi                                                                       |
@@ -28,6 +30,20 @@ Env publik divalidasi zod saat boot (`src/lib/env`). Secret **tidak pernah** mem
 - `src/lib/api/client.ts` (server-only) menyertakan `X-Service-Token` dan `X-Request-Id`, dengan timeout 3 s dan satu kali retry hanya untuk GET. API yang tidak terjangkau dikembalikan sebagai envelope `503 DEPENDENCY_UNAVAILABLE`.
 - `GET /bff/outlook/[slug]?horizon=` adalah contoh rantai F0-X4.
 
+## Alur data mode tamu
+
+```text
+IndexedDB (lib/guest-store) ─► features/planning/guest-plan.tsx (context)
+packages/catalog (resep, harga DATA DEMO) ─┐
+/bff/outlook (perkiraan 7 hari) ───────────┼─► lib/planning/plan.ts ─► packages/domain ─► layar
+NEXT_PUBLIC_DATA_MODE (demo | live) ───────┘
+```
+
+- `lib/guest-store`: repository IndexedDB dengan validasi zod, versi skema, dan ekspor JSON. Antarmuka `PlanningRepository` memungkinkan F3 beralih ke API setelah login tanpa mengubah layar.
+- `lib/planning/plan.ts`: memilih harga dan perkiraan untuk setiap bahan, lalu menyusun baris resep untuk `packages/domain`. Fungsi yang sama meringkas seluruh rencana.
+- `lib/planning/view.ts`: nilai tampilan. Semua "tidak diketahui" diputuskan di sini menjadi `null` (tampil "—"), tidak pernah 0.
+- Bila perkiraan gagal dimuat, modal tetap dihitung dengan harga hari ini.
+
 ## Keamanan
 
 - `src/proxy.ts` membuat **nonce CSP per request** (128-bit) dan memasang header docs 15 §10: HSTS, `nosniff`, Referrer-Policy, Permissions-Policy, COOP, CORP. `X-Powered-By` dimatikan.
@@ -38,13 +54,17 @@ Env publik divalidasi zod saat boot (`src/lib/env`). Secret **tidak pernah** mem
 
 ```text
 src/
-├── app/            layout, halaman, /api/healthz
+├── app/            route: /, /atur-warung, /rencana, /rencana/[menuId], halaman F2–F5, /api/healthz
 ├── app/bff/        Route Handler BFF → core API
+├── components/     shell (header, tab bar bawah, footer, banner DATA DEMO), coming-soon
+├── features/       home · onboarding · planning (layar + komponen domain) · outlook
 ├── lib/api/        klien server-only ke core API
+├── lib/guest-store/ IndexedDB mode tamu
+├── lib/planning/   aturan pemilihan harga/perkiraan + nilai tampilan
 ├── lib/env/        validasi env publik dan server
 ├── lib/format/     Rp 52.400 · +3,2% · 14 Okt 2026 (id-ID, minus tipografis)
 ├── lib/security/   CSP + header keamanan
 ├── proxy.ts        nonce + header per request
 └── styles/         Tailwind v4 + token (@kawan-pasar/tokens)
-e2e/                smoke: health, nonce di setiap <script>, header, kartu DATA DEMO
+e2e/                smoke (header, CSP nonce) + golden path desktop & HP 360×740 dengan axe
 ```
