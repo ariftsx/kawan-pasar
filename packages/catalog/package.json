@@ -1,0 +1,33 @@
+{
+  "name": "@kawan-pasar/catalog",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Versioned product catalog for Kawan Pasar: ingredients, warung types, menu templates, and labelled DATA DEMO prices (F1-Q1).",
+  "license": "Apache-2.0",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@kawan-pasar/contracts": "workspace:*",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@kawan-pasar/config": "workspace:*",
+    "@kawan-pasar/domain": "workspace:*",
+    "@vitest/coverage-v8": "^5.0.5"
+  }
+}
