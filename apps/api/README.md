@@ -45,6 +45,17 @@ Env divalidasi zod saat boot (`src/config/env.ts`, satu-satunya tempat membaca `
 
 Klien Postgres (postgres.js, pool 10) dan Valkey (ioredis, tanpa antrean offline) tersambung secara lazy. Aplikasi tetap bisa boot saat dependensi mati, dan koneksi ditutup rapi saat shutdown.
 
+## Endpoint contoh: `GET /v1/outlook/:slug?horizon=`
+
+Rantai F0-X4: BFF web → endpoint ini → `GET /internal/forecasts/:slug` di model-svc.
+
+- Request ke model ditandatangani HMAC (`src/infra/model-client.ts`). Formatnya sama persis dengan `services/model`, dan dibuktikan oleh test vector yang dibuat dari implementasi Python. Timeout baca 1 s.
+- Jawaban model divalidasi dengan skema `@kawan-pasar/contracts`. Bila tidak sesuai, hasilnya `422 MODEL_INCOMPATIBLE` dan datanya tidak pernah diteruskan.
+- Error kontrak dari model (`ARTIFACT_NOT_FOUND`, `FORECAST_UNAVAILABLE`, …) diteruskan apa adanya. Tanda tangan ditolak, timeout, atau jawaban rusak menjadi `503 MODEL_UNAVAILABLE`.
+- Respons memakai envelope docs 08 §3: `data: { status, forecast }`, `meta`, `provenance`, `availability`, `limitations`.
+
+Fitur Outlook penuh (F4) menambahkan publishing gate, status `stale`, dan penyimpanan run.
+
 ## TypeScript 7 dan decorator (TS-01)
 
 `tsc` di repo ini adalah TS 7 (`@typescript/native`). Dengan `experimentalDecorators` + `emitDecoratorMetadata`, TS 7 meng-emit `design:paramtypes`, dan transformer Vitest juga. Jadi DI NestJS berbasis tipe constructor berjalan di build maupun test, tanpa fallback ke TS 5.
