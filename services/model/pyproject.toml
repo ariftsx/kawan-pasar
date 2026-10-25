@@ -1,0 +1,56 @@
+[project]
+name = "kawan-pasar-model"
+version = "0.1.0"
+description = "Kawan Pasar model service: serves published ARIF-Net artifact bundles on the internal network."
+license = "Apache-2.0"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+  "fastapi~=0.143.3",
+  "pydantic>=2.14,<3",
+  "pydantic-settings>=2.15,<3",
+  "structlog>=26.1,<27",
+  "uvicorn>=0.54,<0.55",
+]
+
+[dependency-groups]
+dev = [
+  "httpx>=0.28,<0.29",
+  "pip-audit>=2.10,<3",
+  "pyright>=1.1.414,<1.2",
+  "pytest>=9.1,<10",
+  "pytest-cov>=7.1,<8",
+  "ruff>=0.17,<0.18",
+]
+
+[tool.uv]
+package = false
+# Supply-chain cooldown, the same policy as pnpm minimumReleaseAge (docs 14 §2, 15 §8).
+exclude-newer = "3 days"
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+# docs 14 §6
+select = ["E", "F", "W", "I", "B", "UP", "S", "ASYNC", "PL", "RUF"]
+
+[tool.ruff.lint.per-file-ignores]
+# assert is how pytest checks; fixed test secrets are not credentials.
+"tests/**" = ["S101", "S105", "S106", "PLR2004"]
+
+[tool.pyright]
+include = ["app", "tests"]
+strict = ["app"]
+pythonVersion = "3.14"
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers --cov=app --cov-report=term-missing --cov-fail-under=90"
+filterwarnings = [
+  "error",
+  # Starlette now prefers httpx2 for TestClient; switching is pending a dependency review.
+  "ignore:Using `httpx` with `starlette.testclient` is deprecated:starlette.exceptions.StarletteDeprecationWarning",
+]
