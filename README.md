@@ -2,7 +2,7 @@
 
 > Perencana modal menu dan risiko harga bahan pangan untuk warung dan UMKM kuliner.
 
-**Status:** pra-implementasi. Kode belum tersedia.
+**Status:** fondasi (F0) sedang dibangun: paket bersama, web skeleton, dan core API skeleton.
 
 ## Apa itu Kawan Pasar
 

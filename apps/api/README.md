@@ -1,0 +1,53 @@
+# @kawan-pasar/api
+
+Core API Kawan Pasar: NestJS 12 di atas Fastify, gaya _modular monolith_ (docs 13 Bagian A). Saat ini berupa **skeleton**: konfigurasi, logging, header keamanan, health probe, dan entrypoint worker. Modul domain menyusul per fitur.
+
+## Menjalankan
+
+```bash
+cp .env.example .env                       # isi SERVICE_TOKEN (≥ 32 karakter)
+pnpm --filter @kawan-pasar/api build
+node --env-file=.env apps/api/dist/main.js    # http://localhost:4000/healthz
+node --env-file=.env apps/api/dist/worker.js  # worker BullMQ (belum ada antrean)
+pnpm --filter @kawan-pasar/api test           # Vitest: unit + boot via fastify.inject
+```
+
+| Env                   | Wajib | Default            | Isi                                                              |
+| --------------------- | ----- | ------------------ | ---------------------------------------------------------------- |
+| `SERVICE_TOKEN`       | ya    | —                  | Secret bersama dengan BFF, ≥ 32 karakter, dirotasi 90 hari       |
+| `PORT` · `HOST`       | tidak | `4000` · `0.0.0.0` | Alamat listen                                                    |
+| `LOG_LEVEL`           | tidak | `info`             | Level pino                                                       |
+| `TRUSTED_PROXY_CIDRS` | tidak | `10.0.0.0/8`       | Subnet proxy (Traefik) yang header `X-Forwarded-*`-nya dipercaya |
+| `NODE_ENV`            | tidak | `development`      | `development` · `test` · `production`                            |
+
+Env divalidasi zod saat boot (`src/config/env.ts`, satu-satunya tempat membaca `process.env`). Bila ada yang salah, proses berhenti dan menyebut nama key-nya tanpa menampilkan nilainya.
+
+## Perilaku yang dijamin
+
+- **Service token.** `SERVICE_TOKEN` sudah wajib dan divalidasi. Guard yang menegakkannya di setiap route menyusul di PR berikutnya.
+- **Header.** `@fastify/helmet` aktif tanpa CSP (respons JSON). CORS mati karena API hanya dipanggil oleh BFF.
+- **Batas.** Body 64 KB. `trustProxy` hanya untuk subnet di `TRUSTED_PROXY_CIDRS`, tidak pernah `true`.
+- **Log.** pino JSON lewat nestjs-pino. Header `authorization`, `cookie`, `x-service-token`, dan `set-cookie` disensor. Probe tidak dicatat.
+- **Shutdown.** `SIGTERM` menutup aplikasi dengan rapi; request baru saat penutupan mendapat 503.
+
+`/readyz` belum memeriksa dependensi. Cek DB, Valkey, dan model-svc (timeout 1 s) ditambahkan saat klien-kliennya dibuat (F0 PR 10).
+
+## TypeScript 7 dan decorator (TS-01)
+
+`tsc` di repo ini adalah TS 7 (`@typescript/native`). Dengan `experimentalDecorators` + `emitDecoratorMetadata`, TS 7 meng-emit `design:paramtypes`, dan transformer Vitest juga. Jadi DI NestJS berbasis tipe constructor berjalan di build maupun test, tanpa fallback ke TS 5.
+
+Konsekuensinya: kelas yang di-inject harus diimpor sebagai **nilai**, bukan `import type`. Kalau tidak, metadata-nya menjadi `Object`. Token non-kelas (mis. `ENV`) tetap memakai `@Inject(TOKEN)`.
+
+`fastify` dipin persis ke versi yang dipakai `@nestjs/platform-fastify`, agar hanya ada satu salinan Fastify di dependency tree.
+
+## Struktur
+
+```text
+src/
+├── main.ts            bootstrap HTTP
+├── worker.ts          entrypoint worker (image sama, CMD berbeda)
+├── app.factory.ts     susunan Fastify + Nest, dipakai main.ts dan test
+├── app.module.ts      logger, guard & filter global, modul
+├── config/            skema env (zod) + ConfigModule (token ENV)
+└── modules/health/    /healthz, /readyz
+```
