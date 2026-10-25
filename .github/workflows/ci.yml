@@ -103,7 +103,8 @@ jobs:
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: browsers for e2e (Chromium only)
         if: needs.changes.outputs.web == 'true'
-        run: pnpm --filter @kawan-pasar/web exec playwright install --with-deps chromium
+        # GitHub runners already ship the Chrome system libraries; skipping apt saves ~7 min.
+        run: pnpm --filter @kawan-pasar/web exec playwright install chromium
       - name: e2e (web, desktop + 360x740 mobile, axe)
         if: needs.changes.outputs.web == 'true'
         run: pnpm --filter @kawan-pasar/web test:e2e
