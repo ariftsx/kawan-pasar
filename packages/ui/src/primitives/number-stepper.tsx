@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Button,
   Group,
@@ -14,6 +16,8 @@ export type NumberStepperProps = Omit<NumberFieldProps, 'className' | 'children'
   readonly label: string;
   /** Shown after the value, e.g. "porsi/hari" or "g". */
   readonly unit?: string;
+  /** Wider input for formatted values such as rupiah. */
+  readonly isWide?: boolean;
   readonly className?: string;
 };
 
@@ -23,8 +27,18 @@ const STEP_BUTTON = cn(
   FOCUS_RING,
 );
 
-/** QtyInput (docs 10 §7.1): role="spinbutton" with labelled − and + buttons. */
-export function NumberStepper({ label, unit, className, ...props }: NumberStepperProps) {
+/**
+ * QtyInput (docs 10 §7.1): role="spinbutton" with labelled − and + buttons.
+ * React Aria snaps values to multiples of `step` counted from `minValue`, so pick both to keep
+ * real values valid (minValue 0 with step 5 keeps 120 at 120; minValue 1 would make it 121).
+ */
+export function NumberStepper({
+  label,
+  unit,
+  isWide = false,
+  className,
+  ...props
+}: NumberStepperProps) {
   return (
     <NumberField {...props} className={cn('flex flex-col gap-1', className)}>
       <Label className="text-sm text-text-secondary">{label}</Label>
@@ -33,7 +47,12 @@ export function NumberStepper({ label, unit, className, ...props }: NumberSteppe
           <Button slot="decrement" className={STEP_BUTTON}>
             −
           </Button>
-          <Input className="w-16 bg-transparent text-center font-mono text-base text-text-primary outline-none" />
+          <Input
+            className={cn(
+              'bg-transparent text-center font-mono text-base text-text-primary outline-none',
+              isWide ? 'w-32' : 'w-16',
+            )}
+          />
           <Button slot="increment" className={STEP_BUTTON}>
             +
           </Button>

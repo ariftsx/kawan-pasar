@@ -1,3 +1,5 @@
+'use client';
+
 import { ToggleButton, type ToggleButtonProps } from 'react-aria-components';
 
 import { cn } from '../cn.js';

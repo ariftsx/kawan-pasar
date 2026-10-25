@@ -45,6 +45,13 @@ describe('MetricCard', () => {
     expect(screen.queryByText(/Rp 0/)).toBeNull();
   });
 
+  it('renders names in the text style', () => {
+    render(
+      <MetricCard label="Bahan paling berisiko" value="Cabai merah keriting" valueKind="text" />,
+    );
+    expect(screen.getByText('Cabai merah keriting').className).not.toContain('font-mono');
+  });
+
   it('renders the brand tone and a badge', () => {
     render(<MetricCard label="Perkiraan" value="Rp 10.914" tone="brand" badge={<DemoBadge />} />);
     expect(screen.getByText('Rp 10.914').className).toContain('text-text-brand');

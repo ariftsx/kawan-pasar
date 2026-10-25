@@ -2,6 +2,13 @@ import { resolveSemanticColors } from '@kawan-pasar/tokens';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { connection } from 'next/server';
 
+import { BottomTabBar } from '@/components/shell/bottom-tab-bar';
+import { DemoBanner } from '@/components/shell/demo-banner';
+import { Providers } from '@/components/shell/providers';
+import { SiteFooter } from '@/components/shell/site-footer';
+import { SiteHeader } from '@/components/shell/site-header';
+import { publicEnv } from '@/lib/env';
+
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 
@@ -40,9 +47,26 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { readonly children: ReactNode }) {
   await connection();
+  const isDemo = publicEnv.NEXT_PUBLIC_DATA_MODE === 'demo';
   return (
     <html lang="id" className={`${inter.variable} ${jetbrains.variable}`}>
-      <body>{children}</body>
+      <body className="flex min-h-dvh flex-col">
+        <Providers>
+          <a
+            href="#konten"
+            className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-overlay focus:rounded-md focus:bg-bg-surface focus:p-2"
+          >
+            Lewati ke konten
+          </a>
+          <SiteHeader />
+          {isDemo ? <DemoBanner /> : null}
+          <main id="konten" className="mx-auto w-full max-w-content flex-1 px-4 py-6 lg:px-12">
+            {children}
+          </main>
+          <SiteFooter isDemo={isDemo} />
+          <BottomTabBar />
+        </Providers>
+      </body>
     </html>
   );
 }
