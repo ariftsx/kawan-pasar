@@ -1,3 +1,5 @@
+'use client';
+
 import { SwitchButton, SwitchField, type SwitchFieldProps } from 'react-aria-components/Switch';
 
 import { cn } from '../cn.js';

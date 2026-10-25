@@ -10,6 +10,8 @@ export type MetricCardProps = {
   readonly badge?: ReactNode;
   readonly emptyLabel?: string;
   readonly tone?: 'default' | 'brand';
+  /** `text` for names (sans, smaller); numbers stay mono and tabular. */
+  readonly valueKind?: 'number' | 'text';
   readonly className?: string;
 };
 
@@ -21,6 +23,7 @@ export function MetricCard({
   badge,
   emptyLabel = 'Belum tersedia',
   tone = 'default',
+  valueKind = 'number',
   className,
 }: MetricCardProps) {
   return (
@@ -42,7 +45,9 @@ export function MetricCard({
       ) : (
         <p
           className={cn(
-            'font-mono text-2xl font-semibold tabular-nums md:text-3xl',
+            valueKind === 'number'
+              ? 'font-mono text-2xl font-semibold tabular-nums md:text-3xl'
+              : 'text-xl font-semibold md:text-2xl',
             tone === 'brand' ? 'text-text-brand' : 'text-text-primary',
           )}
         >

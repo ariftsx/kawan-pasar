@@ -126,6 +126,7 @@ describe('optional field parts', () => {
     render(
       <>
         <NumberStepper label="Takaran" defaultValue={10} />
+        <NumberStepper label="Harga" defaultValue={15000} isWide />
         <TextField label="Harga jual" />
       </>,
     );
