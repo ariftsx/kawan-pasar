@@ -1,0 +1,52 @@
+{
+  "bundle_schema": "kp-artifact-bundle-1.0.0",
+  "bundle_id": "demo__2026-10-18",
+  "model_version": "demo",
+  "dataset_version": "demo",
+  "preprocessing_version": "demo",
+  "data_cutoff": "2026-10-18T12:00:00+07:00",
+  "generated_at": "2026-10-18T12:00:00+07:00",
+  "artifact_status": "draft",
+  "source_commit": "b97756a",
+  "commodities": [
+    "cabai-merah-keriting",
+    "bawang-merah",
+    "beras-medium-1"
+  ],
+  "horizons": [
+    1,
+    3,
+    7,
+    14,
+    30,
+    90,
+    180,
+    365
+  ],
+  "files": [
+    {
+      "path": "forecasts/cabai-merah-keriting.json",
+      "sha256": "53c4afc034a760d49d7055a9290c766be001592920cd869fee085dc9094ba484",
+      "bytes": 1506
+    },
+    {
+      "path": "forecasts/bawang-merah.json",
+      "sha256": "ccab3555c7565114b1949b0b86736658edb0a45999b385c7d15ce4adff228e48",
+      "bytes": 1499
+    },
+    {
+      "path": "forecasts/beras-medium-1.json",
+      "sha256": "7d4a46ac79a154363b4716847f4a50cbfb826149942f70d4a142cf3933dac1c3",
+      "bytes": 1479
+    },
+    {
+      "path": "context/availability.json",
+      "sha256": "c4ce5c1b9c4f1210e658e47cae9554f52edbcddcab926ecdba267d7fcce31830",
+      "bytes": 129
+    }
+  ],
+  "limitations": [
+    "DATA DEMO — bukan hasil model.",
+    "Fitur masih dalam pengembangan; perkiraan ARIF-Net tampil setelah model selesai."
+  ]
+}

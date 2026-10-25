@@ -1,0 +1,64 @@
+{
+  "run": {
+    "id": "fr_01JADEM0000000000000000002",
+    "commodity": "bawang-merah",
+    "market": "PIKJ",
+    "origin": "2026-10-18",
+    "model_version": "demo",
+    "dataset_version": "demo",
+    "preprocessing_version": "demo",
+    "data_cutoff": "2026-10-18T12:00:00+07:00",
+    "status": "generated"
+  },
+  "reference_price_idr": 38933,
+  "points": [
+    {
+      "horizon_day": 1,
+      "target_date": "2026-10-19",
+      "predicted_change": 0.0034,
+      "predicted_price_idr": 39065
+    },
+    {
+      "horizon_day": 3,
+      "target_date": "2026-10-21",
+      "predicted_change": 0.0059,
+      "predicted_price_idr": 39163
+    },
+    {
+      "horizon_day": 7,
+      "target_date": "2026-10-25",
+      "predicted_change": 0.009,
+      "predicted_price_idr": 39283
+    },
+    {
+      "horizon_day": 14,
+      "target_date": "2026-11-01",
+      "predicted_change": 0.0127,
+      "predicted_price_idr": 39427
+    },
+    {
+      "horizon_day": 30,
+      "target_date": "2026-11-17",
+      "predicted_change": 0.0186,
+      "predicted_price_idr": 39657
+    },
+    {
+      "horizon_day": 90,
+      "target_date": "2027-01-16",
+      "predicted_change": 0.0323,
+      "predicted_price_idr": 40191
+    },
+    {
+      "horizon_day": 180,
+      "target_date": "2027-04-16",
+      "predicted_change": 0.0456,
+      "predicted_price_idr": 40708
+    },
+    {
+      "horizon_day": 365,
+      "target_date": "2027-10-18",
+      "predicted_change": 0.065,
+      "predicted_price_idr": 41464
+    }
+  ]
+}

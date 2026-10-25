@@ -6,5 +6,8 @@ uv.lock
 **/coverage/
 **/.turbo/
 
+# Bundle files are checksummed in their manifest; reformatting would invalidate them.
+services/model/demo/
+
 # Token sources keep one token per line for readable diffs.
 packages/tokens/src/tokens/*.json

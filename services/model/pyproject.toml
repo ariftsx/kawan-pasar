@@ -40,7 +40,7 @@ select = ["E", "F", "W", "I", "B", "UP", "S", "ASYNC", "PL", "RUF"]
 "tests/**" = ["S101", "S105", "S106", "PLR2004"]
 
 [tool.pyright]
-include = ["app", "tests"]
+include = ["app", "scripts", "tests"]
 strict = ["app"]
 pythonVersion = "3.14"
 venvPath = "."

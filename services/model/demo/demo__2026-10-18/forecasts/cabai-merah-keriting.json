@@ -1,0 +1,64 @@
+{
+  "run": {
+    "id": "fr_01JADEM0000000000000000001",
+    "commodity": "cabai-merah-keriting",
+    "market": "PIKJ",
+    "origin": "2026-10-18",
+    "model_version": "demo",
+    "dataset_version": "demo",
+    "preprocessing_version": "demo",
+    "data_cutoff": "2026-10-18T12:00:00+07:00",
+    "status": "generated"
+  },
+  "reference_price_idr": 52400,
+  "points": [
+    {
+      "horizon_day": 1,
+      "target_date": "2026-10-19",
+      "predicted_change": 0.0106,
+      "predicted_price_idr": 52955
+    },
+    {
+      "horizon_day": 3,
+      "target_date": "2026-10-21",
+      "predicted_change": 0.0183,
+      "predicted_price_idr": 53359
+    },
+    {
+      "horizon_day": 7,
+      "target_date": "2026-10-25",
+      "predicted_change": 0.028,
+      "predicted_price_idr": 53867
+    },
+    {
+      "horizon_day": 14,
+      "target_date": "2026-11-01",
+      "predicted_change": 0.0396,
+      "predicted_price_idr": 54475
+    },
+    {
+      "horizon_day": 30,
+      "target_date": "2026-11-17",
+      "predicted_change": 0.058,
+      "predicted_price_idr": 55439
+    },
+    {
+      "horizon_day": 90,
+      "target_date": "2027-01-16",
+      "predicted_change": 0.1004,
+      "predicted_price_idr": 57661
+    },
+    {
+      "horizon_day": 180,
+      "target_date": "2027-04-16",
+      "predicted_change": 0.142,
+      "predicted_price_idr": 59841
+    },
+    {
+      "horizon_day": 365,
+      "target_date": "2027-10-18",
+      "predicted_change": 0.2022,
+      "predicted_price_idr": 62995
+    }
+  ]
+}
