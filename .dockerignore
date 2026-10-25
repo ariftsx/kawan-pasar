@@ -1,0 +1,19 @@
+# Build context hygiene: no secrets, no local installs, no build output, no local docs.
+**/node_modules
+**/.next
+**/dist
+**/coverage
+**/.turbo
+.turbo
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/.coverage
+**/.env
+**/.env.*
+!**/.env.example
+.git
+docs
+**/playwright-report
+**/test-results
