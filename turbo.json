@@ -20,6 +20,10 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "@kawan-pasar/web#build": {
+      "dependsOn": ["^build", "@kawan-pasar/web#typecheck"],
+      "outputs": [".next/**", "!.next/cache/**"]
     }
   }
 }
