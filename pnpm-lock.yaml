@@ -285,28 +285,49 @@ importers:
 
   apps/web:
     dependencies:
+      '@kawan-pasar/catalog':
+        specifier: workspace:*
+        version: link:../../packages/catalog
+      '@kawan-pasar/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@kawan-pasar/domain':
         specifier: workspace:*
         version: link:../../packages/domain
       '@kawan-pasar/tokens':
         specifier: workspace:*
         version: link:../../packages/tokens
+      '@kawan-pasar/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      idb:
+        specifier: ^8.0.4
+        version: 8.0.4
       next:
         specifier: ^16.4.2
         version: 16.4.2(@babel/core@7.29.7)(@playwright/test@1.64.1)(@types/node@24.19.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       react:
         specifier: ^19.3.1
         version: 19.3.1
+      react-aria-components:
+        specifier: ^1.22.1
+        version: 1.22.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       react-dom:
         specifier: ^19.3.1
         version: 19.3.1(react@19.3.1)
       server-only:
         specifier: ^0.0.1
         version: 0.0.1
+      ulid:
+        specifier: ^3.0.2
+        version: 3.0.2
       zod:
         specifier: ^4.6.0
         version: 4.6.7
     devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.14.0
+        version: 4.14.0(playwright-core@1.64.1)
       '@eslint-react/eslint-plugin':
         specifier: ^5.28.1
         version: 5.28.1(eslint@10.13.0(jiti@2.6.1))(typescript@6.0.3)
@@ -337,6 +358,9 @@ importers:
       eslint-plugin-react-hooks:
         specifier: ^7.1.1
         version: 7.1.1(eslint@10.13.0(jiti@2.6.1))
+      fake-indexeddb:
+        specifier: ^6.2.6
+        version: 6.2.6
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
@@ -491,6 +515,12 @@ packages:
   '@alloc/quick-lru@5.3.0':
     resolution: {integrity: sha512-U4+70Pc5ZS9osnCBCE5Jha/ciHM+Yp+CNMNC/7HvYbNRk1Ldd+f7qO65W5qfhu/TCv+/ozljlXXe9Nj8419DMA==}
     engines: {node: '>=10'}
+
+  '@axe-core/playwright@4.14.0':
+    resolution: {integrity: sha512-SGUhG5PIHd2eMdpgBF2PyQLOhX+qyDR2PT4cmoS4Qk2ak+jX/rrSvst9l0PGv5WTHolKpUMvVmoHpr4cZgf1RQ==}
+    engines: {node: '>=22.12.0'}
+    peerDependencies:
+      playwright-core: '>= 1.0.0'
 
   '@babel/code-frame@7.29.7':
     resolution: {integrity: sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==}
@@ -2038,6 +2068,10 @@ packages:
   avvio@9.3.1:
     resolution: {integrity: sha512-QyTKW61/qlba+cUQBm/sT9X8lri4UdomqSDwCnrnj1IvLVDRRiXRkz4CgBRWB+/cmfC7SK5WQc8T1vSdGvaUcQ==}
 
+  axe-core@4.14.0:
+    resolution: {integrity: sha512-9WTZxEjsZ7b13TH8JPmbV2z8CHbl80/2hm3XPEG4JgNdQLK81IBRXmSxHfMAOkSqQeRxT/0dwNDz2GOm3zzpcQ==}
+    engines: {node: '>=4'}
+
   balanced-match@4.0.4:
     resolution: {integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==}
     engines: {node: 18 || 20 || >=22}
@@ -2441,6 +2475,10 @@ packages:
     resolution: {integrity: sha512-KfYbmpRm0VbLjEvVa9yGwCi9GI34xvi7A/HXYWQO65CSD2u3MczUJSuwXKFIxlGsgBQizV9q5J9NHj4VG0n+pA==}
     engines: {node: '>=12.0.0'}
 
+  fake-indexeddb@6.2.6:
+    resolution: {integrity: sha512-ihhmr0KoET51jT8R4YhbUYuLLvr1qqO6INISygtN16i8loR8kAxtAUr4+EKHTSMjL+lggaAn4OC7DRqzrNgnuQ==}
+    engines: {node: '>=18'}
+
   fast-decode-uri-component@1.0.1:
     resolution: {integrity: sha512-WKgKWg5eUxvRZGwW8FvfbaH7AXSh2cL+3j5fMGzUMCxWBJ3dV3a7Wz8y2f/uQ0e3B6WmodD3oS54jTQ9HVTIIg==}
 
@@ -2633,6 +2671,9 @@ packages:
   hyperdyperid@1.2.0:
     resolution: {integrity: sha512-Y93lCzHYgGWdrJ66yIktxiaGULYc6oGiABxhcO5AufBeOyoIdZF7bIfLaOrbM0iGIOXQQgxxRrFEnb+Y6w1n4A==}
     engines: {node: '>=10.18'}
+
+  idb@8.0.4:
+    resolution: {integrity: sha512-jd0ITCrN+Zah4J7R/Z2jnR3W7A4BXDAjmo62MwWuSjxCiueUAf7X5rbodEdidWzeknwXHmLpdZkoiiCppNi30Q==}
 
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
@@ -3767,6 +3808,11 @@ packages:
 snapshots:
 
   '@alloc/quick-lru@5.3.0': {}
+
+  '@axe-core/playwright@4.14.0(playwright-core@1.64.1)':
+    dependencies:
+      axe-core: 4.14.0
+      playwright-core: 1.64.1
 
   '@babel/code-frame@7.29.7':
     dependencies:
@@ -5182,6 +5228,8 @@ snapshots:
       '@fastify/error': 4.2.1
       fastq: 1.20.3
 
+  axe-core@4.14.0: {}
+
   balanced-match@4.0.4: {}
 
   base64-js@1.5.1: {}
@@ -5617,6 +5665,8 @@ snapshots:
 
   expect-type@1.4.0: {}
 
+  fake-indexeddb@6.2.6: {}
+
   fast-decode-uri-component@1.0.1: {}
 
   fast-deep-equal@3.1.3: {}
@@ -5833,6 +5883,8 @@ snapshots:
   hookified@2.2.0: {}
 
   hyperdyperid@1.2.0: {}
+
+  idb@8.0.4: {}
 
   ieee754@1.2.1: {}
 

@@ -2,9 +2,27 @@
 @import '@kawan-pasar/tokens/tokens.css';
 @import '@kawan-pasar/tokens/theme.css';
 
+/* Components in packages/ui are styled with utilities, so Tailwind must scan their source. */
+@source '../../../../packages/ui/src';
+
 @theme inline {
   --font-sans: var(--font-inter), system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  /* layout/max-content (docs 10 §5) as max-w-content. */
+  --container-content: var(--kp-layout-max-content);
+}
+
+/* z-index and safe-area utilities from tokens, so components never need arbitrary values. */
+@utility z-sticky {
+  z-index: var(--kp-z-sticky);
+}
+
+@utility z-overlay {
+  z-index: var(--kp-z-overlay);
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 @layer base {
