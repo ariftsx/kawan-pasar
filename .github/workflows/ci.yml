@@ -96,7 +96,15 @@ jobs:
           LEFTHOOK: '0'
       - run: pnpm run format:check
       - run: pnpm turbo run lint typecheck test build
-      - name: smoke (web)
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: needs.changes.outputs.web == 'true'
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: browsers for e2e (Chromium only)
+        if: needs.changes.outputs.web == 'true'
+        run: pnpm --filter @kawan-pasar/web exec playwright install --with-deps chromium
+      - name: e2e (web, desktop + 360x740 mobile, axe)
         if: needs.changes.outputs.web == 'true'
         run: pnpm --filter @kawan-pasar/web test:e2e
       - name: audit production dependencies
