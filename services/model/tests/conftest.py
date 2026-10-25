@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -13,5 +15,7 @@ def settings() -> Settings:
 
 
 @pytest.fixture
-def client(settings: Settings) -> TestClient:
-    return TestClient(create_app(settings), raise_server_exceptions=False)
+def client(settings: Settings) -> Iterator[TestClient]:
+    # The context manager runs the lifespan, which loads the bundle into app.state.
+    with TestClient(create_app(settings), raise_server_exceptions=False) as test_client:
+        yield test_client
