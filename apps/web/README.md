@@ -12,12 +12,21 @@ pnpm --filter @kawan-pasar/web test       # Vitest (src/lib)
 pnpm --filter @kawan-pasar/web test:e2e   # Playwright smoke (butuh build)
 ```
 
-| Env                     | Wajib | Isi                                                                       |
-| ----------------------- | ----- | ------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_APP_URL`   | ya    | URL publik aplikasi                                                       |
-| `NEXT_PUBLIC_DATA_MODE` | ya    | `demo` atau `live`. Mode `demo` memberi label DATA DEMO pada angka contoh |
+| Env                     | Wajib       | Isi                                                                       |
+| ----------------------- | ----------- | ------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_APP_URL`   | ya          | URL publik aplikasi                                                       |
+| `NEXT_PUBLIC_DATA_MODE` | ya          | `demo` atau `live`. Mode `demo` memberi label DATA DEMO pada angka contoh |
+| `API_INTERNAL_URL`      | ya (server) | URL core API di jaringan internal, mis. `http://api:4000`                 |
+| `SERVICE_TOKEN`         | ya (server) | Secret bersama api; dibaca saat dipakai pertama kali, tidak saat build    |
 
 Env publik divalidasi zod saat boot (`src/lib/env`). Secret **tidak pernah** memakai prefiks `NEXT_PUBLIC_`.
+
+## BFF
+
+`/bff/*` adalah Route Handler yang hanya meneruskan request ke core API (docs 12 §5). Aturan bisnis tetap di `apps/api`.
+
+- `src/lib/api/client.ts` (server-only) menyertakan `X-Service-Token` dan `X-Request-Id`, dengan timeout 3 s dan satu kali retry hanya untuk GET. API yang tidak terjangkau dikembalikan sebagai envelope `503 DEPENDENCY_UNAVAILABLE`.
+- `GET /bff/outlook/[slug]?horizon=` adalah contoh rantai F0-X4.
 
 ## Keamanan
 
@@ -30,7 +39,9 @@ Env publik divalidasi zod saat boot (`src/lib/env`). Secret **tidak pernah** mem
 ```text
 src/
 ├── app/            layout, halaman, /api/healthz
-├── lib/env/        validasi env publik
+├── app/bff/        Route Handler BFF → core API
+├── lib/api/        klien server-only ke core API
+├── lib/env/        validasi env publik dan server
 ├── lib/format/     Rp 52.400 · +3,2% · 14 Okt 2026 (id-ID, minus tipografis)
 ├── lib/security/   CSP + header keamanan
 ├── proxy.ts        nonce + header per request
