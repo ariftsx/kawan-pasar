@@ -1,0 +1,153 @@
+# CI gates for every pull request and for main (docs 17 §6, docs 20 PR 11).
+# Private-repo minutes are limited (CI-01), so jobs run only for the paths a change touches,
+# and every third-party action is pinned to a full commit SHA.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PNPM_VERSION: 12.14.0
+  UV_VERSION: 0.13.3
+  # Public build-time values for apps/web (never secrets); the smoke test serves this build.
+  NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
+  NEXT_PUBLIC_DATA_MODE: demo
+
+jobs:
+  changes:
+    name: detect changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      node: ${{ steps.filter.outputs.node }}
+      web: ${{ steps.filter.outputs.web }}
+      python: ${{ steps.filter.outputs.python }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: filter
+        name: classify changed paths
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          # A new branch or a force push has no usable base: check everything.
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            files="ALL"
+          else
+            files="$(git diff --name-only "$BASE" HEAD)"
+          fi
+          has() { [ "$files" = "ALL" ] || printf '%s\n' "$files" | grep -Eq "$1"; }
+          shared='^(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|turbo\.json|\.nvmrc|\.github/)'
+          has "^(apps|packages)/|$shared" && echo "node=true" >> "$GITHUB_OUTPUT" || echo "node=false" >> "$GITHUB_OUTPUT"
+          has "^(apps/web|packages)/|$shared" && echo "web=true" >> "$GITHUB_OUTPUT" || echo "web=false" >> "$GITHUB_OUTPUT"
+          has '^(services/|\.github/)' && echo "python=true" >> "$GITHUB_OUTPUT" || echo "python=false" >> "$GITHUB_OUTPUT"
+
+  secrets:
+    name: gitleaks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: scan the full history
+        run: >-
+          docker run --rm -v "$PWD:/repo"
+          ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f
+          git /repo --no-banner --redact --exit-code 1
+
+  node:
+    name: node (lint, typecheck, test, build, audit)
+    needs: changes
+    if: needs.changes.outputs.node == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      # Corepack in Node 24.11 cannot run pnpm 12; install the pinned version directly.
+      - run: npm install --global --no-fund --no-audit "pnpm@$PNPM_VERSION"
+      - id: store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.store.outputs.path }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
+      # Install scripts stay blocked except the allowBuilds list; lefthook is not needed in CI.
+      - run: pnpm install --frozen-lockfile
+        env:
+          LEFTHOOK: '0'
+      - run: pnpm run format:check
+      - run: pnpm turbo run lint typecheck test build
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: needs.changes.outputs.web == 'true'
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: browsers for e2e (Chromium only)
+        if: needs.changes.outputs.web == 'true'
+        run: pnpm --filter @kawan-pasar/web exec playwright install --with-deps chromium
+      - name: e2e (web, desktop + 360x740 mobile, axe)
+        if: needs.changes.outputs.web == 'true'
+        run: pnpm --filter @kawan-pasar/web test:e2e
+      - name: audit production dependencies
+        run: pnpm audit --prod --audit-level high
+
+  python:
+    name: python (${{ matrix.service }})
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [model, ingest]
+    defaults:
+      run:
+        working-directory: services/${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: present
+        working-directory: .
+        run: |
+          if [ -f "services/${{ matrix.service }}/pyproject.toml" ]; then echo "yes=true" >> "$GITHUB_OUTPUT"; else echo "yes=false" >> "$GITHUB_OUTPUT"; fi
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        if: steps.present.outputs.yes == 'true'
+        with:
+          version: ${{ env.UV_VERSION }}
+          working-directory: services/${{ matrix.service }}
+          enable-cache: true
+          cache-dependency-glob: services/${{ matrix.service }}/uv.lock
+      - if: steps.present.outputs.yes == 'true'
+        run: uv sync --frozen
+      - if: steps.present.outputs.yes == 'true'
+        run: uv run ruff format --check . && uv run ruff check .
+      - if: steps.present.outputs.yes == 'true'
+        run: uv run pyright
+      - if: steps.present.outputs.yes == 'true'
+        run: uv run pytest
+      - name: audit runtime dependencies
+        if: steps.present.outputs.yes == 'true'
+        run: |
+          uv export --frozen --no-dev --no-hashes --no-emit-project > "$RUNNER_TEMP/requirements.txt"
+          uv run pip-audit --strict -r "$RUNNER_TEMP/requirements.txt"

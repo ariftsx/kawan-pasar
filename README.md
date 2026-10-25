@@ -39,6 +39,8 @@ pnpm install        # memasang dependensi dan git hooks (lefthook)
 pnpm run check      # lint, typecheck, dan test di semua paket (Turborepo)
 ```
 
+CI (GitHub Actions, `.github/workflows/ci.yml`) menjalankan gitleaks, lint/typecheck/test/build Node, smoke web, `pnpm audit`, serta ruff/pyright/pytest/pip-audit untuk `services/*`. Setiap job hanya berjalan bila path terkait berubah, dan semua action dipin ke SHA. Pembaruan dependensi diatur Renovate (`.github/renovate.json5`, cooldown 3 hari); aplikasi Renovate perlu dipasang di repo.
+
 Commit memakai format [Conventional Commits](https://www.conventionalcommits.org/), diperiksa oleh commitlint. Dependensi hanya dipasang bila versinya sudah terbit ≥ 3 hari (`minimumReleaseAge`).
 
 ## Lisensi
