@@ -1,6 +1,10 @@
 import { Module, type DynamicModule } from '@nestjs/common';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 
+import { AllExceptionsFilter } from './common/all-exceptions.filter.js';
+import { resolveRequestId } from './common/request-id.js';
+import { SERVICE_TOKEN_HEADER, ServiceTokenGuard } from './common/service-token.guard.js';
 import { ConfigModule } from './config/config.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 
@@ -10,7 +14,7 @@ import type { Env } from './config/env.js';
 const REDACT = [
   'req.headers.authorization',
   'req.headers.cookie',
-  'req.headers["x-service-token"]',
+  `req.headers["${SERVICE_TOKEN_HEADER}"]`,
   'res.headers["set-cookie"]',
 ];
 
@@ -27,11 +31,17 @@ export class AppModule {
         LoggerModule.forRoot({
           pinoHttp: {
             level: env.LOG_LEVEL,
+            genReqId: (request) => resolveRequestId(request),
+            customAttributeKeys: { reqId: 'request_id' },
             redact: { paths: REDACT, censor: '[redacted]' },
             autoLogging: { ignore: (request) => PROBE_PATHS.has(String(request.url)) },
           },
         }),
         HealthModule,
+      ],
+      providers: [
+        { provide: APP_GUARD, useClass: ServiceTokenGuard },
+        { provide: APP_FILTER, useClass: AllExceptionsFilter },
       ],
     };
   }
