@@ -28,9 +28,9 @@ function ForecastCell({
   readonly hasPrice: boolean;
   readonly predictedChange: number | null;
 }) {
-  if (!hasPrice) return <span className="text-xs text-text-muted">—</span>;
+  if (!hasPrice) return <span className="text-sm text-text-secondary">—</span>;
   if (predictedChange === null) {
-    return <span className="text-xs text-text-muted">tanpa perkiraan</span>;
+    return <span className="text-sm text-text-secondary">tanpa perkiraan</span>;
   }
   return <MovementBadge change={predictedChange} label={formatChange(predictedChange)} />;
 }
@@ -58,12 +58,12 @@ export function IngredientRow({
       <th scope="row" className="py-3 pr-3 text-left font-medium text-text-primary">
         {ingredient?.name ?? item.ingredient}
         {ingredient?.commodity == null ? null : <span className="text-text-brand"> ★</span>}
-        <span className="block text-xs font-normal text-text-muted">
+        <span className="block text-sm font-normal text-text-secondary">
           {item.qty} {item.unit}
           {unitPrice}
         </span>
       </th>
-      <td className="py-3 pr-3 text-right font-mono">
+      <td className="py-3 pr-3 text-right tabular-nums">
         <CostCell line={line} />
       </td>
       <td className="py-3 text-right">

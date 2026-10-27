@@ -3,6 +3,7 @@
 import { DemoBadge, MovementBadge } from '@kawan-pasar/ui';
 import { Link } from 'react-aria-components';
 
+import { Icon } from '@/components/icons';
 import { formatChange } from '@/lib/format';
 import { menuView } from '@/lib/planning/view';
 
@@ -23,7 +24,7 @@ export type MenuCostCardProps = {
 function Figure({ label, children }: { readonly label: string; readonly children: ReactNode }) {
   return (
     <div>
-      <dt className="text-xs text-text-secondary">{label}</dt>
+      <dt className="text-sm text-text-secondary">{label}</dt>
       <dd className="flex flex-wrap items-center gap-2">{children}</dd>
     </div>
   );
@@ -40,20 +41,20 @@ export function MenuCostCard({
 }: MenuCostCardProps) {
   const view = menuView(cost, hasOutlook);
   return (
-    <article className="flex flex-col gap-3 rounded-lg border border-border-default bg-bg-surface p-4">
+    <article className="flex flex-col gap-3 rounded-xl border border-border-default bg-bg-surface p-4">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h3 className="font-semibold text-text-primary">{name}</h3>
-          <p className="text-xs text-text-muted">{portionsPerDay} porsi/hari</p>
+          <h3 className="text-xl font-bold text-text-primary">{name}</h3>
+          <p className="text-base text-text-secondary">{portionsPerDay} porsi sehari</p>
         </div>
         {isDemo ? <DemoBadge /> : null}
       </div>
       <dl className="grid grid-cols-2 gap-3">
         <Figure label="Modal per porsi hari ini">
-          <span className="font-mono text-xl font-semibold">{view.todayPerPortion ?? '—'}</span>
+          <span className="text-2xl font-bold tabular-nums">{view.todayPerPortion ?? '—'}</span>
         </Figure>
         <Figure label="Perkiraan 7 hari">
-          <span className="font-mono text-xl font-semibold text-text-brand">
+          <span className="text-2xl font-bold text-text-brand tabular-nums">
             {view.outlookPerPortion ?? '—'}
           </span>
           {view.deltaRatio === null ? null : (
@@ -68,17 +69,18 @@ export function MenuCostCard({
           missing={cost.coverage.missingIngredients}
         />
       )}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-default pt-3 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-default pt-3 text-base">
         <span className="text-text-secondary">
           {view.riskName === null
             ? 'Belum ada bahan berharga'
-            : `${view.riskName} = ${String(view.riskShare)} modal porsi`}
+            : `${view.riskName}: ${String(view.riskShare)} dari modal porsi`}
         </span>
         <Link
           href={`/rencana/${id}`}
-          className="rounded-md px-2 py-1 font-medium text-text-brand outline-none data-[focus-visible]:outline-2 data-[focus-visible]:outline-border-focus data-[hovered]:underline"
+          className="inline-flex min-h-11 items-center gap-1 rounded-md px-2 font-semibold text-text-brand outline-none data-[focus-visible]:outline-2 data-[focus-visible]:outline-border-focus data-[hovered]:underline"
         >
-          Rincian →
+          Lihat rincian<span className="sr-only"> {name}</span>
+          <Icon name="chevron-right" className="size-5" />
         </Link>
       </div>
     </article>

@@ -4,15 +4,9 @@ import { cn } from '@kawan-pasar/ui';
 import { usePathname } from 'next/navigation';
 import { Link } from 'react-aria-components';
 
-import { MOBILE_TABS, isActive } from './nav-items';
+import { Icon } from '@/components/icons';
 
-const ICON: ReadonlyMap<string, string> = new Map([
-  ['/', '⌂'],
-  ['/pantau', '◔'],
-  ['/rencana', '☰'],
-  ['/outlook', '★'],
-  ['/lainnya', '⋯'],
-]);
+import { MOBILE_TABS, isActive } from './nav-items';
 
 /** Mobile navigation (docs 10 §7.5): five tabs, sticky, above the safe-area inset. */
 export function BottomTabBar() {
@@ -31,13 +25,19 @@ export function BottomTabBar() {
                 href={tab.href}
                 {...(active ? { 'aria-current': 'page' as const } : {})}
                 className={cn(
-                  'flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs outline-none',
+                  'group flex min-h-16 flex-col items-center justify-center gap-1 text-xs outline-none',
                   'data-[focus-visible]:outline-2 data-[focus-visible]:-outline-offset-2 data-[focus-visible]:outline-border-focus',
-                  active ? 'font-semibold text-text-brand' : 'text-text-secondary',
+                  active ? 'font-bold text-text-brand' : 'text-text-secondary',
                 )}
               >
-                <span aria-hidden="true" className="text-lg leading-none">
-                  {ICON.get(tab.href)}
+                {/* The pill behind the active icon shows "you are here" without relying on colour. */}
+                <span
+                  className={cn(
+                    'flex h-8 w-14 items-center justify-center rounded-full',
+                    active ? 'bg-bg-brand-subtle' : 'group-data-[hovered]:bg-bg-subtle',
+                  )}
+                >
+                  <Icon name={tab.icon} />
                 </span>
                 {tab.short}
               </Link>

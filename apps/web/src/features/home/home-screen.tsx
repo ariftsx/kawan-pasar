@@ -5,6 +5,7 @@
 import { ButtonLink, DemoBadge, MetricCard, MovementBadge } from '@kawan-pasar/ui';
 import { useState } from 'react';
 
+import { Bakul } from '@/components/mascot/bakul';
 import { ForecastTrustCard } from '@/features/outlook/forecast-trust-card';
 import { CoverageNote } from '@/features/planning/components/coverage-note';
 import { MenuCostCard } from '@/features/planning/components/menu-cost-card';
@@ -80,7 +81,7 @@ function HomeMetrics({ plan }: { readonly plan: ReturnType<typeof usePlan> }) {
         caption={
           top === undefined
             ? ''
-            : `${ingredientName(top.ingredientId)} = ${percentOf(top.shareRatio)} modal harian`
+            : `${ingredientName(top.ingredientId)}: ${percentOf(top.shareRatio)} dari modal harian`
         }
       />
     </section>
@@ -91,10 +92,10 @@ function MenuGrid({ plan }: { readonly plan: ReturnType<typeof usePlan> }) {
   return (
     <section aria-labelledby="menus-title" className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id="menus-title" className="text-lg font-semibold">
+        <h2 id="menus-title" className="text-2xl font-bold">
           Menu Anda
         </h2>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <ButtonLink href="/rencana" variant="secondary" size="sm">
             Rencana Menu
           </ButtonLink>
@@ -129,12 +130,16 @@ export function HomeScreen({ publicHome }: { readonly publicHome: ReactNode }) {
   }
   return (
     <div className="flex flex-col gap-6">
-      <header>
-        <p className="text-xs text-text-muted">{today} · harga Pasar Kramatjati</p>
-        <h1 className="text-2xl font-semibold">Ringkasan dapur hari ini</h1>
-        <p className="text-sm text-text-secondary">
-          {summary.menuCount} menu · {summary.portionsPerDay} porsi/hari
-        </p>
+      <header className="flex items-end justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <p className="text-base text-text-secondary">{today}</p>
+          <h1 className="text-3xl font-bold">Ringkasan dapur hari ini</h1>
+          <p className="text-lg text-text-secondary">
+            {summary.menuCount} menu, {summary.portionsPerDay} porsi sehari. Harga dari Pasar
+            Kramatjati.
+          </p>
+        </div>
+        <Bakul pose="happy" className="hidden w-28 shrink-0 md:block" />
       </header>
       <HomeMetrics plan={plan} />
       <CoverageNote
@@ -144,7 +149,7 @@ export function HomeScreen({ publicHome }: { readonly publicHome: ReactNode }) {
       />
       <MenuGrid plan={plan} />
       <ForecastTrustCard outlook={plan.outlook} />
-      <p className="text-xs text-text-muted">
+      <p className="text-sm text-text-secondary">
         Data tersimpan di HP ini. Konteks iklim, berita, dan logistik akan tersedia di halaman
         Konteks.
       </p>

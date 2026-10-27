@@ -9,7 +9,7 @@ export default function OutlookPage() {
     <ComingSoon
       title="Outlook Harga ★"
       phase="F4"
-      description="Grafik perkiraan per horizon dan dampaknya ke menu Anda. Sementara itu, perkiraan 7 hari (DATA DEMO) sudah dipakai di Rencana Menu."
+      description="Grafik perkiraan harga dan pengaruhnya ke modal menu Anda. Sementara itu, perkiraan 7 hari (DATA DEMO) sudah dipakai di Rencana Menu."
     />
   );
 }

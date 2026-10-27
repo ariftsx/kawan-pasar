@@ -1,5 +1,7 @@
 import { calculateMenuCost, type RecipeLine } from '@kawan-pasar/domain';
+import { DemoBadge, MovementBadge } from '@kawan-pasar/ui';
 
+import { Spot } from '@/components/illustrations';
 import { formatChange, formatMarketDate, formatRupiah } from '@/lib/format';
 
 // DATA DEMO card from the interview stimulus (docs 05 §4): Rp 10.850 → Rp 10.914.
@@ -40,31 +42,40 @@ export function DemoCostCard() {
   return (
     <section
       aria-labelledby="demo-cost-title"
-      className="bg-bg-surface border-border-default rounded-lg border p-6 shadow-1"
+      className="flex flex-col gap-4 rounded-xl border-2 border-border-default bg-bg-surface p-5 md:flex-row md:items-center md:gap-8 md:p-6"
     >
-      <div className="flex items-center justify-between gap-4">
-        <h2 id="demo-cost-title" className="text-lg font-semibold">
-          Ayam Geprek + Nasi
-        </h2>
-        <span className="bg-demo-bg text-demo-fg rounded-sm px-2 py-0.5 text-xs font-semibold">
-          DATA DEMO
-        </span>
+      <Spot name="piring" className="w-28 self-center md:w-40" />
+      <div className="flex flex-1 flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 id="demo-cost-title" className="text-xl font-bold">
+            Ayam Geprek + Nasi
+          </h3>
+          <DemoBadge />
+        </div>
+        <dl className="grid gap-4 md:grid-cols-2">
+          <div className="flex flex-col gap-1">
+            <dt className="text-base text-text-secondary">Modal satu porsi hari ini</dt>
+            <dd className="text-3xl font-bold tabular-nums">
+              {formatRupiah(cost.perPortionTodayIdr)}
+            </dd>
+          </div>
+          <div className="flex flex-col gap-1">
+            <dt className="text-base text-text-secondary">Perkiraan 7 hari lagi</dt>
+            <dd className="flex flex-wrap items-center gap-2">
+              <span className="text-3xl font-bold text-text-brand tabular-nums">
+                {formatRupiah(cost.perPortionOutlookIdr)}
+              </span>
+              {cost.deltaRatio === null ? null : (
+                <MovementBadge change={cost.deltaRatio} label={formatChange(cost.deltaRatio)} />
+              )}
+            </dd>
+          </div>
+        </dl>
+        <p className="text-sm text-text-secondary">
+          Contoh, bukan harga sungguhan. Harga per {formatMarketDate('2026-10-14')}, 100 porsi
+          sehari. Perkiraan masih dalam pengembangan.
+        </p>
       </div>
-      <dl className="mt-4 grid grid-cols-2 gap-4 font-mono">
-        <div>
-          <dt className="text-text-muted font-sans text-xs">Modal per porsi hari ini</dt>
-          <dd className="text-2xl">{formatRupiah(cost.perPortionTodayIdr)}</dd>
-        </div>
-        <div>
-          <dt className="text-text-muted font-sans text-xs">Perkiraan 7 hari lagi</dt>
-          <dd className="text-text-brand text-2xl">{formatRupiah(cost.perPortionOutlookIdr)}</dd>
-          <dd className="text-status-up-fg text-sm">{formatChange(cost.deltaRatio)}</dd>
-        </div>
-      </dl>
-      <p className="text-text-muted mt-4 text-xs">
-        Contoh fiktif per {formatMarketDate('2026-10-14')} · 100 porsi/hari · perkiraan masih dalam
-        pengembangan.
-      </p>
     </section>
   );
 }

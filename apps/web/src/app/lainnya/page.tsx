@@ -1,6 +1,8 @@
 import { Card } from '@kawan-pasar/ui';
 import Link from 'next/link';
 
+import { Icon } from '@/components/icons';
+
 import type { Metadata, Route } from 'next';
 
 export const metadata: Metadata = { title: 'Lainnya' };
@@ -15,17 +17,20 @@ const LINKS: readonly { href: Route; label: string; note: string }[] = [
 export default function LainnyaPage() {
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">Lainnya</h1>
+      <h1 className="text-3xl font-bold">Lainnya</h1>
       <Card>
         <ul className="flex flex-col divide-y divide-border-default">
           {LINKS.map((link) => (
             <li key={link.href}>
               <Link
                 href={link.href}
-                className="flex min-h-14 flex-col justify-center rounded-md px-2 focus-visible:outline-2 focus-visible:outline-border-focus"
+                className="flex min-h-16 items-center justify-between gap-3 rounded-md px-2 focus-visible:outline-2 focus-visible:outline-border-focus"
               >
-                <span className="font-medium text-text-primary">{link.label}</span>
-                <span className="text-xs text-text-muted">{link.note}</span>
+                <span className="flex flex-col">
+                  <span className="text-lg font-semibold text-text-primary">{link.label}</span>
+                  <span className="text-base text-text-secondary">{link.note}</span>
+                </span>
+                <Icon name="chevron-right" className="text-text-secondary" />
               </Link>
             </li>
           ))}

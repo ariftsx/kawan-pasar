@@ -56,7 +56,8 @@ NEXT_PUBLIC_DATA_MODE (demo | live) ───────┘
 src/
 ├── app/            route: /, /atur-warung, /rencana, /rencana/[menuId], halaman F2–F5, /api/healthz
 ├── app/bff/        Route Handler BFF → core API
-├── components/     shell (header, tab bar bawah, footer, banner DATA DEMO), coming-soon
+├── components/     shell (header, tab bar bawah, footer, banner DATA DEMO), coming-soon,
+│                   mascot (Si Bakul), icons, illustrations (gambar 3 langkah)
 ├── features/       home · onboarding · planning (layar + komponen domain) · outlook
 ├── lib/api/        klien server-only ke core API
 ├── lib/guest-store/ IndexedDB mode tamu
@@ -68,3 +69,19 @@ src/
 └── styles/         Tailwind v4 + token (@kawan-pasar/tokens)
 e2e/                smoke (header, CSP nonce) + golden path desktop & HP 360×740 dengan axe
 ```
+
+## Tampilan dan maskot
+
+Pengguna utama banyak yang berusia lanjut, jadi tampilannya dibuat sederhana: huruf Atkinson Hyperlegible, teks utama 18 px, tombol 48–56 px, dan ikon bergambar dengan label di menu bawah.
+
+**Si Bakul** (`src/components/mascot`) adalah bakul nasi anyaman bambu yang membawa beras, cabai merah keriting, dan bawang merah, yaitu tiga bahan yang dipantau. Ia digambar sebagai SVG inline dengan warna dari token `illustration.*`, tanpa file gambar dan tanpa hex.
+
+| Pose    | Dipakai di                            |
+| ------- | ------------------------------------- |
+| `wave`  | Beranda publik (menyapa)              |
+| `point` | Langkah 1–2 Atur Warung               |
+| `happy` | Langkah terakhir Atur Warung, Beranda |
+| `think` | Halaman "segera hadir" dan 404        |
+| `rest`  | Logo (`variant="mark"`)               |
+
+Kalimat Si Bakul singkat dan menjelaskan langkah, tidak pernah menyarankan membeli, menjual, atau mengubah menu. Animasinya (berkedip, melambai tiga kali, gelembung muncul) hanya berjalan lewat `motion-safe:`, sehingga berhenti bila perangkat diatur "kurangi gerakan". Test e2e memeriksa hal ini.

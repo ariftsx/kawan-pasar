@@ -100,7 +100,7 @@ export function RecipeEditor({
 }) {
   return (
     <Card aria-labelledby="editor-title" className="flex flex-col gap-4">
-      <h2 id="editor-title" className="text-lg font-semibold">
+      <h2 id="editor-title" className="text-xl font-bold">
         Ubah resep per porsi
       </h2>
       <ul className="flex flex-col gap-3">

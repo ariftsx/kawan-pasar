@@ -42,7 +42,7 @@ export function CostShareBar({ shares }: { readonly shares: readonly Share[] }) 
               {getIngredient(row.ingredientId)?.name ?? row.ingredientId}
               {row.isModel ? <span className="text-text-brand"> ★</span> : null}
             </span>
-            <span className="font-mono text-text-secondary">
+            <span className="tabular-nums text-text-secondary">
               {String(Math.round(row.shareRatio * 100))}% · {formatRupiah(row.perDayIdr)}
             </span>
           </li>

@@ -9,7 +9,7 @@ export default function KonteksPage() {
     <ComingSoon
       title="Konteks"
       phase="F5"
-      description="Informasi iklim, berita, dan logistik yang tersedia saat data perkiraan dipotong. Informasi ini bukan penyebab pergerakan harga."
+      description="Kabar cuaca, berita, dan pengiriman barang di sekitar tanggal perkiraan dibuat. Informasi ini bukan penyebab naik turunnya harga."
     />
   );
 }

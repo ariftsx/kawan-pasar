@@ -49,9 +49,9 @@ function RencanaHeader({
   return (
     <header className="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-semibold">Rencana Menu</h1>
-        <p className="text-sm text-text-secondary">
-          {menuCount} menu · {portionsPerDay} porsi/hari · horizon 7 hari · Pasar Kramatjati
+        <h1 className="text-3xl font-bold">Rencana Menu</h1>
+        <p className="text-lg text-text-secondary">
+          {menuCount} menu, {portionsPerDay} porsi sehari. Harga dari Pasar Kramatjati.
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -92,7 +92,7 @@ export function RencanaScreen() {
       />
 
       <Card aria-labelledby="share-title" className="flex flex-col gap-4">
-        <h2 id="share-title" className="text-lg font-semibold">
+        <h2 id="share-title" className="text-xl font-bold">
           Asal modal per hari
         </h2>
         {summary.shares.length === 0 ? (
@@ -100,11 +100,11 @@ export function RencanaScreen() {
         ) : (
           <CostShareBar shares={summary.shares} />
         )}
-        <p className="text-xs text-text-muted">★ = bahan yang punya perkiraan harga.</p>
+        <p className="text-sm text-text-secondary">★ = bahan yang punya perkiraan harga.</p>
       </Card>
 
       <Card aria-labelledby="menu-title" className="flex flex-col gap-4">
-        <h2 id="menu-title" className="text-lg font-semibold">
+        <h2 id="menu-title" className="text-xl font-bold">
           Menu Anda
         </h2>
         <MenuTable menus={costed} hasOutlook={hasOutlook} />

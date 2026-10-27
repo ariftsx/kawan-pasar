@@ -10,7 +10,7 @@ export function StepType({ flow }: { readonly flow: Onboarding }) {
   const description = types.find((type) => type.slug === flow.warungType)?.description;
   return (
     <Card aria-labelledby="step-type" className="flex flex-col gap-4">
-      <h2 id="step-type" className="text-lg font-semibold">
+      <h2 id="step-type" className="text-xl font-bold">
         Warung Anda jenis apa?
       </h2>
       <div className="flex flex-wrap gap-2">
@@ -27,14 +27,15 @@ export function StepType({ flow }: { readonly flow: Onboarding }) {
         ))}
       </div>
       {description === undefined ? null : (
-        <p className="text-sm text-text-secondary">{description}</p>
+        <p className="text-base text-text-secondary">{description}</p>
       )}
       <Button
+        size="lg"
         isDisabled={flow.warungType === null}
         onPress={() => {
           flow.setStep(1);
         }}
-        className="self-end"
+        className="md:self-end"
       >
         Lanjut
       </Button>
@@ -52,7 +53,7 @@ function TemplateRow({
   readonly onChange: (change: Partial<Choice>) => void;
 }) {
   return (
-    <li className="flex flex-wrap items-end justify-between gap-3 rounded-md border border-border-default p-3">
+    <li className="flex flex-wrap items-end justify-between gap-3 rounded-lg border-2 border-border-default p-4">
       <Chip
         isSelected={choice.selected}
         onChange={(selected) => {
@@ -62,7 +63,7 @@ function TemplateRow({
         {template.name}
       </Chip>
       <NumberStepper
-        label={`Porsi per hari · ${template.name}`}
+        label={`Porsi per hari untuk ${template.name}`}
         unit="porsi/hari"
         minValue={5}
         maxValue={1000}
@@ -80,12 +81,9 @@ function TemplateRow({
 export function StepMenus({ flow }: { readonly flow: Onboarding }) {
   return (
     <Card aria-labelledby="step-menu" className="flex flex-col gap-4">
-      <h2 id="step-menu" className="text-lg font-semibold">
+      <h2 id="step-menu" className="text-xl font-bold">
         Pilih menu dan porsi per hari
       </h2>
-      <Callout tone="info" title="Bahan otomatis dipantau">
-        Takaran per porsi adalah contoh. Anda bisa mengubahnya nanti di Rincian Menu.
-      </Callout>
       <ul className="flex flex-col gap-3">
         {flow.templates.map((template) => (
           <TemplateRow
@@ -105,7 +103,7 @@ export function StepMenus({ flow }: { readonly flow: Onboarding }) {
         onChange={flow.setCustomName}
         maxLength={60}
       />
-      <div className="flex justify-between gap-2">
+      <div className="flex flex-col-reverse gap-3 md:flex-row md:justify-between">
         <Button
           variant="secondary"
           onPress={() => {
@@ -115,6 +113,7 @@ export function StepMenus({ flow }: { readonly flow: Onboarding }) {
           Kembali
         </Button>
         <Button
+          size="lg"
           isDisabled={flow.selectedCount === 0}
           onPress={() => {
             flow.setStep(2);
@@ -130,10 +129,10 @@ export function StepMenus({ flow }: { readonly flow: Onboarding }) {
 export function StepAlerts({ flow }: { readonly flow: Onboarding }) {
   return (
     <Card aria-labelledby="step-alert" className="flex flex-col gap-4">
-      <h2 id="step-alert" className="text-lg font-semibold">
+      <h2 id="step-alert" className="text-xl font-bold">
         Peringatan harga
       </h2>
-      <p className="text-sm text-text-secondary">
+      <p className="text-base text-text-secondary">
         Peringatan saat harga bergerak di luar kebiasaan akan tersedia setelah fitur akun dan
         notifikasi selesai. Anda bisa melewati langkah ini.
       </p>
@@ -142,11 +141,11 @@ export function StepAlerts({ flow }: { readonly flow: Onboarding }) {
         dari Rencana Menu.
       </Callout>
       {flow.existingMenus > 0 ? (
-        <p className="text-sm text-text-secondary">
+        <p className="text-base text-text-secondary">
           Anda sudah punya {flow.existingMenus} menu. Menu baru akan ditambahkan.
         </p>
       ) : null}
-      <div className="flex justify-between gap-2">
+      <div className="flex flex-col-reverse gap-3 md:flex-row md:justify-between">
         <Button
           variant="secondary"
           onPress={() => {
@@ -155,7 +154,7 @@ export function StepAlerts({ flow }: { readonly flow: Onboarding }) {
         >
           Kembali
         </Button>
-        <Button isPending={flow.isSaving} onPress={() => void flow.finish()}>
+        <Button size="lg" isPending={flow.isSaving} onPress={() => void flow.finish()}>
           Lewati & lihat modal
         </Button>
       </div>

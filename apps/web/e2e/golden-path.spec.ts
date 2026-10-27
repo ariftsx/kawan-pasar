@@ -25,9 +25,20 @@ async function setUpGeprek(page: Page) {
 
 test('public home is accessible and shows the labelled sample', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Modal menu Anda');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('modal satu porsi');
   await expect(page.getByText('DATA DEMO').first()).toBeVisible();
   await expectAccessible(page);
+});
+
+test('Si Bakul waves on the public home but stays still for reduced motion', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByText('Saya bantu hitung modal bahan')).toBeVisible();
+  const wave = page.locator('.motion-safe\\:animate-bakul-wave');
+  await expect(wave).toHaveCount(1);
+  expect(await wave.evaluate((node) => getComputedStyle(node).animationName)).toBe('bakul-wave');
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  expect(await wave.evaluate((node) => getComputedStyle(node).animationName)).toBe('none');
 });
 
 test('empty device → Atur Warung → personal Beranda in under 60 s (F1-X1, UX-01)', async ({
@@ -101,6 +112,7 @@ test('guest data can be exported as JSON (ONB-03)', async ({ page }) => {
 
 test('routes for later phases explain themselves instead of a 404', async ({ page }) => {
   await page.goto('/pantau');
-  await expect(page.getByText('Segera hadir · F2')).toBeVisible();
+  await expect(page.getByText('Segera hadir', { exact: true })).toBeVisible();
+  await expect(page.getByText('Dikerjakan pada tahap F2.')).toBeVisible();
   await expectAccessible(page);
 });
