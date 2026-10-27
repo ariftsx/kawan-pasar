@@ -14,8 +14,6 @@ export type BakulProps = {
   readonly title?: string;
   /** Blinks and waves, only when the device does not ask for reduced motion. */
   readonly isAnimated?: boolean;
-  /** `mark` drops arms, feet, and shadow for the logo. */
-  readonly variant?: 'full' | 'mark';
   readonly className?: string;
 };
 
@@ -253,28 +251,19 @@ function Limbs({ pose, isAnimated }: { pose: BakulPose; isAnimated: boolean }) {
 }
 
 /** The mascot as inline SVG; it scales with its box (set a width with `className`). */
-export function Bakul({
-  pose = 'rest',
-  title,
-  isAnimated = false,
-  variant = 'full',
-  className,
-}: BakulProps) {
-  const isMark = variant === 'mark';
+export function Bakul({ pose = 'rest', title, isAnimated = false, className }: BakulProps) {
   return (
     <svg
-      viewBox={isMark ? '26 4 188 232' : '0 0 240 250'}
+      viewBox="0 0 240 250"
       className={cn('h-auto', className)}
       {...(title === undefined ? { 'aria-hidden': true } : { role: 'img', 'aria-label': title })}
     >
-      {isMark ? null : (
-        <ellipse cx="120" cy="238" rx="66" ry="7" className="fill-illustration-ink/10" />
-      )}
-      {isMark ? null : <Limbs pose={pose} isAnimated={isAnimated} />}
+      <ellipse cx="120" cy="238" rx="66" ry="7" className="fill-illustration-ink/10" />
+      <Limbs pose={pose} isAnimated={isAnimated} />
       <Contents />
       <Body />
       <Face pose={pose} isAnimated={isAnimated} />
-      {!isMark && pose === 'think' ? RIGHT.get('think') : null}
+      {pose === 'think' ? RIGHT.get('think') : null}
     </svg>
   );
 }
