@@ -27,12 +27,14 @@ test('public home is accessible and shows the labelled sample', async ({ page })
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('modal satu porsi');
   await expect(page.getByText('DATA DEMO').first()).toBeVisible();
+  // Older users should not have to scroll to find the one main action.
+  await expect(page.getByRole('link', { name: 'Mulai atur warung' })).toBeInViewport();
   await expectAccessible(page);
 });
 
 test('Si Bakul waves on the public home but stays still for reduced motion', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByText('Saya bantu hitung modal bahan')).toBeVisible();
+  await expect(page.getByText('Saya bantu hitung modal warung Anda.')).toBeVisible();
   const wave = page.locator('.motion-safe\\:animate-bakul-wave');
   await expect(wave).toHaveCount(1);
   expect(await wave.evaluate((node) => getComputedStyle(node).animationName)).toBe('bakul-wave');

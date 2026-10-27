@@ -16,17 +16,16 @@ const STEPS: readonly { art: SpotName; title: string; body: string }[] = [
 
 function Hero() {
   return (
-    <section className="grid items-center gap-6 md:grid-cols-2 md:gap-12">
+    <section className="grid items-center gap-5 md:grid-cols-2 md:gap-12">
       <BakulSays pose="wave" size="lg" isAnimated className="md:order-last">
-        Halo, saya <strong>Si Bakul</strong>. Saya bantu hitung modal bahan di warung Anda.
+        Halo, saya <strong>Si Bakul</strong>! Saya bantu hitung modal warung Anda.
       </BakulSays>
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4 md:gap-5">
         <h1 className="text-3xl font-bold md:text-4xl">
           Berapa modal satu porsi menu Anda hari ini?
         </h1>
         <p className="max-w-prose text-lg text-text-secondary">
-          Pilih menu yang Anda jual, lalu Kawan Pasar menghitung harga bahannya. Gratis, tanpa
-          daftar akun, dan datanya tetap di HP Anda.
+          Pilih menu Anda, lalu Kawan Pasar menghitung harga bahannya. Gratis, tanpa daftar akun.
         </p>
         <div className="flex flex-col gap-3 md:flex-row">
           <ButtonLink href="/atur-warung" size="lg">
