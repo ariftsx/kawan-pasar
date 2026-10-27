@@ -1,5 +1,5 @@
 import { resolveSemanticColors } from '@kawan-pasar/tokens';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Atkinson_Hyperlegible_Mono, Atkinson_Hyperlegible_Next } from 'next/font/google';
 import { connection } from 'next/server';
 
 import { BottomTabBar } from '@/components/shell/bottom-tab-bar';
@@ -15,10 +15,14 @@ import type { ReactNode } from 'react';
 import '@/styles/globals.css';
 
 // Self-hosted at build time by next/font, so CSP `font-src 'self'` holds.
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
-const jetbrains = JetBrains_Mono({
+const atkinson = Atkinson_Hyperlegible_Next({
   subsets: ['latin'],
-  variable: '--font-jetbrains',
+  variable: '--font-atkinson',
+  display: 'swap',
+});
+const atkinsonMono = Atkinson_Hyperlegible_Mono({
+  subsets: ['latin'],
+  variable: '--font-atkinson-mono',
   display: 'swap',
 });
 
@@ -49,7 +53,7 @@ export default async function RootLayout({ children }: { readonly children: Reac
   await connection();
   const isDemo = publicEnv.NEXT_PUBLIC_DATA_MODE === 'demo';
   return (
-    <html lang="id" className={`${inter.variable} ${jetbrains.variable}`}>
+    <html lang="id" className={`${atkinson.variable} ${atkinsonMono.variable}`}>
       <body className="flex min-h-dvh flex-col">
         <Providers>
           <a
