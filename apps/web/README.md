@@ -82,6 +82,8 @@ Pengguna utama banyak yang berusia lanjut, jadi tampilannya dibuat sederhana: hu
 | `point` | Langkah 1–2 Atur Warung               |
 | `happy` | Langkah terakhir Atur Warung, Beranda |
 | `think` | Halaman "segera hadir" dan 404        |
-| `rest`  | Logo (`variant="mark"`)               |
+| `rest`  | Pose bawaan                           |
+
+**Logo** (`src/components/brand/logo-mark.tsx`) adalah Si Bakul yang disederhanakan: bakul dengan bibir anyaman, senyum, cabai, dan bawang merah, memakai token `illustration.*` yang sama. Nama "Kawan Pasar" di header tetap teks biasa agar terbaca jelas. Favicon (`src/app/icon.svg`, `favicon.ico`) dan `apple-icon.png` memakai potongan yang lebih tebal karena garis anyaman hilang di bawah 48 px. File induk (SVG warna, satu warna, lockup, ikon aplikasi) ada di folder desain proyek, bukan di repo.
 
 Kalimat Si Bakul singkat dan menjelaskan langkah, tidak pernah menyarankan membeli, menjual, atau mengubah menu. Animasinya (berkedip, melambai tiga kali, gelembung muncul) hanya berjalan lewat `motion-safe:`, sehingga berhenti bila perangkat diatur "kurangi gerakan". Test e2e memeriksa hal ini.

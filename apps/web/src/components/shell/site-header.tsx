@@ -4,7 +4,7 @@ import { cn } from '@kawan-pasar/ui';
 import { usePathname } from 'next/navigation';
 import { Link } from 'react-aria-components';
 
-import { Bakul } from '@/components/mascot/bakul';
+import { LogoMark } from '@/components/brand/logo-mark';
 
 import { PRIMARY_NAV, isActive } from './nav-items';
 
@@ -20,7 +20,7 @@ export function SiteHeader() {
           href="/"
           className={cn('flex items-center gap-2 rounded-md text-lg font-bold', FOCUS)}
         >
-          <Bakul variant="mark" className="w-9" />
+          <LogoMark className="w-9" />
           <span className="text-text-primary">Kawan Pasar</span>
         </Link>
         <nav aria-label="Navigasi utama" className="hidden flex-1 lg:block">
