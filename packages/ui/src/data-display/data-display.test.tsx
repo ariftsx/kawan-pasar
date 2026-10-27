@@ -49,7 +49,7 @@ describe('MetricCard', () => {
     render(
       <MetricCard label="Bahan paling berisiko" value="Cabai merah keriting" valueKind="text" />,
     );
-    expect(screen.getByText('Cabai merah keriting').className).not.toContain('font-mono');
+    expect(screen.getByText('Cabai merah keriting').className).not.toContain('tabular-nums');
   });
 
   it('renders the brand tone and a badge', () => {
@@ -101,6 +101,13 @@ describe('states', () => {
       />,
     );
     expect(screen.getByRole('button', { name: 'Tambah menu' })).toBeDefined();
+  });
+
+  it('EmptyState places an illustration above the title', () => {
+    render(<EmptyState title="Segera hadir" illustration={<svg data-testid="maskot" />} />);
+    const picture = screen.getByTestId('maskot');
+    const title = screen.getByText('Segera hadir');
+    expect(picture.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('Skeleton and Card render', () => {

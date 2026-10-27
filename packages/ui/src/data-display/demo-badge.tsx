@@ -5,7 +5,7 @@ export function DemoBadge({ className }: { readonly className?: string }) {
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center rounded-sm bg-demo-bg px-2 py-0.5 text-xs font-semibold text-demo-fg',
+        'inline-flex shrink-0 items-center rounded-sm bg-demo-bg px-2 py-0.5 text-xs font-bold text-demo-fg',
         className,
       )}
     >

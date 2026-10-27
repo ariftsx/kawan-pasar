@@ -6,20 +6,29 @@ export type EmptyStateProps = {
   readonly title: string;
   readonly description?: string;
   readonly action?: ReactNode;
+  /** A decorative picture above the title, e.g. the mascot. */
+  readonly illustration?: ReactNode;
   readonly className?: string;
 };
 
-export function EmptyState({ title, description, action, className }: EmptyStateProps) {
+export function EmptyState({
+  title,
+  description,
+  action,
+  illustration,
+  className,
+}: EmptyStateProps) {
   return (
     <div
       className={cn(
-        'flex flex-col items-center gap-3 rounded-lg border border-dashed border-border-strong p-8 text-center',
+        'flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-border-strong p-8 text-center',
         className,
       )}
     >
-      <p className="text-base font-semibold text-text-primary">{title}</p>
+      {illustration}
+      <p className="text-xl font-bold text-text-primary">{title}</p>
       {description === undefined ? null : (
-        <p className="max-w-prose text-sm text-text-secondary">{description}</p>
+        <p className="max-w-prose text-base text-text-secondary">{description}</p>
       )}
       {action}
     </div>
@@ -44,10 +53,10 @@ export function ErrorState({ title, description, requestId, action, className }:
         className,
       )}
     >
-      <p className="text-base font-semibold">{title}</p>
-      {description === undefined ? null : <p className="text-sm">{description}</p>}
+      <p className="text-xl font-bold">{title}</p>
+      {description === undefined ? null : <p className="text-base">{description}</p>}
       {requestId === undefined ? null : (
-        <p className="font-mono text-xs">
+        <p className="font-mono text-sm">
           Kode: <span>{requestId}</span>
         </p>
       )}

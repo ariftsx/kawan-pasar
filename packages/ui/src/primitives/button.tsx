@@ -13,7 +13,7 @@ import { FOCUS_RING } from './focus.js';
 
 export const buttonStyles = cva(
   cn(
-    'inline-flex items-center justify-center gap-2 rounded-md font-medium whitespace-nowrap',
+    'inline-flex items-center justify-center gap-2 rounded-lg font-semibold whitespace-nowrap',
     'transition-colors duration-150 select-none cursor-pointer',
     'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[pending]:cursor-progress',
     FOCUS_RING,
@@ -27,8 +27,13 @@ export const buttonStyles = cva(
         ghost: 'text-text-brand data-[hovered]:bg-bg-brand-subtle',
         danger: 'bg-status-error-bg text-status-error-fg border border-status-error-fg',
       },
-      // md is 44 px tall: the mobile touch-target minimum (docs 09 §8).
-      size: { md: 'min-h-11 px-4 text-sm', sm: 'min-h-9 px-3 text-xs' },
+      // Older users first: md is 48 px, lg 56 px for the one main action on a screen, and sm never
+      // goes under the 44 px touch-target minimum (docs 09 §8).
+      size: {
+        lg: 'min-h-14 px-6 text-lg',
+        md: 'min-h-12 px-5 text-base',
+        sm: 'min-h-11 px-4 text-sm',
+      },
       isFullWidth: { true: 'w-full' },
     },
     defaultVariants: { variant: 'primary', size: 'md' },

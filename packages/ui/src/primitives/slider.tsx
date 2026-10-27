@@ -19,9 +19,9 @@ export type SliderProps = Omit<AriaSliderProps<number>, 'className' | 'children'
 export function Slider({ label, className, ...props }: SliderProps) {
   return (
     <AriaSlider {...props} className={cn('flex flex-col gap-2', className)}>
-      <div className="flex justify-between text-sm">
+      <div className="flex justify-between text-base">
         <Label className="text-text-secondary">{label}</Label>
-        <SliderOutput className="font-mono text-text-primary" />
+        <SliderOutput className="font-semibold text-text-primary tabular-nums" />
       </div>
       <SliderTrack className="relative h-11 w-full">
         {({ state }) => (

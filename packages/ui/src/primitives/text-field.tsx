@@ -21,16 +21,16 @@ export type TextFieldProps = Omit<AriaTextFieldProps, 'className' | 'children'> 
 export function TextField({ label, description, className, ...props }: TextFieldProps) {
   return (
     <AriaTextField {...props} className={cn('flex flex-col gap-1', className)}>
-      <Label className="text-sm text-text-secondary">{label}</Label>
+      <Label className="text-base text-text-secondary">{label}</Label>
       <Input
         className={cn(
-          'min-h-11 rounded-md border border-border-control bg-bg-surface px-3 text-base text-text-primary',
+          'min-h-12 rounded-md border border-border-control bg-bg-surface px-3 text-lg text-text-primary',
           'outline-none data-[focused]:outline-2 data-[focused]:outline-offset-2 data-[focused]:outline-border-focus',
           'data-[invalid]:border-status-error-fg',
         )}
       />
       {description === undefined ? null : (
-        <Text slot="description" className="text-xs text-text-muted">
+        <Text slot="description" className="text-sm text-text-secondary">
           {description}
         </Text>
       )}
