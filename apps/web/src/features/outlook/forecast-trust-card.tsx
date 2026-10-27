@@ -14,7 +14,7 @@ export function ForecastTrustCard({ outlook }: { readonly outlook: OutlookState 
   if (outlook.status === 'loading') return null;
   if (outlook.status === 'unavailable') {
     return (
-      <p className="text-xs text-text-muted">
+      <p className="text-sm text-text-secondary">
         Perkiraan tidak tersedia saat ini. Modal tetap dihitung dengan harga hari ini.
       </p>
     );
@@ -43,7 +43,7 @@ export function ForecastTrustCard({ outlook }: { readonly outlook: OutlookState 
         {rows.map(([label, value]) => (
           <div key={label} className="contents">
             <dt className="text-text-muted">{label}</dt>
-            <dd className="font-mono text-text-primary">{value}</dd>
+            <dd className="tabular-nums text-text-primary">{value}</dd>
           </div>
         ))}
       </dl>

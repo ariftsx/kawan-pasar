@@ -68,7 +68,7 @@ export function MarginCard({
 }) {
   return (
     <Card aria-labelledby="margin-title" className="flex flex-col gap-4">
-      <h2 id="margin-title" className="text-lg font-semibold">
+      <h2 id="margin-title" className="text-xl font-bold">
         Margin per porsi
       </h2>
       <NumberStepper

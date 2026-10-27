@@ -19,17 +19,19 @@ export function StepItem({ index, label, state }: StepItemProps) {
   return (
     <li
       aria-current={state === 'current' ? 'step' : undefined}
-      className="flex items-center gap-2 text-sm"
+      className="flex items-center gap-2 text-base"
     >
       <span
         className={cn(
-          'flex size-7 shrink-0 items-center justify-center rounded-full font-mono text-xs',
+          'flex size-9 shrink-0 items-center justify-center rounded-full text-base font-bold',
           MARKER.get(state),
         )}
       >
         {state === 'done' ? '✓' : index}
       </span>
-      <span className={state === 'upcoming' ? 'text-text-muted' : 'font-medium text-text-primary'}>
+      <span
+        className={state === 'upcoming' ? 'text-text-secondary' : 'font-semibold text-text-primary'}
+      >
         {label}
         {state === 'done' ? <span className="sr-only"> (selesai)</span> : null}
       </span>

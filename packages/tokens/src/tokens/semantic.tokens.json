@@ -63,6 +63,27 @@
     "demo": {
       "fg": { "$value": "{color.amber.700}", "$extensions": { "kp.theme": { "dark": "{color.amber.300}" } } },
       "bg": { "$value": "{color.amber.50}", "$extensions": { "kp.theme": { "dark": "{color.amber.950}" } } }
+    },
+    "illustration": {
+      "$description": "Si Bakul and spot illustrations; decorative, identical in both themes so the mascot stays recognisable.",
+      "outline": { "$value": "{color.bamboo.900}" },
+      "ink": { "$value": "{color.bamboo.950}" },
+      "bamboo": { "$value": "{color.bamboo.200}" },
+      "weave": { "$value": "{color.bamboo.300}" },
+      "rim": { "$value": "{color.bamboo.500}" },
+      "rim-light": { "$value": "{color.bamboo.600}" },
+      "rice": { "$value": "{color.rice.50}" },
+      "grain": { "$value": "{color.rice.200}" },
+      "chili": { "$value": "{color.chili.600}" },
+      "chili-shine": { "$value": "{color.chili.400}" },
+      "leaf": { "$value": "{color.green.500}" },
+      "leaf-light": { "$value": "{color.green.300}" },
+      "shallot": { "$value": "{color.shallot.600}" },
+      "shallot-line": { "$value": "{color.shallot.800}" },
+      "shallot-shine": { "$value": "{color.shallot.300}" },
+      "cheek": { "$value": "{color.blush.300}" },
+      "tongue": { "$value": "{color.blush.500}" },
+      "shine": { "$value": "{color.neutral.0}" }
     }
   }
 }

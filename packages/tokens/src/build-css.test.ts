@@ -36,7 +36,9 @@ describe('tokens.css', () => {
   });
 
   it('never exposes primitives', () => {
-    expect(tokensCss).not.toMatch(/--kp-color-(green|neutral|red|blue|amber)-\d/);
+    expect(tokensCss).not.toMatch(
+      /--kp-color-(green|neutral|red|blue|amber|bamboo|chili|shallot)-\d/,
+    );
   });
 
   it('includes scales and zeroes motion for reduced-motion users', () => {
@@ -59,5 +61,14 @@ describe('theme.css (Tailwind v4)', () => {
     expect(themeCss).toContain('--color-*: initial;');
     expect(themeCss).toContain('--radius-lg: var(--kp-radius-lg);');
     expect(themeCss).toContain('--breakpoint-xl: 1440px;');
+  });
+
+  it('maps a type scale sized for older readers, in rem', () => {
+    expect(themeCss).toContain('--text-*: initial;');
+    expect(themeCss).toContain('--text-base: var(--kp-font-size-base);');
+    expect(themeCss).toContain('--text-base--line-height: var(--kp-line-height-base);');
+    const light = declarations(tokensCss, ':root {');
+    expect(light.get('kp-font-size-xs')).toBe('0.875rem');
+    expect(light.get('kp-font-size-base')).toBe('1.125rem');
   });
 });

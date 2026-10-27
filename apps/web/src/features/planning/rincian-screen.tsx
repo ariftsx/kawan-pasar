@@ -5,6 +5,7 @@
 import { ButtonLink, Card, EmptyState, NumberStepper, Skeleton, TextField } from '@kawan-pasar/ui';
 import { useRouter } from 'next/navigation';
 
+import { Icon } from '@/components/icons';
 import { ForecastTrustCard } from '@/features/outlook/forecast-trust-card';
 
 import { DeleteMenu } from './components/delete-menu';
@@ -37,7 +38,8 @@ function MenuHeader({
   return (
     <header className="flex flex-col gap-3">
       <ButtonLink href="/rencana" variant="ghost" size="sm" className="self-start">
-        ← Rencana Menu
+        <Icon name="chevron-left" className="size-5" />
+        Rencana Menu
       </ButtonLink>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <TextField
@@ -90,7 +92,7 @@ export function RincianScreen({ menuId }: { readonly menuId: string }) {
         isOutlookDemo={outlook.status === 'ready' && outlook.isDemo}
       />
       <Card aria-labelledby="ingredients-title" className="flex flex-col gap-3">
-        <h2 id="ingredients-title" className="text-lg font-semibold">
+        <h2 id="ingredients-title" className="text-xl font-bold">
           Bahan per porsi
         </h2>
         <IngredientTable recipe={menu.recipe} cost={cost} mode={mode} outlooks={outlook.map} />

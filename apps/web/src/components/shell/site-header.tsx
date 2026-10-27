@@ -4,6 +4,8 @@ import { cn } from '@kawan-pasar/ui';
 import { usePathname } from 'next/navigation';
 import { Link } from 'react-aria-components';
 
+import { Bakul } from '@/components/mascot/bakul';
+
 import { PRIMARY_NAV, isActive } from './nav-items';
 
 const FOCUS =
@@ -13,14 +15,12 @@ export function SiteHeader() {
   const pathname = usePathname();
   return (
     <header className="sticky top-0 z-sticky border-b border-border-default bg-bg-surface">
-      <div className="mx-auto flex h-14 max-w-content items-center gap-6 px-4 lg:px-12">
-        <Link href="/" className={cn('flex items-center gap-2 rounded-md font-semibold', FOCUS)}>
-          <span
-            aria-hidden="true"
-            className="flex size-8 items-center justify-center rounded-md bg-bg-brand text-text-on-brand"
-          >
-            K
-          </span>
+      <div className="mx-auto flex h-16 max-w-content items-center gap-6 px-4 lg:px-12">
+        <Link
+          href="/"
+          className={cn('flex items-center gap-2 rounded-md text-lg font-bold', FOCUS)}
+        >
+          <Bakul variant="mark" className="w-9" />
           <span className="text-text-primary">Kawan Pasar</span>
         </Link>
         <nav aria-label="Navigasi utama" className="hidden flex-1 lg:block">
@@ -33,7 +33,7 @@ export function SiteHeader() {
                     href={item.href}
                     {...(active ? { 'aria-current': 'page' as const } : {})}
                     className={cn(
-                      'rounded-md px-3 py-2 text-sm',
+                      'rounded-md px-3 py-2',
                       active
                         ? 'bg-bg-brand-subtle font-semibold text-text-brand'
                         : 'text-text-secondary data-[hovered]:bg-bg-subtle',
@@ -50,7 +50,7 @@ export function SiteHeader() {
         <Link
           href="/atur-warung"
           className={cn(
-            'ml-auto rounded-md px-3 py-2 text-sm text-text-brand data-[hovered]:bg-bg-brand-subtle',
+            'ml-auto rounded-md px-3 py-2 font-semibold text-text-brand data-[hovered]:bg-bg-brand-subtle',
             FOCUS,
           )}
         >

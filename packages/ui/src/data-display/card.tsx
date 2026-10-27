@@ -9,7 +9,7 @@ export function Card({ className, ...props }: CardProps) {
   return (
     <section
       {...props}
-      className={cn('rounded-lg border border-border-default bg-bg-surface p-4 md:p-6', className)}
+      className={cn('rounded-xl border border-border-default bg-bg-surface p-4 md:p-6', className)}
     />
   );
 }

@@ -6,10 +6,44 @@
 @source '../../../../packages/ui/src';
 
 @theme inline {
-  --font-sans: var(--font-inter), system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  /* Atkinson Hyperlegible was drawn for low-vision readers: 1/l/I and 0/O never look alike. */
+  --font-sans: var(--font-atkinson), system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: var(--font-atkinson-mono), ui-monospace, 'SFMono-Regular', Menlo, monospace;
   /* layout/max-content (docs 10 §5) as max-w-content. */
   --container-content: var(--kp-layout-max-content);
+
+  /* Si Bakul: a blink now and then and a short wave. Used only behind motion-safe:. */
+  --animate-bakul-blink: bakul-blink 6s ease-in-out infinite;
+  --animate-bakul-wave: bakul-wave 1.2s ease-in-out 0.6s 3;
+  --animate-pop-in: pop-in 320ms cubic-bezier(0.2, 0, 0, 1) both;
+
+  @keyframes bakul-blink {
+    0%,
+    94%,
+    100% {
+      transform: scaleY(1);
+    }
+    97% {
+      transform: scaleY(0.1);
+    }
+  }
+
+  @keyframes bakul-wave {
+    0%,
+    100% {
+      transform: rotate(0deg);
+    }
+    50% {
+      transform: rotate(-14deg);
+    }
+  }
+
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.97);
+    }
+  }
 }
 
 /* z-index and safe-area utilities from tokens, so components never need arbitrary values. */
@@ -39,6 +73,6 @@
   }
 
   body {
-    @apply bg-bg-canvas text-text-primary font-sans antialiased;
+    @apply bg-bg-canvas text-base text-text-primary font-sans antialiased;
   }
 }

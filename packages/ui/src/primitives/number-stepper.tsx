@@ -22,7 +22,7 @@ export type NumberStepperProps = Omit<NumberFieldProps, 'className' | 'children'
 };
 
 const STEP_BUTTON = cn(
-  'flex size-11 cursor-pointer items-center justify-center text-lg text-text-brand',
+  'flex size-12 cursor-pointer items-center justify-center text-2xl font-bold text-text-brand',
   'data-[disabled]:opacity-40 data-[hovered]:bg-bg-brand-subtle',
   FOCUS_RING,
 );
@@ -41,7 +41,7 @@ export function NumberStepper({
 }: NumberStepperProps) {
   return (
     <NumberField {...props} className={cn('flex flex-col gap-1', className)}>
-      <Label className="text-sm text-text-secondary">{label}</Label>
+      <Label className="text-base text-text-secondary">{label}</Label>
       <div className="flex items-center gap-2">
         <Group className="inline-flex items-center overflow-hidden rounded-md border border-border-control bg-bg-surface">
           <Button slot="decrement" className={STEP_BUTTON}>
@@ -49,15 +49,15 @@ export function NumberStepper({
           </Button>
           <Input
             className={cn(
-              'bg-transparent text-center font-mono text-base text-text-primary outline-none',
-              isWide ? 'w-32' : 'w-16',
+              'bg-transparent text-center text-lg font-semibold text-text-primary tabular-nums outline-none',
+              isWide ? 'w-36' : 'w-20',
             )}
           />
           <Button slot="increment" className={STEP_BUTTON}>
             +
           </Button>
         </Group>
-        {unit === undefined ? null : <span className="text-sm text-text-muted">{unit}</span>}
+        {unit === undefined ? null : <span className="text-base text-text-secondary">{unit}</span>}
       </div>
     </NumberField>
   );

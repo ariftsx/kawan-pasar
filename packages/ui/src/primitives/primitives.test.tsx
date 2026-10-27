@@ -18,7 +18,7 @@ describe('Button', () => {
     button.focus();
     await userEvent.keyboard('{Enter}');
     expect(onPress).toHaveBeenCalledOnce();
-    expect(button.className).toContain('min-h-11');
+    expect(button.className).toContain('min-h-12');
   });
 
   it('does nothing while disabled', async () => {
@@ -49,6 +49,14 @@ describe('Chip', () => {
     expect(chip.getAttribute('aria-pressed')).toBe('false');
     await userEvent.click(chip);
     expect(onChange).toHaveBeenCalledWith(true);
+  });
+
+  it('shows a check mark when selected, so colour is not the only cue', () => {
+    const { rerender } = render(<Chip isSelected={false}>Warteg</Chip>);
+    const chip = screen.getByRole('button', { name: 'Warteg' });
+    expect(chip.querySelector('svg')).toBeNull();
+    rerender(<Chip isSelected>Warteg</Chip>);
+    expect(chip.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
   });
 });
 

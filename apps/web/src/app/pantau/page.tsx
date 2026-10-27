@@ -9,7 +9,7 @@ export default function PantauPage() {
     <ComingSoon
       title="Pantau Harga"
       phase="F2"
-      description="Harga harian, riwayat, dan perubahan untuk cabai merah keriting, bawang merah, dan beras medium akan tampil setelah ingest harga harian aktif."
+      description="Harga harian, riwayat, dan perubahan untuk cabai merah keriting, bawang merah, dan beras medium akan tampil di sini setelah pengambilan harga harian berjalan."
     />
   );
 }

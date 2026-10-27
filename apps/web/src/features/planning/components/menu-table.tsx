@@ -29,14 +29,14 @@ function MenuRow({ menu, cost, hasOutlook }: CostedMenu & { readonly hasOutlook:
           {menu.name}
         </Link>
       </th>
-      <td className="py-3 pr-3 text-right font-mono">{menu.portions_per_day}</td>
-      <td className="py-3 pr-3 text-right font-mono">
+      <td className="py-3 pr-3 text-right tabular-nums">{menu.portions_per_day}</td>
+      <td className="py-3 pr-3 text-right tabular-nums">
         {formatRupiah(cost?.perPortionTodayIdr ?? null)}
       </td>
-      <td className="py-3 pr-3 text-right font-mono text-text-brand">
+      <td className="py-3 pr-3 text-right tabular-nums text-text-brand">
         {hasOutlook ? formatRupiah(cost?.perPortionOutlookIdr ?? null) : '—'}
       </td>
-      <td className="py-3 pr-3 text-right font-mono">
+      <td className="py-3 pr-3 text-right tabular-nums">
         {formatRupiah(cost?.perDayTodayIdr ?? null)}
       </td>
       <td className="py-3 text-text-secondary">{riskLabel(cost)}</td>

@@ -41,7 +41,7 @@ export function MovementBadge({ change, label, className }: MovementBadgeProps) 
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 font-mono text-xs font-medium',
+        'inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-sm font-bold tabular-nums',
         TONE.get(direction),
         className,
       )}

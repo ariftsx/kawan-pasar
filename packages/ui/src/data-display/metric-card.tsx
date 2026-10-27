@@ -34,11 +34,11 @@ export function MetricCard({
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm text-text-secondary">{label}</p>
+        <p className="text-base text-text-secondary">{label}</p>
         {badge}
       </div>
       {value === null ? (
-        <p className="text-base text-text-muted">
+        <p className="text-lg text-text-secondary">
           <span aria-hidden="true">— </span>
           {emptyLabel}
         </p>
@@ -46,15 +46,15 @@ export function MetricCard({
         <p
           className={cn(
             valueKind === 'number'
-              ? 'font-mono text-2xl font-semibold tabular-nums md:text-3xl'
-              : 'text-xl font-semibold md:text-2xl',
+              ? 'text-3xl font-bold tabular-nums md:text-4xl'
+              : 'text-2xl font-bold',
             tone === 'brand' ? 'text-text-brand' : 'text-text-primary',
           )}
         >
           {value}
         </p>
       )}
-      {caption === undefined ? null : <div className="text-xs text-text-muted">{caption}</div>}
+      {caption === undefined ? null : <div className="text-sm text-text-secondary">{caption}</div>}
     </div>
   );
 }

@@ -20,9 +20,9 @@ function SimulationResult({ result }: { readonly result: PriceIncreaseSimulation
     <dl className="grid grid-cols-2 gap-3">
       {figures.map(([label, value, delta, unit]) => (
         <div key={label}>
-          <dt className="text-xs text-text-secondary">{label}</dt>
-          <dd className="font-mono text-xl font-semibold">{formatRupiah(value)}</dd>
-          <dd className="text-xs text-text-muted">
+          <dt className="text-sm text-text-secondary">{label}</dt>
+          <dd className="tabular-nums text-xl font-semibold">{formatRupiah(value)}</dd>
+          <dd className="text-sm text-text-secondary">
             +{formatRupiah(delta)} {unit}
           </dd>
         </div>
@@ -48,10 +48,10 @@ export function SimulationCard({
   return (
     <Card aria-labelledby="simulation-title" className="flex flex-col gap-4">
       <div>
-        <h2 id="simulation-title" className="text-lg font-semibold">
+        <h2 id="simulation-title" className="text-xl font-bold">
           Simulasi kenaikan harga
         </h2>
-        <p className="text-xs text-text-muted">Hitungan biasa, bukan perkiraan model.</p>
+        <p className="text-sm text-text-secondary">Hitungan biasa, bukan perkiraan model.</p>
       </div>
       <label className="flex flex-col gap-1 text-sm text-text-secondary">
         Bahan

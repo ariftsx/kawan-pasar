@@ -4,7 +4,7 @@ import { CATALOG_VERSION } from '@kawan-pasar/catalog';
 export function SiteFooter({ isDemo }: { readonly isDemo: boolean }) {
   return (
     <footer className="mt-12 border-t border-border-default bg-bg-subtle pb-24 lg:pb-0">
-      <div className="mx-auto flex max-w-content flex-col gap-2 px-4 py-6 text-xs text-text-muted lg:px-12">
+      <div className="mx-auto flex max-w-content flex-col gap-2 px-4 py-6 text-sm text-text-secondary lg:px-12">
         <p>
           Kawan Pasar membantu menghitung modal bahan. Harga dan perkiraan adalah informasi, bukan
           saran membeli, menjual, atau mengubah menu.

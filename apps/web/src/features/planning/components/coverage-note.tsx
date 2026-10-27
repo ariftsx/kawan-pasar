@@ -14,7 +14,7 @@ export function CoverageNote({
 }) {
   if (missing.length === 0) return null;
   return (
-    <details className="text-xs text-text-secondary">
+    <details className="text-sm text-text-secondary">
       <summary className="cursor-pointer">
         Dihitung dari{' '}
         <strong>
