@@ -1,5 +1,5 @@
 import { resolveSemanticColors } from '@kawan-pasar/tokens';
-import { Atkinson_Hyperlegible_Mono, Atkinson_Hyperlegible_Next } from 'next/font/google';
+import { Geist_Mono, Plus_Jakarta_Sans } from 'next/font/google';
 import { connection } from 'next/server';
 
 import { BottomTabBar } from '@/components/shell/bottom-tab-bar';
@@ -15,14 +15,15 @@ import type { ReactNode } from 'react';
 import '@/styles/globals.css';
 
 // Self-hosted at build time by next/font, so CSP `font-src 'self'` holds.
-const atkinson = Atkinson_Hyperlegible_Next({
+// Brand v0.4: Plus Jakarta Sans for text, Geist Mono for prices and percentages.
+const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  variable: '--font-atkinson',
+  variable: '--font-jakarta',
   display: 'swap',
 });
-const atkinsonMono = Atkinson_Hyperlegible_Mono({
+const geistMono = Geist_Mono({
   subsets: ['latin'],
-  variable: '--font-atkinson-mono',
+  variable: '--font-geist-mono',
   display: 'swap',
 });
 
@@ -33,7 +34,7 @@ export const instant = false;
 
 export const metadata: Metadata = {
   title: { default: 'Kawan Pasar', template: '%s · Kawan Pasar' },
-  description: 'Hitung modal menu dan pantau risiko harga bahan pangan untuk warung.',
+  description: 'Pantau harga pangan harian, lihat prediksi ARIF-Net, dan pahami inflasi pangan.',
 };
 
 export const viewport: Viewport = {
@@ -53,7 +54,7 @@ export default async function RootLayout({ children }: { readonly children: Reac
   await connection();
   const isDemo = publicEnv.NEXT_PUBLIC_DATA_MODE === 'demo';
   return (
-    <html lang="id" className={`${atkinson.variable} ${atkinsonMono.variable}`}>
+    <html lang="id" className={`${jakarta.variable} ${geistMono.variable}`}>
       <body className="flex min-h-dvh flex-col">
         <Providers>
           <a

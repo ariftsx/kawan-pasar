@@ -43,3 +43,48 @@ export function formatChange(ratio: number | null): string {
 export function formatMarketDate(date: string): string {
   return marketDate.format(new Date(`${date}T00:00:00+07:00`));
 }
+
+const dayMonth = new Intl.DateTimeFormat('id-ID', {
+  day: 'numeric',
+  month: 'short',
+  timeZone: JAKARTA,
+});
+
+const weekdayDate = new Intl.DateTimeFormat('id-ID', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  timeZone: JAKARTA,
+});
+
+const dateTime = new Intl.DateTimeFormat('id-ID', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: JAKARTA,
+});
+
+/** Chart axis label `YYYY-MM-DD` → `14 Okt`. */
+export function formatDayMonth(date: string): string {
+  return dayMonth.format(new Date(`${date}T00:00:00+07:00`));
+}
+
+/** `YYYY-MM-DD` → `Minggu, 18 Okt 2026`. */
+export function formatWeekdayDate(date: string): string {
+  return weekdayDate.format(new Date(`${date}T00:00:00+07:00`));
+}
+
+/** ISO timestamp → `18 Okt 2026, 12.00 WIB`. */
+export function formatTimestamp(iso: string): string {
+  return `${dateTime.format(new Date(iso))} WIB`;
+}
+
+/** Arrow plus percent, so the direction never depends on colour: `↑ +3,2%`, `↓ −1,1%`, `→ 0,0%`. */
+export function formatChangeArrow(ratio: number | null): string {
+  if (ratio === null) return '—';
+  const arrow = ratio > 0.0005 ? '↑' : ratio < -0.0005 ? '↓' : '→';
+  return `${arrow} ${formatChange(ratio)}`;
+}

@@ -7,7 +7,7 @@ export function DemoBanner() {
       <p className="mx-auto flex max-w-content flex-wrap items-center gap-2 px-4 py-2 text-sm text-demo-fg lg:px-12">
         <DemoBadge />
         <span>
-          Mode demo: harga bahan dan perkiraan adalah contoh untuk menunjukkan cara kerja aplikasi.
+          Mode demo: harga dan prediksi adalah contoh untuk menunjukkan cara kerja aplikasi.
         </span>
       </p>
     </div>

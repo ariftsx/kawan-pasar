@@ -35,10 +35,29 @@ test('home page sends the security headers from docs 15 §10', async ({ request 
   expect(headers['x-powered-by']).toBeUndefined();
 });
 
-test('home page renders the DATA DEMO cost card', async ({ request }) => {
+test('home page renders the labelled sample prices', async ({ request }) => {
   const html = await (await request.get('/')).text();
 
   expect(html).toContain('DATA DEMO');
-  expect(html).toContain('10.850');
-  expect(html).toContain('10.914');
+  expect(html).toContain('Cabai merah keriting');
+  expect(html).toContain('52.400');
+});
+
+test('old routes redirect to their v0.4 pages', async ({ request }) => {
+  const pantau = await request.get('/pantau', { maxRedirects: 0 });
+  expect(pantau.status()).toBe(308);
+  expect(pantau.headers().location).toBe('/harga');
+
+  const rencana = await request.get('/rencana', { maxRedirects: 0 });
+  expect(rencana.headers().location).toBe('/');
+});
+
+test('Mode Analis serves the price board as CSV', async ({ request }) => {
+  const response = await request.get('/analis/unduh');
+
+  expect(response.status()).toBe(200);
+  expect(response.headers()['content-type']).toContain('text/csv');
+  const csv = await response.text();
+  expect(csv.split('\n')[0]).toBe('tanggal,komoditas,pasar,harga_idr,sumber');
+  expect(csv).toContain('DATA DEMO');
 });

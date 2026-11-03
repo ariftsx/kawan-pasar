@@ -53,18 +53,18 @@ flowchart LR
 - **Nilai yang tidak diketahui** dikirim sebagai `null` dan ditampilkan "—" plus teks, **tidak pernah 0**.
 - **Perkiraan** selalu membawa provenance: `model_version`, `dataset_version`, `preprocessing_version`, `data_cutoff`, `artifact_status`. Tidak ada artefak `latest` yang implisit.
 
-## 4. Perhitungan modal
+## 4. Harga dan prediksi di web
 
-Semua aritmetika ada di **satu tempat**: `packages/domain`. Paket ini dipakai web, dan nanti juga api.
+Sejak tampilan v0.4, web tidak lagi menghitung modal menu. Perhitungannya (`packages/domain`) tetap ada untuk api, tetapi tidak dipakai web.
 
 ```text
-resep (catalog) → harga per bahan (mode) → perkiraan per komoditas (model) → packages/domain
-                                                                           → modal per porsi & per hari
+katalog komoditas (catalog) → papan harga (apps/web/src/lib/market) → Beranda, Harga, Detail, Analis
+/v1/outlook/:slug (api → model) → lib/outlook (parse + provenance) → Prediksi, Detail, Beranda
 ```
 
-- **Modal parsial.** Bahan tanpa harga tidak dihitung (tidak dianggap 0). Hasilnya `partial` dengan keterangan cakupan ("3 dari 5 bahan"), dan margin tidak dihitung karena akan terlihat lebih besar dari kenyataan.
-- **Perkiraan** hanya berlaku untuk 3 komoditas model. Bahan lain diberi label "tanpa perkiraan".
-- **Simulasi** "kalau cabai naik 30%" adalah hitungan biasa, bukan perkiraan model, dan selalu berlabel begitu.
+- **Harga.** Selama ingest F2 belum berjalan, mode `demo` memakai seri contoh deterministik berlabel DATA DEMO; mode `live` menampilkan "harga belum tersedia", tidak pernah angka karangan.
+- **Prediksi** hanya untuk 3 komoditas model. Horizon ≤ 30 hari "tersedia", 90 hari "sebagian teruji", 180 hari dan 1 tahun "belum diuji" sehingga nilainya disembunyikan. Rentang ketidakpastian belum ada di kontrak, jadi ditampilkan "—".
+- **Konteks** (cuaca, berita/sentimen, kalender, biaya distribusi) hanya ditampilkan sebagai status ketersediaan dari `availability`, tidak pernah sebagai penyebab perubahan harga.
 
 ## 5. Mode data dan bundle artefak
 
@@ -91,21 +91,20 @@ Bundle yang gagal ditolak, dan bundle lama tetap dipakai.
 
 ## 6. Penyimpanan
 
-| Data                              | Tempat                                                  | Fase |
-| --------------------------------- | ------------------------------------------------------- | ---- |
-| Warung & menu mode tamu           | IndexedDB di perangkat (`apps/web/src/lib/guest-store`) | F1 ✓ |
-| Akun, menu tersinkron, peringatan | PostgreSQL via Drizzle ORM                              | F3   |
-| Harga harian                      | PostgreSQL (staging → published)                        | F2   |
-| Cache & antrean                   | Valkey cache (LRU) dan Valkey queue (noeviction + AOF)  | F0 ✓ |
+| Data                              | Tempat                                                 | Fase |
+| --------------------------------- | ------------------------------------------------------ | ---- |
+| Akun, menu tersinkron, peringatan | PostgreSQL via Drizzle ORM                             | F3   |
+| Harga harian                      | PostgreSQL (staging → published)                       | F2   |
+| Cache & antrean                   | Valkey cache (LRU) dan Valkey queue (noeviction + AOF) | F0 ✓ |
 
 ## 7. Fase rilis
 
-| Fase | Isi                                                              | Status                                      |
-| ---- | ---------------------------------------------------------------- | ------------------------------------------- |
-| F0   | Monorepo, paket bersama, 4 service, stack lokal, CI, image       | ✓                                           |
-| F1   | Golden path mode tamu: Atur Warung → Beranda → Rencana → Rincian | ✓                                           |
-| F2   | Ingest harga harian + backfill 2019, Pantau Harga, Q95           | Menunggu perbaikan collector PIHPS (ING-01) |
-| F3   | Masuk dengan Google, sinkron tamu, peringatan, Web Push          | Butuh domain (DNS-01)                       |
-| F4   | Outlook Harga ★ penuh                                            | —                                           |
-| F5   | Konteks, Pelajari, Riset, Mode Analis                            | —                                           |
-| F6   | Hardening: uji beban, restore, Lighthouse, audit                 | —                                           |
+| Fase | Isi                                                                            | Status                                      |
+| ---- | ------------------------------------------------------------------------------ | ------------------------------------------- |
+| F0   | Monorepo, paket bersama, 4 service, stack lokal, CI, image                     | ✓                                           |
+| F1   | Tampilan v0.4: Beranda, Harga, Detail, Prediksi, Edukasi, ARIF-Net (DATA DEMO) | ✓                                           |
+| F2   | Ingest harga harian + backfill 2019, Pantau Harga, Q95                         | Menunggu perbaikan collector PIHPS (ING-01) |
+| F3   | Masuk dengan Google, sinkron tamu, peringatan, Web Push                        | Butuh domain (DNS-01)                       |
+| F4   | Outlook Harga ★ penuh                                                          | —                                           |
+| F5   | Konteks, Pelajari, Riset, Mode Analis                                          | —                                           |
+| F6   | Hardening: uji beban, restore, Lighthouse, audit                               | —                                           |
