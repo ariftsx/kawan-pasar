@@ -60,3 +60,5 @@ export function getTemplate(slug: string): MenuTemplate | undefined {
 export function modelCommodities(): readonly string[] {
   return catalog.ingredients.flatMap((item) => (item.commodity === null ? [] : [item.commodity]));
 }
+
+export * from './market.js';

@@ -25,6 +25,9 @@ export const buttonStyles = cva(
         secondary:
           'bg-bg-surface text-text-primary border border-border-control data-[hovered]:bg-bg-subtle',
         ghost: 'text-text-brand data-[hovered]:bg-bg-brand-subtle',
+        /** Warm accent for the main action on a dark brand surface (v0.4 hero). */
+        highlight:
+          'bg-accent-highlight-solid text-text-primary data-[hovered]:bg-accent-highlight-solid/90',
         danger: 'bg-status-error-bg text-status-error-fg border border-status-error-fg',
       },
       // Older users first: md is 48 px, lg 56 px for the one main action on a screen, and sm never
