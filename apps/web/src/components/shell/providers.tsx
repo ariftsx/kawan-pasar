@@ -3,8 +3,6 @@
 import { useRouter } from 'next/navigation';
 import { RouterProvider } from 'react-aria-components';
 
-import { GuestPlanProvider } from '@/features/planning/guest-plan';
-
 import type { ReactNode } from 'react';
 
 /** React Aria links navigate client-side through the Next router. */
@@ -16,7 +14,7 @@ export function Providers({ children }: { readonly children: ReactNode }) {
         router.push(href);
       }}
     >
-      <GuestPlanProvider>{children}</GuestPlanProvider>
+      {children}
     </RouterProvider>
   );
 }

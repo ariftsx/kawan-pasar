@@ -1,26 +1,42 @@
-// Navigation from docs 05 §5.1. Routes not built yet render a "segera hadir" page, never a 404.
-import type { IconName } from '@/components/icons';
+// Navigation of Kawan Pasar v0.4: price monitoring, ARIF-Net forecasts, and food-inflation
+// literacy. Desktop shows five destinations; mobile shows four tabs plus "Lainnya".
+import type { FeatureIconName } from '@/components/brand/feature-icon';
+import type { Route } from 'next';
 
 export type NavItem = {
-  readonly href: string;
+  readonly href: Route;
   readonly label: string;
-  readonly short: string;
-  readonly icon: IconName;
+  readonly icon: FeatureIconName;
 };
 
 export const PRIMARY_NAV: readonly NavItem[] = [
-  { href: '/', label: 'Beranda', short: 'Beranda', icon: 'warung' },
-  { href: '/pantau', label: 'Pantau Harga', short: 'Harga', icon: 'tag' },
-  { href: '/rencana', label: 'Rencana Menu', short: 'Menu', icon: 'nota' },
-  { href: '/outlook', label: 'Outlook ★', short: 'Outlook', icon: 'star' },
-  { href: '/konteks', label: 'Konteks', short: 'Konteks', icon: 'more' },
-  { href: '/pelajari', label: 'Pelajari', short: 'Pelajari', icon: 'more' },
+  { href: '/', label: 'Beranda', icon: 'beranda' },
+  { href: '/harga', label: 'Harga', icon: 'harga' },
+  { href: '/prediksi', label: 'Prediksi', icon: 'prediksi' },
+  { href: '/edukasi', label: 'Edukasi', icon: 'edukasi' },
+  { href: '/arif-net', label: 'ARIF-Net', icon: 'arif-net' },
 ];
 
-/** Mobile bottom tabs: four destinations plus "Lainnya" (docs 05 §5.1). */
 export const MOBILE_TABS: readonly NavItem[] = [
-  ...PRIMARY_NAV.filter((item) => ['/', '/pantau', '/rencana', '/outlook'].includes(item.href)),
-  { href: '/lainnya', label: 'Lainnya', short: 'Lainnya', icon: 'more' },
+  { href: '/', label: 'Beranda', icon: 'beranda' },
+  { href: '/harga', label: 'Harga', icon: 'harga' },
+  { href: '/prediksi', label: 'Prediksi', icon: 'prediksi' },
+  { href: '/peringatan', label: 'Peringatan', icon: 'peringatan' },
+  { href: '/lainnya', label: 'Lainnya', icon: 'lainnya' },
+];
+
+/** Secondary destinations listed on /lainnya (mobile) and in the footer. */
+export const SECONDARY_NAV: readonly (NavItem & { readonly note: string })[] = [
+  { href: '/edukasi', label: 'Edukasi', icon: 'edukasi', note: 'Literasi inflasi pangan' },
+  { href: '/arif-net', label: 'ARIF-Net', icon: 'arif-net', note: 'Cara kerja model prediksi' },
+  {
+    href: '/arif-net/keterbatasan',
+    label: 'Keterbatasan',
+    icon: 'info',
+    note: 'Batasan data, model, dan produk',
+  },
+  { href: '/analis', label: 'Mode Analis', icon: 'unduh', note: 'Tabel sinyal dan unduh data' },
+  { href: '/pasar', label: 'Pilih pasar', icon: 'pasar', note: 'Pasar Kramat Jati dan lainnya' },
 ];
 
 export function isActive(pathname: string, href: string): boolean {

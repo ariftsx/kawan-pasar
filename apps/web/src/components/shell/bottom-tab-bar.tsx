@@ -4,7 +4,7 @@ import { cn } from '@kawan-pasar/ui';
 import { usePathname } from 'next/navigation';
 import { Link } from 'react-aria-components';
 
-import { Icon } from '@/components/icons';
+import { FeatureIcon } from '@/components/brand/feature-icon';
 
 import { MOBILE_TABS, isActive } from './nav-items';
 
@@ -37,9 +37,9 @@ export function BottomTabBar() {
                     active ? 'bg-bg-brand-subtle' : 'group-data-[hovered]:bg-bg-subtle',
                   )}
                 >
-                  <Icon name={tab.icon} />
+                  <FeatureIcon name={tab.icon} className="size-5" />
                 </span>
-                {tab.short}
+                {tab.label}
               </Link>
             </li>
           );

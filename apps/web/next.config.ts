@@ -10,6 +10,18 @@ const config: NextConfig = {
   reactStrictMode: true,
   typedRoutes: true,
   images: { formats: ['image/avif', 'image/webp'], remotePatterns: [] },
+  // v0.4 renamed the routes and dropped the warung planner; old links land on the closest page.
+  redirects() {
+    return Promise.resolve([
+      { source: '/pantau', destination: '/harga', permanent: true },
+      { source: '/outlook/:slug', destination: '/prediksi?komoditas=:slug', permanent: true },
+      { source: '/outlook', destination: '/prediksi', permanent: true },
+      { source: '/pelajari', destination: '/edukasi', permanent: true },
+      { source: '/konteks', destination: '/harga', permanent: true },
+      { source: '/rencana', destination: '/', permanent: true },
+      { source: '/atur-warung', destination: '/', permanent: true },
+    ]);
+  },
 };
 
 export default config;

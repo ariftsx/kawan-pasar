@@ -1,41 +1,39 @@
-import { Card } from '@kawan-pasar/ui';
 import Link from 'next/link';
 
-import { Icon } from '@/components/icons';
+import { FeatureIcon } from '@/components/brand/feature-icon';
+import { FOCUS } from '@/components/kp/blocks';
+import { SECONDARY_NAV } from '@/components/shell/nav-items';
 
-import type { Metadata, Route } from 'next';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = { title: 'Lainnya' };
 
-const LINKS: readonly { href: Route; label: string; note: string }[] = [
-  { href: '/atur-warung', label: 'Atur warung', note: 'Tambah menu dari template' },
-  { href: '/konteks', label: 'Konteks', note: 'Iklim, berita, logistik' },
-  { href: '/pelajari', label: 'Pelajari', note: 'Cara membaca harga & perkiraan' },
-];
-
-/** Secondary navigation for mobile (docs 05 §5.1). */
+/** Secondary navigation for mobile. */
 export default function LainnyaPage() {
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-3xl font-bold">Lainnya</h1>
-      <Card>
-        <ul className="flex flex-col divide-y divide-border-default">
-          {LINKS.map((link) => (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                className="flex min-h-16 items-center justify-between gap-3 rounded-md px-2 focus-visible:outline-2 focus-visible:outline-border-focus"
-              >
-                <span className="flex flex-col">
-                  <span className="text-lg font-semibold text-text-primary">{link.label}</span>
-                  <span className="text-base text-text-secondary">{link.note}</span>
-                </span>
-                <Icon name="chevron-right" className="text-text-secondary" />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </Card>
+      <h1 className="text-3xl font-extrabold">Lainnya</h1>
+      <ul className="flex flex-col divide-y divide-border-default rounded-3xl border border-border-default bg-bg-surface">
+        {SECONDARY_NAV.map((item) => (
+          <li key={item.href}>
+            <Link
+              href={item.href}
+              className={`flex min-h-16 items-center gap-4 rounded-3xl px-5 py-3 ${FOCUS}`}
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-bg-subtle">
+                <FeatureIcon name={item.icon} />
+              </span>
+              <span className="flex flex-1 flex-col">
+                <span className="text-lg font-semibold">{item.label}</span>
+                <span className="text-base text-text-secondary">{item.note}</span>
+              </span>
+              <span aria-hidden className="text-text-muted">
+                →
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
