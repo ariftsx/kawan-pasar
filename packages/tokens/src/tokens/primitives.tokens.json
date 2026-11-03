@@ -1,74 +1,209 @@
 {
-  "$description": "Tier 1 primitives (docs 10 §3.1, §5). Never referenced by components; only by semantic tokens.",
+  "$description": "Tier 1 primitives (docs 10 §3.1, §5; brand v0.4). Never referenced by components; only by semantic tokens.",
   "color": {
     "$type": "color",
     "green": {
-      "50": { "$value": "#EEF6F1" },
-      "100": { "$value": "#D5EADD" },
-      "200": { "$value": "#A9D4BA" },
-      "300": { "$value": "#74B793" },
-      "400": { "$value": "#43966E" },
-      "500": { "$value": "#237A54" },
-      "600": { "$value": "#1A6344" },
-      "700": { "$value": "#154F37" },
-      "800": { "$value": "#113E2C" },
-      "900": { "$value": "#0C2E21" },
-      "950": { "$value": "#071C14" }
+      "50": {
+        "$value": "#E3F2E9"
+      },
+      "100": {
+        "$value": "#CDE8D7"
+      },
+      "200": {
+        "$value": "#A3D3B5"
+      },
+      "300": {
+        "$value": "#6FB98C"
+      },
+      "400": {
+        "$value": "#3F9D68"
+      },
+      "500": {
+        "$value": "#2E9E5B"
+      },
+      "600": {
+        "$value": "#17865A"
+      },
+      "700": {
+        "$value": "#0E4D35"
+      },
+      "800": {
+        "$value": "#0B3F2B"
+      },
+      "900": {
+        "$value": "#08301F"
+      },
+      "950": {
+        "$value": "#051D13"
+      }
     },
     "neutral": {
-      "0": { "$value": "#FFFFFF" },
-      "25": { "$value": "#FBFAF7" },
-      "50": { "$value": "#F6F5F1" },
-      "100": { "$value": "#ECEAE4" },
-      "200": { "$value": "#DDDAD2" },
-      "300": { "$value": "#C4C0B6" },
-      "400": { "$value": "#9C978C" },
-      "500": { "$value": "#757067" },
-      "600": { "$value": "#57534C" },
-      "700": { "$value": "#403D38" },
-      "800": { "$value": "#2E2C28" },
-      "850": { "$value": "#23211E" },
-      "900": { "$value": "#1B1A18" },
-      "950": { "$value": "#121110" }
+      "0": {
+        "$value": "#FFFFFF"
+      },
+      "25": {
+        "$value": "#FAF7F0"
+      },
+      "50": {
+        "$value": "#F3EFE6"
+      },
+      "100": {
+        "$value": "#ECE6D9"
+      },
+      "200": {
+        "$value": "#E8E2D6"
+      },
+      "300": {
+        "$value": "#D3CCBD"
+      },
+      "400": {
+        "$value": "#A39C8E"
+      },
+      "500": {
+        "$value": "#5C6860"
+      },
+      "600": {
+        "$value": "#4A5750"
+      },
+      "700": {
+        "$value": "#36423B"
+      },
+      "800": {
+        "$value": "#26302A"
+      },
+      "850": {
+        "$value": "#1C2520"
+      },
+      "900": {
+        "$value": "#14201A"
+      },
+      "950": {
+        "$value": "#0D1511"
+      }
     },
     "red": {
-      "50": { "$value": "#FCEEEB" },
-      "300": { "$value": "#F09A88" },
-      "600": { "$value": "#B83A25" },
-      "950": { "$value": "#3A140D" }
+      "50": {
+        "$value": "#FDE7E3"
+      },
+      "300": {
+        "$value": "#F49A8A"
+      },
+      "600": {
+        "$value": "#B23628"
+      },
+      "950": {
+        "$value": "#3A140D"
+      }
     },
     "blue": {
-      "50": { "$value": "#EAF2FB" },
-      "300": { "$value": "#8DB8E8" },
-      "600": { "$value": "#2563A6" },
-      "950": { "$value": "#0F2236" }
+      "50": {
+        "$value": "#E8F0FC"
+      },
+      "300": {
+        "$value": "#8DB8E8"
+      },
+      "600": {
+        "$value": "#2563A6"
+      },
+      "950": {
+        "$value": "#0F2236"
+      }
     },
     "amber": {
-      "50": { "$value": "#FBF3E2" },
-      "300": { "$value": "#E7BC6A" },
-      "600": { "$value": "#9A6510" },
-      "700": { "$value": "#8A5A0E" },
-      "950": { "$value": "#33230A" }
+      "50": {
+        "$value": "#FDF1D8"
+      },
+      "300": {
+        "$value": "#F5C979"
+      },
+      "500": {
+        "$value": "#F0A92E"
+      },
+      "600": {
+        "$value": "#9A6510"
+      },
+      "700": {
+        "$value": "#8A5A0E"
+      },
+      "950": {
+        "$value": "#33230A"
+      }
     },
-    "purple": { "300": { "$value": "#C3A6EA" }, "600": { "$value": "#7A4FB5" } },
-    "slate": { "300": { "$value": "#A9B6C8" }, "600": { "$value": "#56657A" } },
-    "orange": { "300": { "$value": "#EFA77A" }, "600": { "$value": "#B85A22" } },
-    "teal": { "300": { "$value": "#7CC9C2" }, "600": { "$value": "#1D7A73" } },
-    "bamboo": {
-      "200": { "$value": "#EDC27C" },
-      "300": { "$value": "#DCA65A" },
-      "500": { "$value": "#B9772F" },
-      "600": { "$value": "#D79446" },
-      "900": { "$value": "#4A2C17" },
-      "950": { "$value": "#2A1A10" }
+    "purple": {
+      "50": {
+        "$value": "#EEE9FD"
+      },
+      "100": {
+        "$value": "#DCD3FB"
+      },
+      "300": {
+        "$value": "#B4A2F0"
+      },
+      "600": {
+        "$value": "#6A4BD6"
+      },
+      "900": {
+        "$value": "#2A1D5C"
+      }
     },
-    "rice": { "50": { "$value": "#FFFCF2" }, "200": { "$value": "#E6DCC4" } },
-    "chili": { "400": { "$value": "#F07A62" }, "600": { "$value": "#D33A2C" } },
+    "slate": {
+      "300": {
+        "$value": "#A9B6C8"
+      },
+      "600": {
+        "$value": "#56657A"
+      }
+    },
+    "orange": {
+      "300": {
+        "$value": "#EFA77A"
+      },
+      "600": {
+        "$value": "#B85A22"
+      }
+    },
+    "teal": {
+      "300": {
+        "$value": "#7CC9C2"
+      },
+      "600": {
+        "$value": "#1D7A73"
+      }
+    },
+    "chili": {
+      "300": {
+        "$value": "#FF9C8C"
+      },
+      "600": {
+        "$value": "#E04535"
+      },
+      "800": {
+        "$value": "#B23628"
+      }
+    },
+    "leaf": {
+      "500": {
+        "$value": "#2E9E5B"
+      },
+      "600": {
+        "$value": "#17865A"
+      }
+    },
     "shallot": {
-      "300": { "$value": "#D27C93" },
-      "600": { "$value": "#A8445F" },
-      "800": { "$value": "#7E2E46" }
+      "600": {
+        "$value": "#B8325E"
+      },
+      "800": {
+        "$value": "#8C2447"
+      }
     },
-    "blush": { "300": { "$value": "#F2937D" }, "500": { "$value": "#E2604F" } }
+    "sand": {
+      "200": {
+        "$value": "#E6D5B3"
+      },
+      "500": {
+        "$value": "#C9A07A"
+      }
+    }
   }
 }

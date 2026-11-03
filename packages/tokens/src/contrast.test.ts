@@ -29,10 +29,10 @@ describe('token contrast gate (CI)', () => {
   });
 
   it('reproduces the documented audit (docs 10 §3.3)', () => {
-    expect(ratioOf('light', 'status.partial-fg', 'status.partial-bg')).toBeCloseTo(5.36, 2);
-    expect(ratioOf('light', 'border.control', 'bg.surface')).toBeCloseTo(4.92, 2);
-    expect(ratioOf('dark', 'border.control', 'bg.surface')).toBeCloseTo(3.54, 2);
-    expect(ratioOf('light', 'text.primary', 'bg.surface')).toBeCloseTo(17.39, 2);
+    expect(ratioOf('light', 'status.partial-fg', 'status.partial-bg')).toBeCloseTo(5.28, 2);
+    expect(ratioOf('light', 'border.control', 'bg.surface')).toBeCloseTo(5.83, 2);
+    expect(ratioOf('dark', 'border.control', 'bg.surface')).toBeCloseTo(6.16, 2);
+    expect(ratioOf('light', 'text.primary', 'bg.surface')).toBeCloseTo(16.78, 2);
   });
 
   it('keeps border.strong decorative only: it is below 3:1 on purpose', () => {
@@ -49,8 +49,8 @@ describe('token contrast gate (CI)', () => {
 
 describe('resolveSemanticColors', () => {
   it('uses the dark extension only in dark theme', () => {
-    expect(resolveSemanticColors('light').get('bg.brand')).toBe('#154f37');
-    expect(resolveSemanticColors('dark').get('bg.brand')).toBe('#43966e');
+    expect(resolveSemanticColors('light').get('bg.brand')).toBe('#0e4d35');
+    expect(resolveSemanticColors('dark').get('bg.brand')).toBe('#3f9d68');
   });
 
   it('resolves every semantic colour in both themes', () => {

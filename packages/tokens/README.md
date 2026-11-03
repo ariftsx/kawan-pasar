@@ -11,7 +11,8 @@ Sumber tunggal design token Kawan Pasar (format [DTCG](https://www.designtokens.
 Dark mode ditulis di `$extensions["kp.theme"].dark` pada token yang sama, jadi Light dan Dark selalu bergerak bersama.
 
 - **Ukuran huruf** (`font-size`, `line-height`) disetel untuk pembaca lanjut usia: teks utama 18 px (`text-base`) dan tidak ada teks di bawah 14 px (`text-xs`). Nilainya dalam `rem`, jadi pengaturan ukuran teks di browser tetap berlaku. Nama kelas Tailwind tetap `text-xs` … `text-4xl`.
-- **Ilustrasi** (`color.illustration.*`) adalah palet maskot Si Bakul dan gambar langkah (bambu, beras, cabai, bawang merah). Warnanya dekoratif dan sama di Light dan Dark agar maskot tetap dikenali.
+- **Ilustrasi** (`color.illustration.*`) adalah palet maskot Kapa, logo, ikon komoditas, dan ilustrasi v0.4. Warnanya dekoratif dan sama di Light dan Dark agar maskot tetap dikenali.
+- **Aksen** (`color.accent.*`) memberi warna peran v0.4: ungu untuk prediksi, kunyit untuk sorotan dan Kata Kapa, cabai untuk kenaikan, dan hijau tua untuk permukaan merek.
 
 ## Output build (`pnpm --filter @kawan-pasar/tokens build`)
 
