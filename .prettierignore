@@ -1,0 +1,6 @@
+pnpm-lock.yaml
+figcraft-Kawan_Pasar/
+data/
+**/migrations/meta/
+*.pdf
+services/**/.venv/

@@ -1,0 +1,13 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Only these packages may run install scripts (native binaries). Everything else stays blocked.
+allowBuilds:
+  '@swc/core': true
+  esbuild: true
+
+# Security overrides (pnpm audit). Each one is documented in docs/security/dependensi.md.
+overrides:
+  'minimatch@>=7.0.0 <11.0.1': 11.0.4
+  '@esbuild-kit/core-utils>esbuild': 0.25.12

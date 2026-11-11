@@ -1,0 +1,15 @@
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/coverage
+**/.venv
+**/__pycache__
+.git
+.env
+.env.*
+!.env.example
+data
+docs
+figcraft-Kawan_Pasar
+*.pdf

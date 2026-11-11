@@ -1,0 +1,46 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build & cache
+.turbo/
+dist/
+.next/
+coverage/
+*.tsbuildinfo
+
+# env
+.env
+.env.*
+!.env.example
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+
+# misc
+*.log
+.DS_Store
+Thumbs.db
+
+# laporan
+Laporan_CP_Kawan_Pasar_v04.pdf
+
+# design & prototype
+.figma
+.github/design
+.github/prototype
+# prototipe FigCraft disimpan di luar repo (keputusan pemilik, 12 Nov 2026)
+figcraft-Kawan_Pasar/
+
+# audit log
+.audit/
+
+# dataset tim tidak di-commit (keputusan pemilik, 12 Nov 2026); lihat data/README.md
+data/*
+!data/README.md

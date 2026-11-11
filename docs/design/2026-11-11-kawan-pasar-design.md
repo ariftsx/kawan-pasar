@@ -5,6 +5,7 @@
 - Acuan: `Laporan_CP_Kawan_Pasar_v04.pdf` (laporan), `figcraft-Kawan_Pasar/` (prototipe v0.4), `data/seed/prices_combined.csv` (dataset)
 
 Penanda keputusan di dokumen ini:
+
 - **[Pemilik]**: diputuskan pemilik produk dalam diskusi 11 Nov 2026.
 - **[Laporan]**: sudah ditetapkan laporan v04 dan dipertahankan.
 - **[Usulan]**: keputusan perancang yang masih boleh diganti pemilik.
@@ -20,6 +21,7 @@ Prototipe v0.4 sudah dinyatakan siap diimplementasikan ulang, dan seluruh basis 
 ## 2. Tujuan, non-tujuan, anti-tujuan
 
 **Tujuan**
+
 1. Semua halaman publik v0.4 berjalan dengan data nyata dari dataset tim, responsif dari lebar 360 px sampai desktop 1280+.
 2. Sistem tahan beban: halaman publik tetap cepat saat diakses banyak pengguna serentak, dan database tidak menjadi titik jenuh.
 3. Keamanan berlapis sejak fondasi, tidak ditambal belakangan (lihat §9).
@@ -28,6 +30,7 @@ Prototipe v0.4 sudah dinyatakan siap diimplementasikan ulang, dan seluruh basis 
 6. Setiap fase ditutup dengan audit dan simulasi pengguna akhir sebelum lanjut ke fase berikutnya.
 
 **Non-tujuan (di luar lingkup sekarang)**
+
 - Mengembangkan model ARIF-Net. `services/model-arifnet/` hanya berisi struktur direktori, README kontrak, dan placeholder [Pemilik].
 - Apache Airflow, IndoBERT, dan pipeline sentimen (milik anggota tim lain).
 - Penerapan produksi (Docker Swarm, Cloudflare Tunnel, domain). Semuanya **lokal** dulu [Pemilik], tetapi konfigurasi dibuat agar mudah dipindah ke produksi.
@@ -35,6 +38,7 @@ Prototipe v0.4 sudah dinyatakan siap diimplementasikan ulang, dan seluruh basis 
 - Evaluasi SUS (Tugas Akhir).
 
 **Anti-tujuan (dianggap gagal walaupun "jalan")**
+
 - Prediksi tampil tanpa versi model, versi data, dan batas data. Nilai tidak diketahui tampil sebagai 0.
 - Bahasa kausal ("harga naik karena…") atau rekomendasi beli/jual.
 - Halaman publik memicu query DB per pengunjung, atau N+1 query.
@@ -57,23 +61,23 @@ Prototipe v0.4 sudah dinyatakan siap diimplementasikan ulang, dan seluruh basis 
 
 ## 4. Keputusan yang sudah diambil
 
-| Topik | Keputusan | Sumber |
-|---|---|---|
-| Frontend | Next.js 16 App Router, React 19, Tailwind CSS 4, juga berperan sebagai BFF | Pemilik + Laporan |
-| Backend | NestJS 12 (Core API + worker) | Pemilik + Laporan |
-| Database | PostgreSQL 18 | Pemilik |
-| Cache/antrean | **Valkey 9** (protokol kompatibel Redis) | Pemilik |
-| ORM | Drizzle ORM | Laporan |
-| Antrean pekerjaan | BullMQ di atas Valkey | Laporan |
-| Login | **Email + kata sandi** (fase akun) | Pemilik |
-| Ingest harga | **Layanan Python terpisah** (`services/ingest`) | Pemilik |
-| Data awal | CSV tim `data/seed/prices_combined.csv` | Pemilik |
-| Dua komoditas tanpa data | Kartu tetap tampil, harga "—", status "Data belum tersedia" | Pemilik |
-| Pendekatan | Bertahap; Fase 1 = fondasi + seluruh halaman publik | Pemilik |
-| Basis kode | Mulai dari nol | Pemilik |
-| Monorepo | pnpm workspaces + Turborepo | Laporan |
-| TypeScript | **6.0.x**, bukan 7.0 (typescript-eslint 8 hanya mendukung TS <6.1 dan NestJS CLI 12 mengunci ~6.0) | Usulan, berdasar cek kompatibilitas |
-| Reverse proxy lokal | Traefik v3 di Docker Compose | Usulan (Laporan memakai Traefik di produksi) |
+| Topik                    | Keputusan                                                                                          | Sumber                                       |
+| ------------------------ | -------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Frontend                 | Next.js 16 App Router, React 19, Tailwind CSS 4, juga berperan sebagai BFF                         | Pemilik + Laporan                            |
+| Backend                  | NestJS 12 (Core API + worker)                                                                      | Pemilik + Laporan                            |
+| Database                 | PostgreSQL 18                                                                                      | Pemilik                                      |
+| Cache/antrean            | **Valkey 9** (protokol kompatibel Redis)                                                           | Pemilik                                      |
+| ORM                      | Drizzle ORM                                                                                        | Laporan                                      |
+| Antrean pekerjaan        | BullMQ di atas Valkey                                                                              | Laporan                                      |
+| Login                    | **Email + kata sandi** (fase akun)                                                                 | Pemilik                                      |
+| Ingest harga             | **Layanan Python terpisah** (`services/ingest`)                                                    | Pemilik                                      |
+| Data awal                | CSV tim `data/seed/prices_combined.csv`                                                            | Pemilik                                      |
+| Dua komoditas tanpa data | Kartu tetap tampil, harga "—", status "Data belum tersedia"                                        | Pemilik                                      |
+| Pendekatan               | Bertahap; Fase 1 = fondasi + seluruh halaman publik                                                | Pemilik                                      |
+| Basis kode               | Mulai dari nol                                                                                     | Pemilik                                      |
+| Monorepo                 | pnpm workspaces + Turborepo                                                                        | Laporan                                      |
+| TypeScript               | **6.0.x**, bukan 7.0 (typescript-eslint 8 hanya mendukung TS <6.1 dan NestJS CLI 12 mengunci ~6.0) | Usulan, berdasar cek kompatibilitas          |
+| Reverse proxy lokal      | Traefik v3 di Docker Compose                                                                       | Usulan (Laporan memakai Traefik di produksi) |
 
 ## 5. Fakta dataset (hasil audit 11 Nov 2026)
 
@@ -180,6 +184,7 @@ kawan-pasar/                     (= folder "D:\.Capstone dan TA\Kawan Pasar")
 ## 8. Model data
 
 ### Fase 1
+
 - `markets`: `id`, `code` (unik, mis. `PIKJ`), `name`, `city`, `status` (`available` | `coming_soon`). Diisi Pasar Kramat Jati (available); Pasar Senen, Pasar Induk Tanah Tinggi, Pasar Bekasi (coming_soon, sesuai layar Pilih Pasar di prototipe).
 - `commodities`: `id`, `code`, `name`, `source_ref` (mis. `com_14`, nullable), `unit` (`kg`), `model_coverage` (`covered` | `pending`), `sort_order`. Lima komoditas sesuai laporan; rawit hijau dan rawit merah `pending` tanpa `source_ref`.
 - `price_observations`: `id`, `market_id`, `commodity_id`, `observed_on` (date), `price_idr` (integer rupiah, NOT NULL; observasi yang tidak ada = tidak ada baris), `source` (`seed_csv` | `pihps`), `ingest_run_id`, `created_at`. Unik (market, commodity, observed_on). Harga dalam **integer rupiah**, bukan float.
@@ -189,28 +194,29 @@ kawan-pasar/                     (= folder "D:\.Capstone dan TA\Kawan Pasar")
 - `articles`: `id`, `slug`, `category` (`dasar` | `prediksi` | `arif-net` | `keterbatasan`), `title`, `summary`, `body_md`, `reading_minutes`, `published_at`, `updated_at`. Konten awal diambil dari salinan teks prototipe.
 
 ### Fase berikutnya (garis besar, didetailkan di desain fasenya)
+
 `users` (email unik, `password_hash` Argon2id, `role`), `sessions` (disimpan di Valkey, rekam audit di DB), `alert_subscriptions`, `notifications`, `whatsapp_channels` (nomor terenkripsi di tingkat kolom), `analyst_requests`, `audit_log`.
 
 ## 9. Keamanan
 
 Disusun mengikuti OWASP Top 10 (2025) dan ASVS level 2 sebagai daftar periksa.
 
-| Ancaman | Penanganan |
-|---|---|
-| Injeksi (SQL/command) | Hanya query terparameterisasi Drizzle; SQL mentah wajib `sql\`\`` bertemplat; tidak ada eksekusi shell dari input |
-| Validasi input | **Validasi ganda** dari satu sumber skema `packages/contracts`: di Next.js (form, Server Actions, Route Handlers) dan di NestJS (`ZodValidationPipe` global). Mode `strict` (properti asing ditolak), batas panjang string, enum horizon tertutup, rentang tanggal terbatas |
-| XSS | React escaping; konten artikel Markdown dirender ke whitelist elemen (sanitasi), tanpa `dangerouslySetInnerHTML` mentah; CSP ketat ber-nonce (`script-src 'self' 'nonce-…' 'strict-dynamic'`, `object-src 'none'`, `base-uri 'none'`, `frame-ancestors 'none'`) |
-| CSRF | Fase akun: cookie sesi `HttpOnly; Secure; SameSite=Lax`, prefiks `__Host-`, ditambah pemeriksaan Origin untuk Server Actions dan token CSRF untuk mutasi |
+| Ancaman                 | Penanganan                                                                                                                                                                                                                                                                                                                                              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Injeksi (SQL/command)   | Hanya query terparameterisasi Drizzle; SQL mentah wajib `sql\`\`` bertemplat; tidak ada eksekusi shell dari input                                                                                                                                                                                                                                       |
+| Validasi input          | **Validasi ganda** dari satu sumber skema `packages/contracts`: di Next.js (form, Server Actions, Route Handlers) dan di NestJS (`ZodValidationPipe` global). Mode `strict` (properti asing ditolak), batas panjang string, enum horizon tertutup, rentang tanggal terbatas                                                                             |
+| XSS                     | React escaping; konten artikel Markdown dirender ke whitelist elemen (sanitasi), tanpa `dangerouslySetInnerHTML` mentah; CSP ketat ber-nonce (`script-src 'self' 'nonce-…' 'strict-dynamic'`, `object-src 'none'`, `base-uri 'none'`, `frame-ancestors 'none'`)                                                                                         |
+| CSRF                    | Fase akun: cookie sesi `HttpOnly; Secure; SameSite=Lax`, prefiks `__Host-`, ditambah pemeriksaan Origin untuk Server Actions dan token CSRF untuk mutasi                                                                                                                                                                                                |
 | Autentikasi (fase akun) | Argon2id (parameter OWASP), kebijakan kata sandi panjang minimal 12 + cek daftar kata sandi bocor (offline), rate limit login per IP dan per akun, lockout bertahap, pesan galat generik (tidak membocorkan keberadaan email), rotasi sesi setelah login, sesi dapat dicabut, reset kata sandi dengan token sekali pakai berumur pendek (di-hash di DB) |
-| Kontrol akses | Default-deny; guard peran di NestJS; `api` menolak permintaan tanpa token layanan dari `web` |
-| Layanan model | Internal-only; HMAC-SHA256 atas metode + path + timestamp + hash body; toleransi 60 detik; nonce anti-replay di Valkey |
-| DoS / beban | Rate limit berlapis (Traefik per IP → NestJS Throttler berbasis Valkey per rute); batas ukuran body; timeout di setiap hop; pool koneksi terbatas; `statement_timeout`; cache publik melindungi DB |
-| Header | HSTS (produksi), `X-Content-Type-Options`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` minimal, `Cross-Origin-Opener-Policy`; header `X-Powered-By` dimatikan |
-| Rahasia | `.env` tidak di-commit; `.env.example` tanpa nilai; validasi env saat startup (gagal cepat); rahasia berbeda per layanan |
-| Dependensi | Lockfile; `pnpm audit` dan `uv` audit di gerbang mutu; versi dipin; image Docker non-root, minimal, read-only filesystem bila memungkinkan |
-| Logging | Log terstruktur (pino), ID korelasi per permintaan, **tanpa** kata sandi/token/nomor WA/email mentah; galat ke klien generik, detail hanya di log |
-| Integritas bundel | Checksum SHA-256 dan validasi skema sebelum promosi; bundel gagal → `rejected`, bundel aktif tidak berubah |
-| Privasi (UU PDP) | Data minimum; hak hapus akun; enkripsi kolom untuk nomor WA; retensi log terbatas |
+| Kontrol akses           | Default-deny; guard peran di NestJS; `api` menolak permintaan tanpa token layanan dari `web`                                                                                                                                                                                                                                                            |
+| Layanan model           | Internal-only; HMAC-SHA256 atas metode + path + timestamp + hash body; toleransi 60 detik; nonce anti-replay di Valkey                                                                                                                                                                                                                                  |
+| DoS / beban             | Rate limit berlapis (Traefik per IP → NestJS Throttler berbasis Valkey per rute); batas ukuran body; timeout di setiap hop; pool koneksi terbatas; `statement_timeout`; cache publik melindungi DB                                                                                                                                                      |
+| Header                  | HSTS (produksi), `X-Content-Type-Options`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` minimal, `Cross-Origin-Opener-Policy`; header `X-Powered-By` dimatikan                                                                                                                                                              |
+| Rahasia                 | `.env` tidak di-commit; `.env.example` tanpa nilai; validasi env saat startup (gagal cepat); rahasia berbeda per layanan                                                                                                                                                                                                                                |
+| Dependensi              | Lockfile; `pnpm audit` dan `uv` audit di gerbang mutu; versi dipin; image Docker non-root, minimal, read-only filesystem bila memungkinkan                                                                                                                                                                                                              |
+| Logging                 | Log terstruktur (pino), ID korelasi per permintaan, **tanpa** kata sandi/token/nomor WA/email mentah; galat ke klien generik, detail hanya di log                                                                                                                                                                                                       |
+| Integritas bundel       | Checksum SHA-256 dan validasi skema sebelum promosi; bundel gagal → `rejected`, bundel aktif tidak berubah                                                                                                                                                                                                                                              |
+| Privasi (UU PDP)        | Data minimum; hak hapus akun; enkripsi kolom untuk nomor WA; retensi log terbatas                                                                                                                                                                                                                                                                       |
 
 ## 10. Frontend
 
@@ -245,6 +251,7 @@ Disusun mengikuti OWASP Top 10 (2025) dan ASVS level 2 sebagai daftar periksa.
 ## 12. Layanan pendukung
 
 **`services/ingest` (Python, uv, Python 3.14)**
+
 - Fase 1: perintah `import-csv` yang membaca `data/seed/prices_combined.csv`, memvalidasi (pydantic: tanggal valid, harga > 0 dan wajar, komoditas dikenal lewat katalog), memetakan `comcat_id` → komoditas, lalu upsert idempoten (`ON CONFLICT DO NOTHING`). Hasilnya dicatat di `ingest_runs`, kemudian memicu refresh materialized view dan invalidasi cache.
 - Disiapkan antarmuka adapter `PriceSource` agar adapter PIHPS bisa ditambahkan tanpa mengubah alur. Adapter PIHPS sendiri **bukan** bagian Fase 1.
 - Menulis langsung ke Postgres dengan role `ingest_w`, yang hanya punya hak INSERT pada `price_observations` dan `ingest_runs`.
@@ -277,40 +284,40 @@ Setiap keputusan teknis dicatat sebagai ADR (konteks → opsi beserta kelebihan/
 
 ## 14. Rencana fase
 
-| Fase | Isi | Gerbang |
-|---|---|---|
-| 0 | Dokumentasi dasar, kerangka monorepo, tooling (TS strict, ESLint, Prettier, Turborepo), Docker Compose (Traefik, Postgres+PgBouncer, Valkey), skema DB + migrasi, ingest CSV, kerangka `model-arifnet` | Audit Fase 0 |
-| 1 | Paket tokens/catalog/contracts, Core API publik + cache, Next.js shell + seluruh komponen atomik + brand + animasi Kapa, semua halaman publik + 6 status, bundel demo | Audit Fase 1 + simulasi pengguna + uji beban |
-| 2 | Akun (email + kata sandi), Peringatan, notifikasi dalam aplikasi, ringkasan mingguan, WhatsApp (adapter tiruan lokal) | Audit Fase 2 |
-| 3 | Mode Analis (unduh CSV/PNG), Admin (persetujuan peran, pemantauan ingest/artefak, konten) | Audit Fase 3 |
-| 4 | Adapter ingest PIHPS, integrasi layanan model saat ARIF-Net siap | Audit Fase 4 |
+| Fase | Isi                                                                                                                                                                                                    | Gerbang                                      |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| 0    | Dokumentasi dasar, kerangka monorepo, tooling (TS strict, ESLint, Prettier, Turborepo), Docker Compose (Traefik, Postgres+PgBouncer, Valkey), skema DB + migrasi, ingest CSV, kerangka `model-arifnet` | Audit Fase 0                                 |
+| 1    | Paket tokens/catalog/contracts, Core API publik + cache, Next.js shell + seluruh komponen atomik + brand + animasi Kapa, semua halaman publik + 6 status, bundel demo                                  | Audit Fase 1 + simulasi pengguna + uji beban |
+| 2    | Akun (email + kata sandi), Peringatan, notifikasi dalam aplikasi, ringkasan mingguan, WhatsApp (adapter tiruan lokal)                                                                                  | Audit Fase 2                                 |
+| 3    | Mode Analis (unduh CSV/PNG), Admin (persetujuan peran, pemantauan ingest/artefak, konten)                                                                                                              | Audit Fase 3                                 |
+| 4    | Adapter ingest PIHPS, integrasi layanan model saat ARIF-Net siap                                                                                                                                       | Audit Fase 4                                 |
 
 Setiap fase punya rencana implementasi sendiri di `docs/plans/` sebelum dikerjakan.
 
 ## 15. Matriks versi (dicek 11 Nov 2026 dari registry)
 
-| Package | Versi | Catatan |
-|---|---|---|
-| Node.js | 24 LTS (lokal 24.11) | |
-| pnpm | 11.x | |
-| TypeScript | 6.0.3 | TS 7.0.2 belum kompatibel dengan typescript-eslint 8 / NestJS CLI 12 |
-| Next.js | 16.4.x | |
-| React / React DOM | 19.3.x | |
-| Tailwind CSS | 4.3.x | |
-| NestJS core / CLI | 12.4.x / 12.0.x | |
-| Drizzle ORM / Kit | 0.45.x / 0.31.x | driver `pg` 8.23 |
-| Zod | 4.6.x | |
-| BullMQ | 6.7.x | klien ioredis kompatibel Valkey |
-| Vitest | 5.1.x | |
-| Playwright / axe | 1.65.x / 4.14.x | |
-| ESLint / typescript-eslint | 10.x / 8.72.x | |
-| pino / nestjs-pino | 10.x / 5.x | |
-| Argon2 | @node-rs/argon2 2.2.x | fase akun |
-| PostgreSQL | 18 (alpine) | |
-| Valkey | 9 (alpine) | |
-| Traefik | v3 | |
-| Python / uv | 3.14 / 0.13 | |
-| FastAPI | 0.162.x | hanya dideklarasikan |
+| Package                    | Versi                 | Catatan                                                              |
+| -------------------------- | --------------------- | -------------------------------------------------------------------- |
+| Node.js                    | 24 LTS (lokal 24.11)  |                                                                      |
+| pnpm                       | 11.x                  |                                                                      |
+| TypeScript                 | 6.0.3                 | TS 7.0.2 belum kompatibel dengan typescript-eslint 8 / NestJS CLI 12 |
+| Next.js                    | 16.4.x                |                                                                      |
+| React / React DOM          | 19.3.x                |                                                                      |
+| Tailwind CSS               | 4.3.x                 |                                                                      |
+| NestJS core / CLI          | 12.4.x / 12.0.x       |                                                                      |
+| Drizzle ORM / Kit          | 0.45.x / 0.31.x       | driver `pg` 8.23                                                     |
+| Zod                        | 4.6.x                 |                                                                      |
+| BullMQ                     | 6.7.x                 | klien ioredis kompatibel Valkey                                      |
+| Vitest                     | 5.1.x                 |                                                                      |
+| Playwright / axe           | 1.65.x / 4.14.x       |                                                                      |
+| ESLint / typescript-eslint | 10.x / 8.72.x         |                                                                      |
+| pino / nestjs-pino         | 10.x / 5.x            |                                                                      |
+| Argon2                     | @node-rs/argon2 2.2.x | fase akun                                                            |
+| PostgreSQL                 | 18 (alpine)           |                                                                      |
+| Valkey                     | 9 (alpine)            |                                                                      |
+| Traefik                    | v3                    |                                                                      |
+| Python / uv                | 3.14 / 0.13           |                                                                      |
+| FastAPI                    | 0.162.x               | hanya dideklarasikan                                                 |
 
 Versi dipin tepat di lockfile. Setiap peningkatan versi besar wajib lolos cek kompatibilitas peer dependency.
 

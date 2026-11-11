@@ -1,0 +1,7 @@
+* text=auto eol=lf
+*.png binary
+*.ttf binary
+*.pdf binary
+*.figcraft binary
+# CRLF/BOM fixtures must stay byte-exact
+services/ingest/tests/fixtures/*.csv -text
