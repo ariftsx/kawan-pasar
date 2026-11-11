@@ -1,0 +1,12 @@
+# Placeholder only — this service is NOT developed yet (see README.md).
+[project]
+name = "kp-model"
+version = "0.0.0"
+description = "Kawan Pasar model service: serves versioned ARIF-Net forecast bundles (not developed yet)"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    "fastapi>=0.162",
+]
+
+[tool.uv]
+exclude-newer = "2026-11-04T00:00:00Z"

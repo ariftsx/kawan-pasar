@@ -1,0 +1,4 @@
+# Bundles are delivered by the modelling pipeline, never committed.
+*
+!.gitkeep
+!.gitignore
