@@ -1,0 +1,93 @@
+import json
+from pathlib import Path
+
+import psycopg
+import pytest
+
+from kp_ingest.__main__ import main
+
+FIXTURES = Path(__file__).parent / "fixtures"
+
+
+def test_import_csv_prints_a_json_summary(
+    ingest_url: str,
+    owner_conn: psycopg.Connection,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setenv("INGEST_DATABASE_URL", ingest_url)
+    code = main(["import-csv", "--file", str(FIXTURES / "small.csv")])
+    out = capsys.readouterr().out
+    assert code == 0
+    summary = json.loads(out)
+    assert summary["status"] == "succeeded"
+    assert summary["inserted"] == 10
+    assert "postgres://" not in out
+
+
+def test_partial_import_exits_with_code_2(
+    ingest_url: str,
+    owner_conn: psycopg.Connection,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setenv("INGEST_DATABASE_URL", ingest_url)
+    assert main(["import-csv", "--file", str(FIXTURES / "bad_rows.csv")]) == 2
+    assert json.loads(capsys.readouterr().out)["rejected"] == 6
+
+
+def test_missing_database_url_is_reported_by_name(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.delenv("INGEST_DATABASE_URL", raising=False)
+    assert main(["import-csv", "--file", str(FIXTURES / "small.csv")]) == 1
+    assert "INGEST_DATABASE_URL" in capsys.readouterr().err
+
+
+def test_missing_file_is_reported(
+    ingest_url: str, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("INGEST_DATABASE_URL", ingest_url)
+    assert main(["import-csv", "--file", str(FIXTURES / "nope.csv")]) == 1
+    assert "nope.csv" in capsys.readouterr().err
+
+
+def test_unknown_market_fails_without_leaking_the_connection_url(
+    ingest_url: str,
+    owner_conn: psycopg.Connection,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setenv("INGEST_DATABASE_URL", ingest_url)
+    assert main(["import-csv", "--file", str(FIXTURES / "small.csv"), "--market", "XXXX"]) == 1
+    captured = capsys.readouterr()
+    assert "ValueError" in captured.err
+    assert "postgres://" not in captured.err + captured.out
+
+
+def test_connection_uses_a_timeout_so_it_never_hangs(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    seen: dict[str, object] = {}
+
+    def fake_connect(url: str, **kwargs: object) -> None:
+        seen.update(kwargs)
+        raise psycopg.OperationalError("unreachable")
+
+    monkeypatch.setenv("INGEST_DATABASE_URL", "postgres://u:secret@127.0.0.1:1/db")
+    monkeypatch.setattr("kp_ingest.__main__.psycopg.connect", fake_connect)
+    assert main(["import-csv", "--file", str(FIXTURES / "small.csv")]) == 1
+    assert seen.get("connect_timeout") == 10
+    assert "secret" not in capsys.readouterr().err
+
+
+def test_a_bad_header_is_explained_to_the_operator(
+    ingest_url: str,
+    owner_conn: psycopg.Connection,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setenv("INGEST_DATABASE_URL", ingest_url)
+    assert main(["import-csv", "--file", str(FIXTURES / "bad_header.csv")]) == 1
+    captured = capsys.readouterr()
+    assert "comcat_id" in captured.out + captured.err
