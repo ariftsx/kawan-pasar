@@ -1,0 +1,801 @@
+{
+  "id": "7c1ac373-e787-430e-92ee-879c85f1bbc9",
+  "prevId": "e5c67ee8-2679-4939-858b-b91e7de550d0",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.articles": {
+      "name": "articles",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "name": "articles_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public",
+            "type": "always"
+          }
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "article_category",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary": {
+          "name": "summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "body_md": {
+          "name": "body_md",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reading_minutes": {
+          "name": "reading_minutes",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "articles_slug_unique": {
+          "name": "articles_slug_unique",
+          "columns": ["slug"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "articles_slug_format": {
+          "name": "articles_slug_format",
+          "value": "\"articles\".\"slug\" ~ '^[a-z0-9]+(-[a-z0-9]+)*$'"
+        },
+        "articles_reading_minutes_positive": {
+          "name": "articles_reading_minutes_positive",
+          "value": "\"articles\".\"reading_minutes\" > 0"
+        },
+        "articles_body_size": {
+          "name": "articles_body_size",
+          "value": "length(\"articles\".\"body_md\") <= 100000"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.commodities": {
+      "name": "commodities",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "smallint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "name": "commodities_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "32767",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public",
+            "type": "always"
+          }
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_ref": {
+          "name": "source_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "unit": {
+          "name": "unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'kg'"
+        },
+        "model_coverage": {
+          "name": "model_coverage",
+          "type": "model_coverage",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "commodities_code_unique": {
+          "name": "commodities_code_unique",
+          "columns": ["code"],
+          "nullsNotDistinct": false
+        },
+        "commodities_sourceRef_unique": {
+          "name": "commodities_sourceRef_unique",
+          "columns": ["source_ref"],
+          "nullsNotDistinct": false
+        },
+        "commodities_sortOrder_unique": {
+          "name": "commodities_sortOrder_unique",
+          "columns": ["sort_order"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "commodities_code_format": {
+          "name": "commodities_code_format",
+          "value": "\"commodities\".\"code\" ~ '^[a-z0-9]+(-[a-z0-9]+)*$'"
+        },
+        "commodities_unit_kg": {
+          "name": "commodities_unit_kg",
+          "value": "\"commodities\".\"unit\" = 'kg'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.forecast_artifacts": {
+      "name": "forecast_artifacts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "name": "forecast_artifacts_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public",
+            "type": "always"
+          }
+        },
+        "bundle_id": {
+          "name": "bundle_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model_name": {
+          "name": "model_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model_version": {
+          "name": "model_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data_version": {
+          "name": "data_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "preprocess_version": {
+          "name": "preprocess_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data_cutoff": {
+          "name": "data_cutoff",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issued_at": {
+          "name": "issued_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "checksum_sha256": {
+          "name": "checksum_sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "artifact_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "is_demo": {
+          "name": "is_demo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "forecast_artifacts_one_active_per_model": {
+          "name": "forecast_artifacts_one_active_per_model",
+          "columns": [
+            {
+              "expression": "model_name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"forecast_artifacts\".\"status\" = 'active'",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "forecast_artifacts_bundleId_unique": {
+          "name": "forecast_artifacts_bundleId_unique",
+          "columns": ["bundle_id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "forecast_artifacts_checksum_hex": {
+          "name": "forecast_artifacts_checksum_hex",
+          "value": "\"forecast_artifacts\".\"checksum_sha256\" ~ '^[0-9a-f]{64}$'"
+        },
+        "forecast_artifacts_versions_present": {
+          "name": "forecast_artifacts_versions_present",
+          "value": "length(\"forecast_artifacts\".\"model_version\") > 0 AND length(\"forecast_artifacts\".\"data_version\") > 0 AND length(\"forecast_artifacts\".\"preprocess_version\") > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.forecasts": {
+      "name": "forecasts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "name": "forecasts_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public",
+            "type": "always"
+          }
+        },
+        "artifact_id": {
+          "name": "artifact_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "market_id": {
+          "name": "market_id",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "commodity_id": {
+          "name": "commodity_id",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "base_date": {
+          "name": "base_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "horizon_days": {
+          "name": "horizon_days",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "q10_change": {
+          "name": "q10_change",
+          "type": "numeric(9, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "q50_change": {
+          "name": "q50_change",
+          "type": "numeric(9, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "q90_change": {
+          "name": "q90_change",
+          "type": "numeric(9, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "q10_price_idr": {
+          "name": "q10_price_idr",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "q50_price_idr": {
+          "name": "q50_price_idr",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "q90_price_idr": {
+          "name": "q90_price_idr",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "eval_status": {
+          "name": "eval_status",
+          "type": "eval_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "forecasts_artifact_id_forecast_artifacts_id_fk": {
+          "name": "forecasts_artifact_id_forecast_artifacts_id_fk",
+          "tableFrom": "forecasts",
+          "columnsFrom": ["artifact_id"],
+          "tableTo": "forecast_artifacts",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "forecasts_market_id_markets_id_fk": {
+          "name": "forecasts_market_id_markets_id_fk",
+          "tableFrom": "forecasts",
+          "columnsFrom": ["market_id"],
+          "tableTo": "markets",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "forecasts_commodity_id_commodities_id_fk": {
+          "name": "forecasts_commodity_id_commodities_id_fk",
+          "tableFrom": "forecasts",
+          "columnsFrom": ["commodity_id"],
+          "tableTo": "commodities",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "forecasts_artifact_market_commodity_horizon": {
+          "name": "forecasts_artifact_market_commodity_horizon",
+          "columns": ["artifact_id", "market_id", "commodity_id", "horizon_days"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "forecasts_horizon_allowed": {
+          "name": "forecasts_horizon_allowed",
+          "value": "\"forecasts\".\"horizon_days\" IN (1, 3, 7, 14, 30, 90, 180, 365)"
+        },
+        "forecasts_change_monotonic": {
+          "name": "forecasts_change_monotonic",
+          "value": "\"forecasts\".\"q10_change\" <= \"forecasts\".\"q50_change\" AND \"forecasts\".\"q50_change\" <= \"forecasts\".\"q90_change\""
+        },
+        "forecasts_price_monotonic": {
+          "name": "forecasts_price_monotonic",
+          "value": "\"forecasts\".\"q10_price_idr\" <= \"forecasts\".\"q50_price_idr\" AND \"forecasts\".\"q50_price_idr\" <= \"forecasts\".\"q90_price_idr\""
+        },
+        "forecasts_price_positive": {
+          "name": "forecasts_price_positive",
+          "value": "\"forecasts\".\"q10_price_idr\" > 0 AND \"forecasts\".\"q50_price_idr\" > 0 AND \"forecasts\".\"q90_price_idr\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.ingest_runs": {
+      "name": "ingest_runs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "name": "ingest_runs_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public",
+            "type": "always"
+          }
+        },
+        "source": {
+          "name": "source",
+          "type": "price_source",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "finished_at": {
+          "name": "finished_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "ingest_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rows_inserted": {
+          "name": "rows_inserted",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "rows_skipped": {
+          "name": "rows_skipped",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "rows_rejected": {
+          "name": "rows_rejected",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "error": {
+          "name": "error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "ingest_runs_counts_non_negative": {
+          "name": "ingest_runs_counts_non_negative",
+          "value": "\"ingest_runs\".\"rows_inserted\" >= 0 AND \"ingest_runs\".\"rows_skipped\" >= 0 AND \"ingest_runs\".\"rows_rejected\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.markets": {
+      "name": "markets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "smallint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "name": "markets_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "32767",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public",
+            "type": "always"
+          }
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "city": {
+          "name": "city",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "market_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "markets_code_unique": {
+          "name": "markets_code_unique",
+          "columns": ["code"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "markets_code_format": {
+          "name": "markets_code_format",
+          "value": "\"markets\".\"code\" ~ '^[A-Z]{4}$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.price_observations": {
+      "name": "price_observations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "name": "price_observations_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public",
+            "type": "always"
+          }
+        },
+        "market_id": {
+          "name": "market_id",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "commodity_id": {
+          "name": "commodity_id",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "observed_on": {
+          "name": "observed_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price_idr": {
+          "name": "price_idr",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "price_source",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ingest_run_id": {
+          "name": "ingest_run_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "price_observations_market_id_markets_id_fk": {
+          "name": "price_observations_market_id_markets_id_fk",
+          "tableFrom": "price_observations",
+          "columnsFrom": ["market_id"],
+          "tableTo": "markets",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "price_observations_commodity_id_commodities_id_fk": {
+          "name": "price_observations_commodity_id_commodities_id_fk",
+          "tableFrom": "price_observations",
+          "columnsFrom": ["commodity_id"],
+          "tableTo": "commodities",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "price_observations_ingest_run_id_ingest_runs_id_fk": {
+          "name": "price_observations_ingest_run_id_ingest_runs_id_fk",
+          "tableFrom": "price_observations",
+          "columnsFrom": ["ingest_run_id"],
+          "tableTo": "ingest_runs",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "price_observations_market_commodity_day": {
+          "name": "price_observations_market_commodity_day",
+          "columns": ["market_id", "commodity_id", "observed_on"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "price_observations_price_positive": {
+          "name": "price_observations_price_positive",
+          "value": "\"price_observations\".\"price_idr\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.article_category": {
+      "name": "article_category",
+      "schema": "public",
+      "values": ["dasar", "prediksi", "arif-net", "keterbatasan"]
+    },
+    "public.artifact_status": {
+      "name": "artifact_status",
+      "schema": "public",
+      "values": ["pending", "active", "retired", "rejected"]
+    },
+    "public.eval_status": {
+      "name": "eval_status",
+      "schema": "public",
+      "values": ["available", "partial", "not_tested"]
+    },
+    "public.ingest_status": {
+      "name": "ingest_status",
+      "schema": "public",
+      "values": ["running", "succeeded", "partial", "failed"]
+    },
+    "public.market_status": {
+      "name": "market_status",
+      "schema": "public",
+      "values": ["available", "coming_soon"]
+    },
+    "public.model_coverage": {
+      "name": "model_coverage",
+      "schema": "public",
+      "values": ["covered", "pending"]
+    },
+    "public.price_source": {
+      "name": "price_source",
+      "schema": "public",
+      "values": ["seed_csv", "pihps"]
+    }
+  },
+  "schemas": {},
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
