@@ -1,0 +1,24 @@
+# Dev-only overlay: exposes internal services on the loopback interface for local
+# tooling (migrations, tests, DB clients). Never used outside a developer machine.
+# The backend network is internal, so these services also join a dev network
+# that is allowed to publish ports.
+networks:
+  devtools:
+    name: kp-devtools
+
+services:
+  postgres:
+    ports: ['127.0.0.1:15432:5432']
+    networks: [backend, devtools]
+  pgbouncer:
+    ports: ['127.0.0.1:16432:6432']
+    networks: [backend, devtools]
+  valkey-cache:
+    ports: ['127.0.0.1:16379:6379']
+    networks: [backend, devtools]
+  valkey-queue:
+    ports: ['127.0.0.1:16380:6379']
+    networks: [backend, devtools]
+  api:
+    ports: ['127.0.0.1:3001:3001']
+    networks: [backend, devtools]

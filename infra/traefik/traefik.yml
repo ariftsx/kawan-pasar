@@ -1,0 +1,44 @@
+# Traefik static configuration (local). Routes come from the file provider only:
+# the Docker socket is deliberately NOT mounted (socket access = host root).
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+entryPoints:
+  web:
+    address: ':80'
+    transport:
+      respondingTimeouts:
+        readTimeout: 15s
+        writeTimeout: 30s
+        idleTimeout: 90s
+    http:
+      middlewares:
+        - secure-headers@file
+        - rate-limit@file
+        - in-flight@file
+        - body-limit@file
+        - compress@file
+  ping:
+    address: ':8082'
+
+ping:
+  entryPoint: ping
+
+api:
+  dashboard: false
+
+providers:
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+log:
+  level: INFO
+  format: json
+
+accessLog:
+  format: json
+  fields:
+    headers:
+      defaultMode: drop

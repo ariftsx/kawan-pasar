@@ -1,0 +1,153 @@
+name: kawan-pasar
+
+x-hardening: &hardening
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+
+networks:
+  edge:
+    name: kp-edge
+  backend:
+    name: kp-backend
+    internal: true
+
+volumes:
+  pgdata:
+  valkey-queue-data:
+
+services:
+  postgres:
+    <<: *hardening
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?set POSTGRES_SUPERUSER_PASSWORD in .env}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=scram-sha-256
+      KP_OWNER_PASSWORD: ${KP_OWNER_PASSWORD:?set KP_OWNER_PASSWORD}
+      APP_RW_PASSWORD: ${APP_RW_PASSWORD:?set APP_RW_PASSWORD}
+      INGEST_W_PASSWORD: ${INGEST_W_PASSWORD:?set INGEST_W_PASSWORD}
+      PGBOUNCER_AUTH_PASSWORD: ${PGBOUNCER_AUTH_PASSWORD:?set PGBOUNCER_AUTH_PASSWORD}
+      TZ: Asia/Jakarta
+    command: >
+      postgres
+      -c max_connections=100
+      -c shared_buffers=256MB
+      -c timezone=Asia/Jakarta
+      -c log_min_duration_statement=500
+      -c password_encryption=scram-sha-256
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ../postgres/init:/docker-entrypoint-initdb.d:ro
+    networks: [backend]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d postgres -h 127.0.0.1']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  pgbouncer:
+    <<: *hardening
+    image: edoburu/pgbouncer:v1.24.1-p1
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      PGBOUNCER_AUTH_PASSWORD: ${PGBOUNCER_AUTH_PASSWORD:?set PGBOUNCER_AUTH_PASSWORD}
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - umask 077 && printf '"pgbouncer_auth" "%s"\n' "$$PGBOUNCER_AUTH_PASSWORD" > /tmp/userlist.txt && exec pgbouncer /etc/pgbouncer/pgbouncer.ini
+    volumes:
+      - ../pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+    networks: [backend]
+    healthcheck:
+      test: ['CMD-SHELL', 'nc -z 127.0.0.1 6432']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  valkey-cache:
+    <<: *hardening
+    image: valkey/valkey:9-alpine
+    environment:
+      VALKEY_PASSWORD: ${VALKEY_PASSWORD:?set VALKEY_PASSWORD}
+    command:
+      - sh
+      - -c
+      - exec valkey-server --requirepass "$$VALKEY_PASSWORD" --maxmemory 256mb --maxmemory-policy allkeys-lru --save '' --appendonly no
+    networks: [backend]
+    healthcheck:
+      test: ['CMD-SHELL', 'valkey-cli --no-auth-warning -a "$$VALKEY_PASSWORD" ping | grep -q PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  valkey-queue:
+    <<: *hardening
+    image: valkey/valkey:9-alpine
+    environment:
+      VALKEY_PASSWORD: ${VALKEY_PASSWORD:?set VALKEY_PASSWORD}
+    command:
+      - sh
+      - -c
+      - exec valkey-server --requirepass "$$VALKEY_PASSWORD" --maxmemory-policy noeviction --appendonly yes --appendfsync everysec
+    volumes:
+      - valkey-queue-data:/data
+    networks: [backend]
+    healthcheck:
+      test: ['CMD-SHELL', 'valkey-cli --no-auth-warning -a "$$VALKEY_PASSWORD" ping | grep -q PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  traefik:
+    <<: *hardening
+    image: traefik:v3.7.18
+    read_only: true
+    ports:
+      - '127.0.0.1:8080:80'
+    volumes:
+      - ../traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ../traefik/dynamic:/etc/traefik/dynamic:ro
+    networks: [edge, backend]
+    healthcheck:
+      test: ['CMD', 'traefik', 'healthcheck', '--ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    <<: *hardening
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    image: kawan-pasar/api:local
+    read_only: true
+    depends_on:
+      pgbouncer: { condition: service_healthy }
+      valkey-cache: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      API_PORT: '3001'
+      DATABASE_URL: postgres://app_rw:${APP_RW_PASSWORD}@pgbouncer:6432/kawanpasar
+      DATABASE_POOL_MAX: '10'
+      VALKEY_CACHE_URL: redis://:${VALKEY_PASSWORD}@valkey-cache:6379/0
+      VALKEY_QUEUE_URL: redis://:${VALKEY_PASSWORD}@valkey-queue:6379/0
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?set SERVICE_TOKEN}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    networks: [backend]
+
+  ingest:
+    profiles: [jobs]
+    security_opt:
+      - no-new-privileges:true
+    build:
+      context: ../../services/ingest
+    image: kawan-pasar/ingest:local
+    read_only: true
+    depends_on:
+      pgbouncer: { condition: service_healthy }
+    environment:
+      INGEST_DATABASE_URL: postgres://ingest_w:${INGEST_W_PASSWORD}@pgbouncer:6432/kawanpasar
+    volumes:
+      - ../../data/seed:/data/seed:ro
+    networks: [backend]

@@ -1,0 +1,8 @@
+http:
+  routers:
+    # Fase 0 placeholder: no application is routed yet. Replaced by the `web` router in Fase 1.
+    fallback:
+      entryPoints: [web]
+      rule: PathPrefix(`/`)
+      priority: 1
+      service: noop@internal

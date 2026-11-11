@@ -1,0 +1,30 @@
+http:
+  middlewares:
+    secure-headers:
+      headers:
+        frameDeny: true
+        contentTypeNosniff: true
+        referrerPolicy: strict-origin-when-cross-origin
+        permissionsPolicy: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()'
+        customResponseHeaders:
+          X-Powered-By: ''
+          Server: ''
+          Cross-Origin-Opener-Policy: same-origin
+          Cross-Origin-Resource-Policy: same-origin
+        # HSTS is enabled in production only (local runs over plain http).
+    rate-limit:
+      rateLimit:
+        average: 50
+        burst: 100
+        period: 1s
+    in-flight:
+      inFlightReq:
+        amount: 100
+    body-limit:
+      buffering:
+        maxRequestBodyBytes: 1048576
+        memRequestBodyBytes: 1048576
+    compress:
+      compress:
+        encodings: [br, gzip]
+        minResponseBodyBytes: 1024
