@@ -12,7 +12,7 @@ const env = Object.fromEntries(
     .map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]),
 );
 
-const SERVICES = ['postgres', 'pgbouncer', 'valkey-cache', 'valkey-queue', 'traefik'];
+const SERVICES = ['postgres', 'pgbouncer', 'valkey-cache', 'valkey-queue', 'traefik', 'api', 'web'];
 const EXPECTED_HOST_PORTS = new Set(['15432', '16432', '16379', '16380', '8080', '3001']);
 const results = [];
 const secrets = Object.entries(env)
@@ -147,18 +147,88 @@ check('only expected host ports, all bound to 127.0.0.1', () => {
   return bindings.every((b) => b.url === '127.0.0.1' && EXPECTED_HOST_PORTS.has(b.port));
 });
 
-try {
-  const res = await fetch('http://127.0.0.1:8080/', { signal: AbortSignal.timeout(3000) });
-  // No routes exist yet in Fase 0, so Traefik answers 404 — but it must carry the security headers.
-  const ok =
-    res.headers.get('x-content-type-options') === 'nosniff' && !res.headers.has('x-powered-by');
-  results.push(['traefik answers on 127.0.0.1:8080 with security headers', ok ? 'OK' : 'FAIL']);
-} catch (e) {
-  results.push([
-    'traefik answers on 127.0.0.1:8080 with security headers',
-    `FAIL (${redact(e instanceof Error ? e.message : 'error')})`,
-  ]);
+async function checkAsync(name, fn) {
+  try {
+    results.push([name, (await fn()) === false ? 'FAIL' : 'OK']);
+  } catch (e) {
+    results.push([name, `FAIL (${redact(e instanceof Error ? e.message : 'error')})`]);
+  }
 }
+
+const EDGE = 'http://127.0.0.1:8080';
+const edge = (path, init = {}) =>
+  fetch(EDGE + path, { signal: AbortSignal.timeout(5000), ...init });
+
+await checkAsync('web through traefik: 200 with CSP and security headers', async () => {
+  const res = await edge('/');
+  const csp = res.headers.get('content-security-policy') ?? '';
+  return (
+    res.status === 200 &&
+    csp.includes("frame-ancestors 'none'") &&
+    csp.includes("object-src 'none'") &&
+    res.headers.get('x-content-type-options') === 'nosniff' &&
+    !res.headers.has('x-powered-by')
+  );
+});
+
+await checkAsync('static JS is compressed (br) and immutable', async () => {
+  const html = await (await edge('/')).text();
+  const src = /<script src="(\/_next\/static\/[^"]+\.js)"/.exec(html)?.[1];
+  if (src === undefined) throw new Error('no script in page');
+  const res = await edge(src, { headers: { 'accept-encoding': 'br, gzip' } });
+  return (
+    res.headers.get('content-encoding') === 'br' &&
+    (res.headers.get('cache-control') ?? '').includes('immutable')
+  );
+});
+
+await checkAsync('internal revalidation is unreachable from outside', async () => {
+  const res = await edge('/api/internal/revalidate', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ tags: ['articles'] }),
+  });
+  return res.status >= 400 && res.status !== 401;
+});
+
+check('api accepts the web container (trusted proxy) with the service token', () => {
+  const out = docker(
+    [
+      'compose',
+      '-p',
+      'kawan-pasar',
+      'exec',
+      '-T',
+      '-e',
+      'SERVICE_TOKEN',
+      'web',
+      'node',
+      '-e',
+      "fetch('http://api:3001/v1/markets',{headers:{'x-service-token':process.env.SERVICE_TOKEN}}).then(r=>console.log(r.status))",
+    ],
+    { SERVICE_TOKEN: env.SERVICE_TOKEN },
+  );
+  return out.trim() === '200';
+});
+
+check('web runs as non-root with a read-only filesystem', () => {
+  const id = containerId('web');
+  const [user, ro] = docker([
+    'inspect',
+    '-f',
+    '{{.Config.User}} {{.HostConfig.ReadonlyRootfs}}',
+    id,
+  ])
+    .trim()
+    .split(' ');
+  return user !== '' && user !== 'root' && user !== '0' && ro === 'true';
+});
+
+await checkAsync('ISR: data page is cached after the first request', async () => {
+  await edge('/pasar');
+  const res = await edge('/pasar');
+  return res.status === 200 && res.headers.get('x-nextjs-cache') === 'HIT';
+});
 
 const width = Math.max(...results.map(([n]) => n.length));
 for (const [name, status] of results) console.log(`${name.padEnd(width)}  ${status}`);

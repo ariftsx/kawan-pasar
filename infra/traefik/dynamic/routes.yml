@@ -1,8 +1,28 @@
 http:
   routers:
-    # Fase 0 placeholder: no application is routed yet. Replaced by the `web` router in Fase 1.
-    fallback:
+    # Public site: everything goes to the Next.js web server.
+    web:
       entryPoints: [web]
       rule: PathPrefix(`/`)
       priority: 1
+      service: web
+
+    # Internal endpoints (cache revalidation) are for the Docker network only. Traefik refuses
+    # them before they reach the web server; the endpoint additionally requires its own token.
+    block-internal:
+      entryPoints: [web]
+      rule: PathPrefix(`/api/internal`)
+      priority: 100
       service: noop@internal
+
+  services:
+    web:
+      loadBalancer:
+        servers:
+          - url: http://web:3000
+        healthCheck:
+          path: /api/health
+          interval: 10s
+          timeout: 3s
+        responseForwarding:
+          flushInterval: 100ms

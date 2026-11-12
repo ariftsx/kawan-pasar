@@ -1,17 +1,47 @@
 // Generates a local .env with fresh random secrets and the derived connection URLs.
-// Usage: node scripts/gen-env.mjs [--force]
+// Usage: node scripts/gen-env.mjs [--force | --add-missing]
 // Refuses to overwrite an existing .env unless --force is given (rotating secrets
 // requires recreating the data volumes: `pnpm infra:down -v`).
+// --add-missing appends secrets introduced by a later phase (e.g. WEB_REVALIDATE_TOKEN) to an
+// existing .env without touching the values already there.
 import { randomBytes } from 'node:crypto';
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 const target = new URL('../.env', import.meta.url);
+const secret = () => randomBytes(32).toString('base64url');
+
+// Secrets added after Fase 0. They do not affect any data volume, so they can be added safely.
+const LATER_SECRETS = ['WEB_REVALIDATE_TOKEN'];
+
+if (process.argv.includes('--add-missing')) {
+  if (!existsSync(target)) {
+    console.error('.env does not exist — run without flags first');
+    process.exit(1);
+  }
+  const lines = readFileSync(target, 'utf8').split(/\r?\n/);
+  // A key with an empty value (e.g. copied from .env.example) counts as missing.
+  const filled = new Set(
+    lines.filter((l) => /^[A-Z0-9_]+=.+/.test(l)).map((l) => l.slice(0, l.indexOf('='))),
+  );
+  const missing = LATER_SECRETS.filter((k) => !filled.has(k));
+  if (missing.length > 0) {
+    // Drop empty placeholders and never glue onto a last line without a newline.
+    const kept = lines.filter((l) => !missing.some((k) => l.startsWith(`${k}=`)));
+    const head = kept.join('\n').replace(/\n*$/, '\n');
+    const added = missing.map((k) => `${k}=${secret()}`).join('\n');
+    writeFileSync(target, `${head}${added}\n`, { mode: 0o600 });
+  }
+  console.log(
+    missing.length > 0 ? `added: ${missing.join(', ')} (values not shown)` : 'nothing to add',
+  );
+  process.exit(0);
+}
+
 if (existsSync(target) && !process.argv.includes('--force')) {
   console.error('.env already exists — pass --force to regenerate (then run: pnpm infra:down -v)');
   process.exit(1);
 }
 
-const secret = () => randomBytes(32).toString('base64url');
 const s = {
   POSTGRES_SUPERUSER_PASSWORD: secret(),
   KP_OWNER_PASSWORD: secret(),
@@ -20,6 +50,7 @@ const s = {
   PGBOUNCER_AUTH_PASSWORD: secret(),
   VALKEY_PASSWORD: secret(),
   SERVICE_TOKEN: secret(),
+  WEB_REVALIDATE_TOKEN: secret(),
 };
 
 const pg = (user, pw, port, db) => `postgres://${user}:${pw}@127.0.0.1:${port}/${db}`;

@@ -131,6 +131,7 @@ services:
       context: ../..
       dockerfile: apps/api/Dockerfile
     image: kawan-pasar/api:local
+    cap_drop: [ALL]
     read_only: true
     depends_on:
       pgbouncer: { condition: service_healthy }
@@ -145,8 +146,39 @@ services:
       SERVICE_TOKEN: ${SERVICE_TOKEN:?set SERVICE_TOKEN}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       RATE_LIMIT_PER_MINUTE: '120'
+      RATE_LIMIT_INTERNAL_PER_MINUTE: '1200'
       TRUSTED_PROXY_IPS: 172.30.0.10
+      # The API tells the web server which cache tags to revalidate after data changes.
+      WEB_INTERNAL_URL: http://web:3000
+      WEB_REVALIDATE_TOKEN: ${WEB_REVALIDATE_TOKEN:?set WEB_REVALIDATE_TOKEN (node scripts/gen-env.mjs --add-missing)}
     networks: [backend]
+
+  web:
+    <<: *hardening
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+    image: kawan-pasar/web:local
+    cap_drop: [ALL]
+    read_only: true
+    # ISR/data cache. Size-limited so a flood of distinct pages cannot fill the host disk.
+    tmpfs:
+      - /app/apps/web/.next/cache:size=256m,uid=1000,gid=1000,mode=0700
+      # Next.js writes regenerated ISR pages here (everything else under .next stays read-only).
+      - /app/apps/web/.next/server/route-cache:size=128m,uid=1000,gid=1000,mode=0700
+      - /tmp:size=16m
+    depends_on:
+      api: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      API_INTERNAL_URL: http://api:3001
+      API_TIMEOUT_MS: '3000'
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?set SERVICE_TOKEN}
+      WEB_REVALIDATE_TOKEN: ${WEB_REVALIDATE_TOKEN:?set WEB_REVALIDATE_TOKEN}
+    networks:
+      backend:
+        # The only address the API trusts to forward client IPs (TRUSTED_PROXY_IPS).
+        ipv4_address: 172.30.0.10
 
   ingest:
     profiles: [jobs]

@@ -17,8 +17,14 @@ const steps = [
   { name: 'lint', cmd: 'pnpm lint' },
   { name: 'typecheck', cmd: 'pnpm typecheck' },
   { name: 'unit-tests', cmd: 'pnpm test' },
+  // Builds the web app without any API or secrets (data pages must not need them at build time).
+  { name: 'web-build', cmd: 'pnpm --filter @kawan-pasar/web build' },
+  // Containers must run the code under audit, not an image from an earlier build.
+  { name: 'stack-rebuild', cmd: 'node scripts/compose.mjs up -d --wait --build api web' },
   { name: 'infra', cmd: 'pnpm infra:check' },
   { name: 'integration-tests', cmd: 'pnpm test:int' },
+  // End-user simulation through Traefik: 6 widths, axe, reduced motion, JS budget.
+  { name: 'e2e-smoke', cmd: 'pnpm --filter @kawan-pasar/e2e e2e' },
   { name: 'test-db-reset', cmd: 'pnpm --filter @kawan-pasar/api db:test:reset' },
   {
     name: 'ingest-tests',
