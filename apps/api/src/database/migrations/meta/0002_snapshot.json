@@ -82,9 +82,7 @@
       "uniqueConstraints": {
         "articles_slug_unique": {
           "name": "articles_slug_unique",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "nullsNotDistinct": false
         }
       },
@@ -171,23 +169,17 @@
       "uniqueConstraints": {
         "commodities_code_unique": {
           "name": "commodities_code_unique",
-          "columns": [
-            "code"
-          ],
+          "columns": ["code"],
           "nullsNotDistinct": false
         },
         "commodities_sourceRef_unique": {
           "name": "commodities_sourceRef_unique",
-          "columns": [
-            "source_ref"
-          ],
+          "columns": ["source_ref"],
           "nullsNotDistinct": false
         },
         "commodities_sortOrder_unique": {
           "name": "commodities_sortOrder_unique",
-          "columns": [
-            "sort_order"
-          ],
+          "columns": ["sort_order"],
           "nullsNotDistinct": false
         }
       },
@@ -319,9 +311,7 @@
       "uniqueConstraints": {
         "forecast_artifacts_bundleId_unique": {
           "name": "forecast_artifacts_bundleId_unique",
-          "columns": [
-            "bundle_id"
-          ],
+          "columns": ["bundle_id"],
           "nullsNotDistinct": false
         }
       },
@@ -438,39 +428,27 @@
         "forecasts_artifact_id_forecast_artifacts_id_fk": {
           "name": "forecasts_artifact_id_forecast_artifacts_id_fk",
           "tableFrom": "forecasts",
-          "columnsFrom": [
-            "artifact_id"
-          ],
+          "columnsFrom": ["artifact_id"],
           "tableTo": "forecast_artifacts",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "forecasts_market_id_markets_id_fk": {
           "name": "forecasts_market_id_markets_id_fk",
           "tableFrom": "forecasts",
-          "columnsFrom": [
-            "market_id"
-          ],
+          "columnsFrom": ["market_id"],
           "tableTo": "markets",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "forecasts_commodity_id_commodities_id_fk": {
           "name": "forecasts_commodity_id_commodities_id_fk",
           "tableFrom": "forecasts",
-          "columnsFrom": [
-            "commodity_id"
-          ],
+          "columnsFrom": ["commodity_id"],
           "tableTo": "commodities",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -479,12 +457,7 @@
       "uniqueConstraints": {
         "forecasts_artifact_market_commodity_horizon": {
           "name": "forecasts_artifact_market_commodity_horizon",
-          "columns": [
-            "artifact_id",
-            "market_id",
-            "commodity_id",
-            "horizon_days"
-          ],
+          "columns": ["artifact_id", "market_id", "commodity_id", "horizon_days"],
           "nullsNotDistinct": false
         }
       },
@@ -651,9 +624,7 @@
       "uniqueConstraints": {
         "markets_code_unique": {
           "name": "markets_code_unique",
-          "columns": [
-            "code"
-          ],
+          "columns": ["code"],
           "nullsNotDistinct": false
         }
       },
@@ -737,39 +708,27 @@
         "price_observations_market_id_markets_id_fk": {
           "name": "price_observations_market_id_markets_id_fk",
           "tableFrom": "price_observations",
-          "columnsFrom": [
-            "market_id"
-          ],
+          "columnsFrom": ["market_id"],
           "tableTo": "markets",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "price_observations_commodity_id_commodities_id_fk": {
           "name": "price_observations_commodity_id_commodities_id_fk",
           "tableFrom": "price_observations",
-          "columnsFrom": [
-            "commodity_id"
-          ],
+          "columnsFrom": ["commodity_id"],
           "tableTo": "commodities",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "price_observations_ingest_run_id_ingest_runs_id_fk": {
           "name": "price_observations_ingest_run_id_ingest_runs_id_fk",
           "tableFrom": "price_observations",
-          "columnsFrom": [
-            "ingest_run_id"
-          ],
+          "columnsFrom": ["ingest_run_id"],
           "tableTo": "ingest_runs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -778,11 +737,7 @@
       "uniqueConstraints": {
         "price_observations_market_commodity_day": {
           "name": "price_observations_market_commodity_day",
-          "columns": [
-            "market_id",
-            "commodity_id",
-            "observed_on"
-          ],
+          "columns": ["market_id", "commodity_id", "observed_on"],
           "nullsNotDistinct": false
         }
       },
@@ -800,65 +755,37 @@
     "public.article_category": {
       "name": "article_category",
       "schema": "public",
-      "values": [
-        "dasar",
-        "prediksi",
-        "arif-net",
-        "keterbatasan"
-      ]
+      "values": ["dasar", "prediksi", "arif-net", "keterbatasan"]
     },
     "public.artifact_status": {
       "name": "artifact_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "active",
-        "retired",
-        "rejected"
-      ]
+      "values": ["pending", "active", "retired", "rejected"]
     },
     "public.eval_status": {
       "name": "eval_status",
       "schema": "public",
-      "values": [
-        "available",
-        "partial",
-        "not_tested"
-      ]
+      "values": ["available", "partial", "not_tested"]
     },
     "public.ingest_status": {
       "name": "ingest_status",
       "schema": "public",
-      "values": [
-        "running",
-        "succeeded",
-        "partial",
-        "failed"
-      ]
+      "values": ["running", "succeeded", "partial", "failed"]
     },
     "public.market_status": {
       "name": "market_status",
       "schema": "public",
-      "values": [
-        "available",
-        "coming_soon"
-      ]
+      "values": ["available", "coming_soon"]
     },
     "public.model_coverage": {
       "name": "model_coverage",
       "schema": "public",
-      "values": [
-        "covered",
-        "pending"
-      ]
+      "values": ["covered", "pending"]
     },
     "public.price_source": {
       "name": "price_source",
       "schema": "public",
-      "values": [
-        "seed_csv",
-        "pihps"
-      ]
+      "values": ["seed_csv", "pihps"]
     }
   },
   "schemas": {},

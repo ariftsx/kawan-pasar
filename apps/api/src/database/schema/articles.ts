@@ -12,6 +12,8 @@ export const articles = pgTable(
     summary: text().notNull(),
     bodyMd: text().notNull(),
     readingMinutes: smallint().notNull(),
+    /** Display order within the education pages (ascending). */
+    sortOrder: smallint().notNull().default(0),
     publishedAt: timestamp({ withTimezone: true }),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },

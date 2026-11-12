@@ -35,5 +35,8 @@ export const priceObservations = pgTable(
     // Also the read index: (market, commodity) equality + observed_on range/order.
     unique('price_observations_market_commodity_day').on(t.marketId, t.commodityId, t.observedOn),
     check('price_observations_price_positive', sql`${t.priceIdr} > 0`),
+    // Plausibility bounds, also enforced by ingest: a second line of defence for any writer.
+    check('price_observations_price_plausible', sql`${t.priceIdr} <= 10000000`),
+    check('price_observations_date_range', sql`${t.observedOn} >= DATE '2000-01-01'`),
   ],
 );

@@ -22,6 +22,20 @@
       "when": 1794416838232,
       "tag": "0002_revoke_app_refresh",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794427265640,
+      "tag": "0003_articles_sort_order",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794427819433,
+      "tag": "0004_observation_bounds",
+      "breakpoints": true
     }
   ]
 }

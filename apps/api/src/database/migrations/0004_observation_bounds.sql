@@ -1,0 +1,2 @@
+ALTER TABLE "price_observations" ADD CONSTRAINT "price_observations_price_plausible" CHECK ("price_observations"."price_idr" <= 10000000);--> statement-breakpoint
+ALTER TABLE "price_observations" ADD CONSTRAINT "price_observations_date_range" CHECK ("price_observations"."observed_on" >= DATE '2000-01-01');

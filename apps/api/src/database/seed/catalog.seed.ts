@@ -1,6 +1,6 @@
 import { pathToFileURL } from 'node:url';
 import { COMMODITIES, MARKETS } from '@kawan-pasar/catalog';
-import { sql } from 'drizzle-orm';
+import { inArray, sql } from 'drizzle-orm';
 import pg from 'pg';
 import { createDb } from '../client.js';
 import type { Db } from '../client.js';
@@ -24,8 +24,17 @@ export async function seedCatalog(db: Db): Promise<void> {
         },
       });
 
-    // sort_order is unique: park existing values out of range before re-applying them.
-    await tx.update(commodities).set({ sortOrder: sql`${commodities.sortOrder} + 1000` });
+    // sort_order is unique: park the catalog rows out of range before re-applying their values.
+    // Only catalog codes are parked, so rows removed from the catalog never grow (smallint).
+    await tx
+      .update(commodities)
+      .set({ sortOrder: sql`${commodities.sortOrder} + 1000` })
+      .where(
+        inArray(
+          commodities.code,
+          COMMODITIES.map((c) => c.code),
+        ),
+      );
     await tx
       .insert(commodities)
       .values(

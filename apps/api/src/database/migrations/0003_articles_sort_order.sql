@@ -1,0 +1,1 @@
+ALTER TABLE "articles" ADD COLUMN "sort_order" smallint DEFAULT 0 NOT NULL;

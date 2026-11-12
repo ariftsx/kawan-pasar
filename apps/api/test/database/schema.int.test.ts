@@ -168,3 +168,34 @@ describe('mv_latest_prices', () => {
     ]);
   });
 });
+
+describe('observation bounds (Fase 0 review M9)', () => {
+  it('rejects prices above the plausible maximum', async () => {
+    expect(await insertObservation('cabai-merah-keriting', '2026-09-30', 10_000_001)).toBe(
+      CHECK_VIOLATION,
+    );
+  });
+
+  it('rejects observations before 2000-01-01', async () => {
+    expect(await insertObservation('cabai-merah-keriting', '1999-12-31', 40_000)).toBe(
+      CHECK_VIOLATION,
+    );
+  });
+});
+
+describe('catalog seed with a commodity no longer in the catalog (Fase 0 review M8)', () => {
+  it('does not grow sort_order of rows outside the catalog on repeated seeds', async () => {
+    await owner.query(
+      "INSERT INTO commodities (code, name, unit, model_coverage, sort_order) VALUES ('test-removed', 'X', 'kg', 'pending', 9)",
+    );
+    try {
+      for (let i = 0; i < 40; i += 1) await seedCatalog(createDb(owner));
+      const res = await owner.query<{ sort_order: number }>(
+        "SELECT sort_order FROM commodities WHERE code = 'test-removed'",
+      );
+      expect(res.rows[0]?.sort_order).toBe(9);
+    } finally {
+      await owner.query("DELETE FROM commodities WHERE code = 'test-removed'");
+    }
+  });
+});
