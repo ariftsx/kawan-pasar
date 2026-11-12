@@ -1,5 +1,8 @@
 import json
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
+from typing import ClassVar
 
 import psycopg
 import pytest
@@ -91,3 +94,56 @@ def test_a_bad_header_is_explained_to_the_operator(
     assert main(["import-csv", "--file", str(FIXTURES / "bad_header.csv")]) == 1
     captured = capsys.readouterr()
     assert "comcat_id" in captured.out + captured.err
+
+
+class _InvalidateHandler(BaseHTTPRequestHandler):
+    calls: ClassVar[list[tuple[str, str | None, bytes]]] = []
+
+    def do_POST(self) -> None:
+        length = int(self.headers.get("Content-Length", "0"))
+        self.calls.append((self.path, self.headers.get("x-service-token"), self.rfile.read(length)))
+        body = b'{"deleted": 3}'
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, format: str, *args: object) -> None:  # noqa: A002
+        return
+
+
+def test_successful_import_invalidates_the_api_price_cache(
+    ingest_url: str,
+    owner_conn: psycopg.Connection,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    _InvalidateHandler.calls = []
+    server = HTTPServer(("127.0.0.1", 0), _InvalidateHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        monkeypatch.setenv("INGEST_DATABASE_URL", ingest_url)
+        monkeypatch.setenv("API_INTERNAL_URL", f"http://127.0.0.1:{server.server_port}")
+        monkeypatch.setenv("SERVICE_TOKEN", "t" * 40)
+        assert main(["import-csv", "--file", str(FIXTURES / "small.csv")]) == 0
+    finally:
+        server.shutdown()
+    assert _InvalidateHandler.calls == [
+        ("/internal/cache/invalidate", "t" * 40, b'{"scope": "prices"}')
+    ]
+    capsys.readouterr()
+
+
+def test_an_unreachable_api_does_not_fail_the_import(
+    ingest_url: str,
+    owner_conn: psycopg.Connection,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setenv("INGEST_DATABASE_URL", ingest_url)
+    monkeypatch.setenv("API_INTERNAL_URL", "http://127.0.0.1:1")
+    monkeypatch.setenv("SERVICE_TOKEN", "t" * 40)
+    assert main(["import-csv", "--file", str(FIXTURES / "small.csv")]) == 0
+    assert "t" * 40 not in capsys.readouterr().err

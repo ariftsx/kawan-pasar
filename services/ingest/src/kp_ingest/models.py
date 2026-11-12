@@ -34,6 +34,8 @@ class RawPriceRow(BaseModel):
     commodity_name: str = Field(min_length=1, max_length=100)
     observed_on: date
     price_idr: int
+    #: Physical line in the source file (for operator-facing logs); not part of the data.
+    source_line: int | None = None
 
     @field_validator("price_idr", mode="before")
     @classmethod

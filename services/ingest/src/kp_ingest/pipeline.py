@@ -76,7 +76,11 @@ def run_ingest(
             commodity = commodities.get(item.source_ref)
             if commodity is None:
                 rejected += 1
-                log.warning("row rejected: unknown commodity ref %s", item.source_ref)
+                log.warning(
+                    "row rejected: line %s: unknown commodity ref %s",
+                    item.source_line if item.source_line is not None else "?",
+                    item.source_ref,
+                )
                 continue
             _append(batch, commodity, item)
             if len(batch.prices) >= BATCH_SIZE:

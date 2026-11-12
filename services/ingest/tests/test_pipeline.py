@@ -150,3 +150,13 @@ def test_a_refresh_failure_still_finishes_the_run(
     ).fetchone()
     assert run is not None and run[:2] == ("succeeded", True) and "refresh" in str(run[2])
     assert result.inserted == 10
+
+
+def test_unknown_commodity_rejections_carry_their_line_number(
+    ingest_conn: psycopg.Connection,
+    owner_conn: psycopg.Connection,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    with caplog.at_level("WARNING", logger="kp_ingest"):
+        run_ingest(CsvSeedSource(FIXTURES / "bad_rows.csv"), ingest_conn)
+    assert any("line 3" in r.getMessage() and "com_99" in r.getMessage() for r in caplog.records)

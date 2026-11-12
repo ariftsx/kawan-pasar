@@ -32,6 +32,22 @@ curl -s http://127.0.0.1:3001/health/ready  # Core API: {"status":"ok",...}
 
 > Semua perintah `docker compose` dijalankan lewat `node scripts/compose.mjs …` (atau skrip `pnpm infra:*`). Skrip itu selalu memakai kedua berkas compose; memanggil compose dengan set berkas lain akan membuat ulang kontainer tanpa port dev.
 
+## Menjalankan uji
+
+```bash
+pnpm --filter @kawan-pasar/api db:test:reset   # wajib sebelum uji Python pertama kali (DB uji dimigrasi)
+pnpm audit:all                                   # semua gerbang mutu (melakukan reset di atas sendiri)
+```
+
+Uji ingest (`cd services/ingest && uv run pytest`) memakai database `kawanpasar_test` yang sudah dimigrasi. Bila belum, fixture uji gagal dengan pesan yang menyebut perintah reset di atas.
+
+## Data prediksi demo dan artikel
+
+```bash
+pnpm --filter @kawan-pasar/api bundle:demo        # bundel prediksi demo berlabel (ADR 0006)
+pnpm --filter @kawan-pasar/api db:seed:articles   # artikel dari content/articles (lihat docs/product/konten-artikel.md)
+```
+
 ## Port di mesin lokal
 
 Semua port hanya terikat ke `127.0.0.1`, tidak terbuka ke jaringan lain.

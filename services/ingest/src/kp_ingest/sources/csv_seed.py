@@ -44,6 +44,7 @@ class CsvSeedSource:
                             "commodity_name": record["commodity"],
                             "observed_on": (record["date"] or "").strip(),
                             "price_idr": record["price"],
+                            "source_line": reader.line_num,
                         }
                     )
                 except ValidationError as error:

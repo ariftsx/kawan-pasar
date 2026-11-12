@@ -13,6 +13,7 @@ from pathlib import Path
 
 import psycopg
 
+from kp_ingest.api_client import invalidate_price_cache
 from kp_ingest.pipeline import run_ingest
 from kp_ingest.sources.csv_seed import CsvSeedSource
 
@@ -59,6 +60,10 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     print(json.dumps(asdict(result)))
+    api_url = os.environ.get("API_INTERNAL_URL", "")
+    token = os.environ.get("SERVICE_TOKEN", "")
+    if result.status != "failed" and api_url and token:
+        invalidate_price_cache(api_url, token)
     return EXIT[result.status]
 
 
