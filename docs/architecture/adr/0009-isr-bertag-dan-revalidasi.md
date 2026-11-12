@@ -34,6 +34,14 @@
 - URL publik tetap tanpa kode pasar lewat `rewrites` (`/pasar` → `/PIKJ/pasar`).
 - `src/proxy.ts` menolak segmen pasar yang tidak dikenal dengan 404 sebelum render. Tanpa penjaga ini, setiap path acak akan membuat entri cache baru.
 
+**Pembaruan Fase 1C.**
+
+- **Rute data:** `beranda`, `harga`, `harga/[commodity]`, `prediksi`, `prediksi/[commodity]`, `edukasi`, `edukasi/[slug]`, `pasar`. Daftar rewrite dibangkitkan dari `src/lib/routes.ts`. `proxy.test.ts` memastikan setiap tujuan rewrite tercakup `matcher` (literal).
+- **Penolakan `proxy.ts`:** pasar, kode komoditas, atau slug yang tidak lolos `ArticleSlugSchema` ditolak, demikian juga segmen tambahan. Semuanya di-rewrite ke path tanpa rute (`/_kp/tidak-ditemukan`), sehingga pengunjung melihat halaman not-found statis dengan status 404 dan `no-store`.
+- **Slug artikel:** halaman artikel mencocokkan slug dengan daftar artikel terbit (yang sudah di-cache) sebelum memanggil API, sehingga slug tak dikenal tidak pernah sampai ke API.
+- **Risiko sisa:** slug yang sah secara bentuk tetapi tidak ada tetap dirender sebagai 404 sekali per path. Batasnya tmpfs `route-cache` 128 MB dan rate limit Traefik.
+- **`/` (orientasi):** `proxy.ts` mengalihkan pengunjung yang punya cookie `kp_onboarded=1` ke `/beranda`. Cookie dipasang `MarkOnboarded` di halaman lain; tidak mengidentifikasi pengguna.
+
 ### Revalidasi bertag
 
 1. Data berubah: ingest atau `POST /internal/cache/invalidate`, termasuk yang dipicu CLI bundel lewat `notifyApiInvalidate`.

@@ -45,3 +45,17 @@ Status akun (WhatsApp terhubung, belum ada peringatan) menyusul di Fase 2.
 ## Asal artwork
 
 Logo, ikon, dan ilustrasi di `brand/data/*.tsx` dibangkitkan sekali dari `figcraft-Kawan_Pasar/assets.mjs`: SVG diubah menjadi JSX (atribut camelCase, `id` dibuang). Geometri pose Kapa disalin manual ke `brand/kapa-poses.ts` dan `brand/Kapa.tsx`. Bila prototipe berubah, perbarui berkas itu lalu jalankan `brand.test.tsx`.
+
+## Pola interaksi tanpa fetch (Fase 1C)
+
+- **Varian dirender server, klien hanya memilih.** Grafik 4 rentang, 8 horizon prediksi (kartu metrik, baris tabel, titik grafik), dan filter komoditas semuanya ada di HTML. `Switch` dan `CommodityFilter` hanya mengganti atribut `data-*`, lalu `charts.css` menampilkan varian yang cocok.
+- **Tanpa JS:** varian bawaan tetap tampil (90 hari, 7 hari, semua komoditas). Tombol pemilih tidak dirender sebelum hidrasi, jadi tidak ada tombol mati.
+- **Kata Kapa** dibangkitkan `kataKapa()` dari data. Aturannya berurutan (terlambat → perubahan 30 hari ≥ 5% → perkiraan 7 hari → tips umum), dan uji menolak kata "karena", "beli", "jual", "pasti".
+- **Prediksi selalu disertai `PredictionMeta`** (versi model, versi data, batas data, "Data demo", "Kedaluwarsa") dan `Disclaimer`. Status `hidden`, `unavailable`, dan `pending_coverage` tidak menampilkan angka di mana pun (`forecastView().showNumbers`).
+- **Markdown artikel:** `ArticleBody` merender dengan `react-markdown` di server. HTML mentah dilewati, elemen dibatasi daftar putih, tautan `javascript:`/`data:` menjadi teks biasa, dan tautan luar memakai `rel="noopener noreferrer"`.
+- **Tata letak sempit dan teks 200%** (`globals.css`):
+  - Grid default memakai `minmax(0,1fr)`.
+  - Kontainer yang memotong luapan menjadi containing block bagi teks `sr-only`.
+  - `overflow-wrap: anywhere` untuk kata panjang.
+  - Tabel lebar berada di region gulir yang bisa difokus keyboard.
+  - Harga besar memakai `clamp()`.

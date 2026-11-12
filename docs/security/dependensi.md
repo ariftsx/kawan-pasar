@@ -40,3 +40,10 @@ Image `web` hanya memuat output `standalone` Next (dependensi yang benar-benar d
 2. Cek peer dependency semua paket yang terkait.
 3. Pasang, lalu jalankan `pnpm audit:all`.
 4. Perubahan versi besar (major) dicatat sebagai ADR.
+
+## Dependensi web (Fase 1C)
+
+| Paket            | Versi  | Catatan                                                                                                                      |
+| ---------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `react-markdown` | 10.1.0 | Keputusan pemilik. Dijalankan hanya di server (Server Component), 0 KB di browser. `skipHtml`, daftar putih elemen, URL aman |
+| `@types/hast`    | 3.0.5  | Dev-only; tipe pohon HTML yang dipakai renderer artikel                                                                      |

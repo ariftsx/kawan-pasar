@@ -24,6 +24,8 @@ Semua gerbang dijalankan dengan `pnpm audit:all`. Log setiap gerbang ada di `.au
 - Uji integrasi API berjalan serial (`fileParallelism: false`) karena berbagi satu basis data uji.
 - Aturan produk diuji secara eksplisit, misalnya "harga 0 ditolak" (CHECK), "tanpa versi tidak tampil", dan "impor ulang idempoten".
 - Keluaran yang bisa memuat rahasia diuji tidak membocorkannya (pesan galat env, CLI ingest, skrip pemeriksa infra, log klien API web).
+- Uji integrasi API memakai **database Valkey 15** (`test/helpers/load-env.ts`), bukan database 0 milik tumpukan dev. Sebelum Fase 1C keduanya berbagi database 0, sehingga data uji (bundel prediksi uji) sempat tersaji oleh API dev.
+- Spesifikasi e2e: `shell` (lebar layar, axe, teks 200%, reflow 320 px, gerak, anggaran JS), `journeys` (alur pengguna 360/1280 px), `product-rules` (tidak ada "Rp 0", versi model + "Data demo" + disclaimer, bahasa non-kausal, pemberitahuan data terlambat), dan `no-js` (semua halaman tanpa JavaScript).
 - Uji e2e berjalan terhadap kontainer sungguhan yang dibangun ulang oleh `audit:all` (`stack-rebuild`), jadi yang diuji adalah image yang akan dijalankan, bukan server dev.
 - Uji komponen memeriksa aturan produk di tingkat tampilan: `null` → "—" (tidak pernah "Rp 0"), label "Kedaluwarsa"/"Data demo", dan arah perubahan yang tidak hanya berupa warna.
 

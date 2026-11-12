@@ -2,6 +2,31 @@
 
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/). Versi produk mengikuti fase pengembangan.
 
+## [Fase 1C — Halaman publik] — 2026-11-13
+
+### Ditambahkan
+
+- Seluruh halaman publik v0.4 dengan data nyata: Beranda Publik (orientasi), Beranda, Harga, Detail komoditas, Prediksi (8 horizon), Edukasi, Artikel, ARIF-Net, Keterbatasan, Pilih Pasar, dan Lainnya.
+- Grafik SVG yang dirender server, tanpa library:
+  - Riwayat harga (30 hari, 90 hari, 1 tahun, semua) dan grafik prediksi (aktual, median, rentang 80%, hari dasar).
+  - Pilihan rentang dan horizon hanya mengganti varian yang sudah ada di HTML.
+  - Tooltip dengan papan ketik; ringkasan teks dan tabel data sebagai alternatif.
+- Logika tampilan sebagai fungsi yang diuji:
+  - Kartu "paling naik/turun", Kata Kapa berbasis fakta data (kata kausal dan beli/jual ditolak uji), perubahan 1/7/30/90 hari tanpa interpolasi, dan tampilan prediksi.
+  - Prediksi tersembunyi atau tidak tersedia tidak menampilkan angka di mana pun.
+- API: ringkasan harga membawa `forecastArtifact` (versi model untuk setiap prediksi 7 hari). Aturan "terlambat" dipindah ke `@kawan-pasar/contracts` agar API dan web memakai definisi yang sama.
+- `FreshnessNotice`: halaman dari cache tetap memperingatkan bila data sudah lewat 2 hari kerja.
+- Artikel Markdown dirender dengan `react-markdown` di server (HTML mentah diabaikan, daftar putih elemen, URL aman), lengkap dengan daftar isi dan contoh harga dari data nyata.
+- Orientasi kunjungan pertama dengan cookie fungsional `kp_onboarded` (`docs/security/cookie-dan-privasi.md`), URL kanonik, sitemap, dan robots.
+- Uji e2e: perjalanan pengguna di 360/1280 px, aturan produk di semua halaman, tanpa JavaScript, dan seluruh halaman di 6 lebar layar, teks 200%, reflow 320 px, serta axe.
+
+### Diperbaiki
+
+- **Uji integrasi API berbagi Valkey database 0 dengan API dev.** Data uji (bundel prediksi uji non-demo) sempat tersaji di dev tanpa label "Data demo". Uji kini memakai database 15.
+- Penjaga banjir path (`proxy.ts`) kini juga berjalan untuk URL publik, karena proxy melihat URL sebelum rewrite.
+- Health check Traefik ke web yang terlalu ketat mengubah kelambatan CPU menjadi 503 untuk semua permintaan (satu replika).
+- Tata letak sempit dan teks 200%: grid default `minmax(0,1fr)`, containing block untuk teks `sr-only` di kontainer gulir, tabel lebar di region gulir yang bisa difokus, dan harga besar memakai `clamp()`.
+
 ## [Fase 1B — Fondasi web] — 2026-11-12
 
 ### Ditambahkan

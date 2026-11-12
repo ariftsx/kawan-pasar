@@ -1,7 +1,7 @@
 // Runs every quality gate of a phase in order and prints a pass/fail table.
 // Usage: pnpm audit:all        Full logs per step: .audit/<step>.log (git-ignored)
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -44,7 +44,11 @@ function listFiles() {
     encoding: 'utf8',
   });
   if (out.status !== 0) throw new Error('git ls-files failed');
-  return out.stdout.split('\n').filter(Boolean);
+  // `ls-files -c` still lists tracked files deleted in the working tree (e.g. a moved module).
+  return out.stdout
+    .split('\n')
+    .filter(Boolean)
+    .filter((f) => existsSync(path.join(root, f)));
 }
 
 const TEXT = /\.(ts|tsx|js|mjs|cjs|py|md|json|ya?ml|sql|toml|css|html|txt|ini|sh)$|Dockerfile$/;
