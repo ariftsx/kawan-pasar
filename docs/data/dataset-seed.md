@@ -4,20 +4,20 @@ Berkas: `data/seed/prices_combined.csv` (disediakan tim; **tidak di-commit** ke 
 
 ## Fakta dataset (diaudit 11 Nov 2026)
 
-| Hal | Nilai |
-|---|---|
-| Kolom | `comcat_id, commodity, date, price` (UTF-8) |
-| Baris data | 5.859 (3 komoditas × 1.953 hari kerja) |
-| Periode | 2 Jan 2019 – 30 Sep 2026 |
-| Nilai kosong / duplikat | Tidak ada |
-| Akhir pekan | Tidak ada (hari kerja PIHPS) |
-| Celah terpanjang | 11 hari (libur panjang). Celah **tidak** diisi atau diinterpolasi |
+| Hal                     | Nilai                                                             |
+| ----------------------- | ----------------------------------------------------------------- |
+| Kolom                   | `comcat_id, commodity, date, price` (UTF-8)                       |
+| Baris data              | 5.859 (3 komoditas × 1.953 hari kerja)                            |
+| Periode                 | 2 Jan 2019 – 30 Sep 2026                                          |
+| Nilai kosong / duplikat | Tidak ada                                                         |
+| Akhir pekan             | Tidak ada (hari kerja PIHPS)                                      |
+| Celah terpanjang        | 11 hari (libur panjang). Celah **tidak** diisi atau diinterpolasi |
 
-| `comcat_id` | Nama di CSV | Rentang harga (Rp/kg) | Hari tanpa perubahan |
-|---|---|---|---|
-| `com_14` | Cabai Merah Keriting | 20.000 – 150.000 | 68,6% |
-| `com_11` | Bawang Merah Ukuran Sedang | 25.000 – 82.500 | 80,9% |
-| `com_3` | Beras Kualitas Medium I | 11.950 – 16.100 | 96,4% |
+| `comcat_id` | Nama di CSV                | Rentang harga (Rp/kg) | Hari tanpa perubahan |
+| ----------- | -------------------------- | --------------------- | -------------------- |
+| `com_14`    | Cabai Merah Keriting       | 20.000 – 150.000      | 68,6%                |
+| `com_11`    | Bawang Merah Ukuran Sedang | 25.000 – 82.500       | 80,9%                |
+| `com_3`     | Beras Kualitas Medium I    | 11.950 – 16.100       | 96,4%                |
 
 Cabai rawit hijau dan cabai rawit merah **tidak ada** di dataset. Keduanya tampil di UI dengan harga "—" dan status "Data belum tersedia".
 
@@ -44,24 +44,24 @@ uv run --env-file ../../.env python -m kp_ingest import-csv --file ../../data/se
 
 Keluaran berupa ringkasan JSON, misalnya `{"run_id": 1, "status": "succeeded", "inserted": 5859, "skipped": 0, "rejected": 0}`.
 
-| Kode keluar | Arti |
-|---|---|
-| 0 | `succeeded`: semua baris valid |
-| 2 | `partial`: sebagian baris ditolak (lihat log `row rejected: line N: …`) |
-| 1 | `failed` atau pemanggilan salah (env/berkas/pasar tidak dikenal) |
+| Kode keluar | Arti                                                                    |
+| ----------- | ----------------------------------------------------------------------- |
+| 0           | `succeeded`: semua baris valid                                          |
+| 2           | `partial`: sebagian baris ditolak (lihat log `row rejected: line N: …`) |
+| 1           | `failed` atau pemanggilan salah (env/berkas/pasar tidak dikenal)        |
 
 ## Perilaku validasi
 
-| Masukan | Hasil |
-|---|---|
-| BOM UTF-8, akhir baris CRLF, spasi di sekitar nilai | Diterima (dibersihkan) |
-| Harga `40000` atau `40000.0` | Disimpan `40000` (integer rupiah) |
-| Harga dengan pemisah ribuan (`40.000`, `40,000`), eksponen (`1e4`), `40_000`, tanda `+` | Baris ditolak (mencegah `40.000` terbaca Rp40) |
-| Harga pecahan (`40000.5`), < 100, kosong, bukan angka, `NaN`/`inf`, > 10.000.000 | Baris ditolak, **tidak** disimpan sebagai 0 |
-| Tanggal bukan format `YYYY-MM-DD` (mis. epoch `1727654400`, `30/09/2026`), sebelum 2000-01-01, tidak valid, atau di masa depan (WIB) | Baris ditolak |
-| `comcat_id` tidak ada di katalog | Baris ditolak |
-| Header kurang kolom wajib (mis. CSV Excel berpemisah `;`) | Run ditutup `failed` dengan alasan, tidak ada baris ditulis |
-| Berkas bukan UTF-8 (mis. CP-1252) | Run ditutup `failed`; batch yang sudah masuk tetap tersimpan dan view di-refresh |
+| Masukan                                                                                                                              | Hasil                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| BOM UTF-8, akhir baris CRLF, spasi di sekitar nilai                                                                                  | Diterima (dibersihkan)                                                           |
+| Harga `40000` atau `40000.0`                                                                                                         | Disimpan `40000` (integer rupiah)                                                |
+| Harga dengan pemisah ribuan (`40.000`, `40,000`), eksponen (`1e4`), `40_000`, tanda `+`                                              | Baris ditolak (mencegah `40.000` terbaca Rp40)                                   |
+| Harga pecahan (`40000.5`), < 100, kosong, bukan angka, `NaN`/`inf`, > 10.000.000                                                     | Baris ditolak, **tidak** disimpan sebagai 0                                      |
+| Tanggal bukan format `YYYY-MM-DD` (mis. epoch `1727654400`, `30/09/2026`), sebelum 2000-01-01, tidak valid, atau di masa depan (WIB) | Baris ditolak                                                                    |
+| `comcat_id` tidak ada di katalog                                                                                                     | Baris ditolak                                                                    |
+| Header kurang kolom wajib (mis. CSV Excel berpemisah `;`)                                                                            | Run ditutup `failed` dengan alasan, tidak ada baris ditulis                      |
+| Berkas bukan UTF-8 (mis. CP-1252)                                                                                                    | Run ditutup `failed`; batch yang sudah masuk tetap tersimpan dan view di-refresh |
 
 Alasan penolakan di log hanya memuat nama field dan jenis galat, tanpa isi baris mentah.
 

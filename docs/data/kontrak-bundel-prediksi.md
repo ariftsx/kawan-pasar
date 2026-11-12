@@ -15,29 +15,29 @@ Satu bundel = satu direktori `<bundle_id>/` yang dikirim pipeline (rsync, tulis-
 
 ### `metadata.json`
 
-| Field | Tipe | Wajib | Kolom DB (`forecast_artifacts`) |
-|---|---|---|---|
-| `bundle_id` | string, unik | ya | `bundle_id` |
-| `model_name` | string (mis. `arif-net`) | ya | `model_name` |
-| `model_version` | string tidak kosong | ya | `model_version` |
-| `data_version` | string tidak kosong | ya | `data_version` |
-| `preprocess_version` | string tidak kosong | ya | `preprocess_version` |
-| `data_cutoff` | ISO-8601 dengan zona waktu | ya | `data_cutoff` (timestamptz) |
-| `issued_at` | ISO-8601 dengan zona waktu | ya | `issued_at` (timestamptz) |
+| Field                | Tipe                       | Wajib | Kolom DB (`forecast_artifacts`) |
+| -------------------- | -------------------------- | ----- | ------------------------------- |
+| `bundle_id`          | string, unik               | ya    | `bundle_id`                     |
+| `model_name`         | string (mis. `arif-net`)   | ya    | `model_name`                    |
+| `model_version`      | string tidak kosong        | ya    | `model_version`                 |
+| `data_version`       | string tidak kosong        | ya    | `data_version`                  |
+| `preprocess_version` | string tidak kosong        | ya    | `preprocess_version`            |
+| `data_cutoff`        | ISO-8601 dengan zona waktu | ya    | `data_cutoff` (timestamptz)     |
+| `issued_at`          | ISO-8601 dengan zona waktu | ya    | `issued_at` (timestamptz)       |
 
 `checksum_sha256` di DB adalah SHA-256 (hex huruf kecil, 64 karakter) dari berkas `forecasts.*`.
 
 ### `forecasts.csv`
 
-| Kolom | Tipe | Null | Kolom DB (`forecasts`) | Aturan |
-|---|---|---|---|---|
-| `market_code` | string | tidak | → `market_id` | Harus ada di katalog (`PIKJ`, …) |
-| `commodity_code` | string | tidak | → `commodity_id` | Harus ada di katalog dan berstatus `covered` |
-| `base_date` | `YYYY-MM-DD` | tidak | `base_date` | |
-| `horizon_days` | integer | tidak | `horizon_days` | ∈ {1, 3, 7, 14, 30, 90, 180, 365} |
-| `q10_change`, `q50_change`, `q90_change` | desimal (r(t,h)) | boleh kosong | `q*_change` numeric(9,6) | q10 ≤ q50 ≤ q90 |
-| `q10_price_idr`, `q50_price_idr`, `q90_price_idr` | integer rupiah | boleh kosong | `q*_price_idr` | > 0 dan monoton |
-| `eval_status` | `available` \| `partial` \| `not_tested` | tidak | `eval_status` | |
+| Kolom                                             | Tipe                                     | Null         | Kolom DB (`forecasts`)   | Aturan                                       |
+| ------------------------------------------------- | ---------------------------------------- | ------------ | ------------------------ | -------------------------------------------- |
+| `market_code`                                     | string                                   | tidak        | → `market_id`            | Harus ada di katalog (`PIKJ`, …)             |
+| `commodity_code`                                  | string                                   | tidak        | → `commodity_id`         | Harus ada di katalog dan berstatus `covered` |
+| `base_date`                                       | `YYYY-MM-DD`                             | tidak        | `base_date`              |                                              |
+| `horizon_days`                                    | integer                                  | tidak        | `horizon_days`           | ∈ {1, 3, 7, 14, 30, 90, 180, 365}            |
+| `q10_change`, `q50_change`, `q90_change`          | desimal (r(t,h))                         | boleh kosong | `q*_change` numeric(9,6) | q10 ≤ q50 ≤ q90                              |
+| `q10_price_idr`, `q50_price_idr`, `q90_price_idr` | integer rupiah                           | boleh kosong | `q*_price_idr`           | > 0 dan monoton                              |
+| `eval_status`                                     | `available` \| `partial` \| `not_tested` | tidak        | `eval_status`            |                                              |
 
 Nilai kosong berarti **tidak diketahui**: disimpan NULL dan ditampilkan "—", tidak pernah 0. Satu baris unik per (pasar, komoditas, horizon) dalam satu bundel.
 
@@ -58,10 +58,10 @@ Aturan tampil di produk: umur > 8 hari → label "kedaluwarsa"; > 28 hari → di
 
 Layanan model hanya ada di jaringan internal. Setiap permintaan wajib membawa:
 
-| Header | Isi |
-|---|---|
-| `X-KP-Timestamp` | Waktu epoch dalam detik (UTC) |
-| `X-KP-Nonce` | String acak unik per permintaan (≥ 16 byte, base64url) |
+| Header           | Isi                                                               |
+| ---------------- | ----------------------------------------------------------------- |
+| `X-KP-Timestamp` | Waktu epoch dalam detik (UTC)                                     |
+| `X-KP-Nonce`     | String acak unik per permintaan (≥ 16 byte, base64url)            |
 | `X-KP-Signature` | Hex HMAC-SHA256 dengan kunci bersama atas string kanonik di bawah |
 
 String kanonik (dipisah `\n`):

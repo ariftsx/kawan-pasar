@@ -1,6 +1,7 @@
 packages:
   - apps/*
   - packages/*
+  - tests/*
 
 # Only these packages may run install scripts (native binaries). Everything else stays blocked.
 allowBuilds:
