@@ -1,5 +1,5 @@
 import { Global, Inject, Logger, Module } from '@nestjs/common';
-import type { OnApplicationShutdown } from '@nestjs/common';
+import type { OnApplicationShutdown, OnModuleInit } from '@nestjs/common';
 import pg from 'pg';
 import { ENV } from '../config/config.module.js';
 import type { Env } from '../config/env.js';
@@ -40,8 +40,25 @@ export function createPool(env: Env): pg.Pool {
   ],
   exports: [PG_POOL, DRIZZLE],
 })
-export class DatabaseModule implements OnApplicationShutdown {
+export class DatabaseModule implements OnModuleInit, OnApplicationShutdown {
+  private readonly log = new Logger('DatabaseModule');
+
   constructor(@Inject(PG_POOL) private readonly pool: pg.Pool) {}
+
+  /**
+   * Opens the first connection during boot. Through PgBouncer (SCRAM + auth_query) the first
+   * connection can take longer than the readiness probe allows, which made /health/ready report
+   * "down" right after start. Never throws: an unreachable database is reported by readiness.
+   */
+  async onModuleInit(): Promise<void> {
+    try {
+      await this.pool.query('SELECT 1');
+    } catch (e) {
+      this.log.warn(
+        `database not reachable at startup: ${e instanceof Error ? e.message : 'error'}`,
+      );
+    }
+  }
 
   async onApplicationShutdown(): Promise<void> {
     await this.pool.end();

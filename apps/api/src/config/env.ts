@@ -12,6 +12,19 @@ export const EnvSchema = z.object({
   VALKEY_CACHE_URL: redisUrl,
   VALKEY_QUEUE_URL: redisUrl,
   SERVICE_TOKEN: z.string().min(32),
+  /** Requests per minute per client and route group (second layer after Traefik). */
+  RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).max(100_000).default(120),
+  /** Comma-separated proxy IPs allowed to set X-Forwarded-For (the web/BFF container). */
+  TRUSTED_PROXY_IPS: z
+    .string()
+    .default('')
+    .transform((v) =>
+      v
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0),
+    )
+    .pipe(z.array(z.ipv4())),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });
 

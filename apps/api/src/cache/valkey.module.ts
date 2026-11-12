@@ -3,8 +3,10 @@ import type { OnApplicationShutdown } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { ENV } from '../config/config.module.js';
 import type { Env } from '../config/env.js';
+import { CacheService } from './cache.service.js';
+import { VALKEY_CACHE } from './tokens.js';
 
-export const VALKEY_CACHE = Symbol('VALKEY_CACHE');
+export { VALKEY_CACHE } from './tokens.js';
 
 const BOOT_WAIT_MS = 2_000;
 
@@ -51,8 +53,9 @@ function firstConnection(client: Redis): Promise<void> {
         return client;
       },
     },
+    CacheService,
   ],
-  exports: [VALKEY_CACHE],
+  exports: [VALKEY_CACHE, CacheService],
 })
 export class ValkeyModule implements OnApplicationShutdown {
   constructor(@Inject(VALKEY_CACHE) private readonly cache: Redis) {}

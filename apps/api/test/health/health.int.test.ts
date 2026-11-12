@@ -1,5 +1,7 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
+import type pg from 'pg';
 import { afterEach, describe, expect, it } from 'vitest';
+import { PG_POOL } from '../../src/database/database.module.js';
 import { createApp } from '../../src/app.factory.js';
 import { loadEnv } from '../../src/config/env.js';
 import type { Env } from '../../src/config/env.js';
@@ -69,5 +71,21 @@ describe('health endpoints', () => {
     const res = await (await start(testEnv())).inject({ method: 'GET', url: '/nope' });
     expect(res.statusCode).toBe(404);
     expect(res.body).not.toMatch(/stack|node_modules|at /);
+  });
+});
+
+describe('startup', () => {
+  it('opens a database connection during startup so readiness is accurate right after boot', async () => {
+    const started = await start(testEnv());
+    const pool = started.get<pg.Pool>(PG_POOL);
+    expect(pool.totalCount).toBeGreaterThanOrEqual(1);
+  });
+
+  it('still starts when the database is unreachable (readiness reports it instead)', async () => {
+    const started = await start(
+      testEnv({ DATABASE_URL: 'postgres://app_rw:pw@127.0.0.1:1/kawanpasar' }),
+    );
+    const res = await started.inject({ method: 'GET', url: '/health/ready' });
+    expect(res.statusCode).toBe(503);
   });
 });

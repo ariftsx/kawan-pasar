@@ -2,7 +2,8 @@ import { Controller, Get, HttpStatus, Inject, Res } from '@nestjs/common';
 import type { FastifyReply } from 'fastify';
 import type { Redis } from 'ioredis';
 import type pg from 'pg';
-import { VALKEY_CACHE } from '../../cache/valkey.module.js';
+import { VALKEY_CACHE } from '../../cache/tokens.js';
+import { Public } from '../../common/public.decorator.js';
 import { PG_POOL } from '../../database/database.module.js';
 
 type CheckState = 'up' | 'down';
@@ -32,6 +33,7 @@ async function probe(run: () => Promise<unknown>): Promise<CheckState> {
   }
 }
 
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(

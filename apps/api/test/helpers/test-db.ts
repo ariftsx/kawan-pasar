@@ -25,7 +25,7 @@ export async function resetTestDatabase(): Promise<void> {
   const pool = new pg.Pool({
     connectionString: testUrls.owner(),
     max: 1,
-    connectionTimeoutMillis: 5_000,
+    connectionTimeoutMillis: 15_000,
   });
   try {
     await pool.query('DROP SCHEMA IF EXISTS drizzle CASCADE');
@@ -40,11 +40,16 @@ export async function resetTestDatabase(): Promise<void> {
   }
 }
 
+/**
+ * 15 s connect timeout: from a Windows host, direct PostgreSQL connections through the Docker
+ * Desktop port proxy have a long latency tail (p99 ≈ 0.8 s, spikes > 5 s under CPU load).
+ * The API itself connects inside the Docker network through PgBouncer and is unaffected.
+ */
 export function poolFor(role: keyof typeof testUrls): pg.Pool {
   return new pg.Pool({
     connectionString: testUrls[role](),
     max: 2,
-    connectionTimeoutMillis: 5_000,
+    connectionTimeoutMillis: 15_000,
   });
 }
 

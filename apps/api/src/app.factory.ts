@@ -1,23 +1,36 @@
 import 'reflect-metadata';
 import { randomUUID } from 'node:crypto';
 import helmet from '@fastify/helmet';
+import type { Type } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module.js';
+import type { Clock } from './common/clock.js';
 import type { Env } from './config/env.js';
 
 const ONE_MIB = 1_048_576;
 
-/** Only proxies on private container networks (Traefik) may set X-Forwarded-* headers. */
-const TRUSTED_PROXIES = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'];
+export interface AppOptions {
+  /** Extra modules (used by tests to mount probe controllers). */
+  readonly imports?: readonly Type[];
+  /** Replaces the system clock (tests). */
+  readonly clock?: Clock;
+  /** Where request logs are written (default stdout); tests capture them. */
+  readonly logDestination?: NodeJS.WritableStream;
+}
 
 /** Builds the configured Core API application. Shared by `main.ts` and the tests. */
-export async function createApp(env: Env): Promise<NestFastifyApplication> {
+export async function createApp(
+  env: Env,
+  options: AppOptions = {},
+): Promise<NestFastifyApplication> {
   const adapter = new FastifyAdapter({
     bodyLimit: ONE_MIB,
-    trustProxy: TRUSTED_PROXIES,
+    // Only the configured proxy (the web/BFF container) may set X-Forwarded-For. With an empty
+    // list nothing is trusted and request.ip is always the socket peer.
+    trustProxy: env.TRUSTED_PROXY_IPS.length > 0 ? [...env.TRUSTED_PROXY_IPS] : false,
     // Never trust a client-supplied request id: it ends up in logs.
     genReqId: () => randomUUID(),
     connectionTimeout: 10_000,
@@ -26,9 +39,13 @@ export async function createApp(env: Env): Promise<NestFastifyApplication> {
     return503OnClosing: true,
   });
 
-  const app = await NestFactory.create<NestFastifyApplication>(AppModule.forRoot(env), adapter, {
-    bufferLogs: true,
-  });
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule.forRoot(env, options),
+    adapter,
+    {
+      bufferLogs: true,
+    },
+  );
   app.useLogger(app.get(Logger));
   app.enableShutdownHooks();
 

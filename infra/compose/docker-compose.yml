@@ -11,6 +11,13 @@ networks:
   backend:
     name: kp-backend
     internal: true
+    # Fixed subnet so the API can trust exactly one proxy address (the web/BFF container).
+    #   static (below .128): 172.30.0.2 traefik, 172.30.0.10 web (Fase 1B)
+    #   dynamic (ip_range):  172.30.0.128/25 for every other container
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+          ip_range: 172.30.0.128/25
 
 volumes:
   pgdata:
@@ -108,7 +115,10 @@ services:
     volumes:
       - ../traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ../traefik/dynamic:/etc/traefik/dynamic:ro
-    networks: [edge, backend]
+    networks:
+      edge: {}
+      backend:
+        ipv4_address: 172.30.0.2
     healthcheck:
       test: ['CMD', 'traefik', 'healthcheck', '--ping']
       interval: 5s
@@ -134,6 +144,8 @@ services:
       VALKEY_QUEUE_URL: redis://:${VALKEY_PASSWORD}@valkey-queue:6379/0
       SERVICE_TOKEN: ${SERVICE_TOKEN:?set SERVICE_TOKEN}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      RATE_LIMIT_PER_MINUTE: '120'
+      TRUSTED_PROXY_IPS: 172.30.0.10
     networks: [backend]
 
   ingest:
@@ -148,6 +160,9 @@ services:
       pgbouncer: { condition: service_healthy }
     environment:
       INGEST_DATABASE_URL: postgres://ingest_w:${INGEST_W_PASSWORD}@pgbouncer:6432/kawanpasar
+      # After a run the job asks the API to drop its cached prices (best effort; TTL otherwise).
+      API_INTERNAL_URL: http://api:3001
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?set SERVICE_TOKEN}
     volumes:
       - ../../data/seed:/data/seed:ro
     networks: [backend]
