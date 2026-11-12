@@ -1,6 +1,8 @@
 import { fileURLToPath } from 'node:url';
 import type { NextConfig } from 'next';
+import { MARKETS } from '@kawan-pasar/catalog';
 import { buildCsp } from './src/lib/csp';
+import { dataRewrites } from './src/lib/routes';
 
 const dev = process.env.NODE_ENV === 'development';
 
@@ -28,7 +30,8 @@ const config: NextConfig = {
   rewrites() {
     return Promise.resolve({
       beforeFiles: [],
-      afterFiles: [{ source: '/pasar', destination: '/PIKJ/pasar' }],
+      // Fase 1: one market with data. Market selection arrives with a second market.
+      afterFiles: dataRewrites(MARKETS[0].code),
       fallback: [],
     });
   },

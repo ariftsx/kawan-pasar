@@ -2,6 +2,7 @@ import { MARKETS } from '@kawan-pasar/catalog';
 import type { ReactNode } from 'react';
 import { cx } from '@/lib/cx';
 import { Footer } from '../organisms/Footer';
+import { MarkOnboarded } from '../organisms/MarkOnboarded';
 import { NavBar } from '../organisms/NavBar';
 import { TabBar } from '../organisms/TabBar';
 import { TopBar } from '../organisms/TopBar';
@@ -32,6 +33,7 @@ export function SiteShell({ children }: { children: ReactNode }): ReactNode {
         <Footer marketName={MARKET_NAME} />
       </div>
       <TabBar />
+      <MarkOnboarded />
     </>
   );
 }

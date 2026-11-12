@@ -87,3 +87,15 @@ const HORIZON_LABELS: Record<Horizon, { short: string; long: string }> = {
 export function formatHorizon(days: Horizon): { short: string; long: string } {
   return HORIZON_LABELS[days];
 }
+
+/** "52 rb", "13,7 rb", "1,25 jt" (axis labels; exact values live in tooltips and tables). */
+export function compactRupiah(n: number): string {
+  const fmt = (v: number, digits: number): string =>
+    v.toLocaleString('id-ID', { maximumFractionDigits: digits });
+  if (Math.abs(n) >= 1_000_000) return `${fmt(n / 1_000_000, 2)} jt`;
+  if (Math.abs(n) >= 1_000) {
+    const k = n / 1_000;
+    return `${fmt(k, Math.abs(k) >= 20 ? 0 : 1)} rb`;
+  }
+  return fmt(n, 0);
+}

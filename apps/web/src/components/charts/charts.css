@@ -1,0 +1,73 @@
+/*
+ * Chart variants are all rendered on the server; a data attribute on the wrapper selects which
+ * one is visible. Without JavaScript the server default stays visible (90 days, 7-day horizon).
+ */
+[data-active-range] > [data-range] {
+  display: none;
+}
+[data-active-range='30d'] > [data-range='30d'],
+[data-active-range='90d'] > [data-range='90d'],
+[data-active-range='365d'] > [data-range='365d'],
+[data-active-range='all'] > [data-range='all'] {
+  display: block;
+}
+
+/* Forecast: horizons up to 30 days use the short time axis, 90+ the long one. */
+[data-active-horizon] [data-scale='long'],
+[data-active-horizon='90'] [data-scale='short'],
+[data-active-horizon='180'] [data-scale='short'],
+[data-active-horizon='365'] [data-scale='short'] {
+  display: none;
+}
+[data-active-horizon='90'] [data-scale='long'],
+[data-active-horizon='180'] [data-scale='long'],
+[data-active-horizon='365'] [data-scale='long'] {
+  display: block;
+}
+
+[data-active-horizon] [data-h] {
+  opacity: 0.45;
+}
+[data-active-horizon='1'] [data-h='1'],
+[data-active-horizon='3'] [data-h='3'],
+[data-active-horizon='7'] [data-h='7'],
+[data-active-horizon='14'] [data-h='14'],
+[data-active-horizon='30'] [data-h='30'],
+[data-active-horizon='90'] [data-h='90'],
+[data-active-horizon='180'] [data-h='180'],
+[data-active-horizon='365'] [data-h='365'] {
+  opacity: 1;
+  stroke: var(--color-surface);
+  stroke-width: 3px;
+}
+
+/* Horizon-dependent blocks outside the chart (metric cards, table rows). */
+[data-active-horizon] [data-horizon-only] {
+  display: none;
+}
+[data-active-horizon='1'] [data-horizon-only='1'],
+[data-active-horizon='3'] [data-horizon-only='3'],
+[data-active-horizon='7'] [data-horizon-only='7'],
+[data-active-horizon='14'] [data-horizon-only='14'],
+[data-active-horizon='30'] [data-horizon-only='30'],
+[data-active-horizon='90'] [data-horizon-only='90'],
+[data-active-horizon='180'] [data-horizon-only='180'],
+[data-active-horizon='365'] [data-horizon-only='365'] {
+  display: block;
+}
+[data-active-horizon='1'] tr[data-row='1'],
+[data-active-horizon='3'] tr[data-row='3'],
+[data-active-horizon='7'] tr[data-row='7'],
+[data-active-horizon='14'] tr[data-row='14'],
+[data-active-horizon='30'] tr[data-row='30'],
+[data-active-horizon='90'] tr[data-row='90'],
+[data-active-horizon='180'] tr[data-row='180'],
+[data-active-horizon='365'] tr[data-row='365'] {
+  background-color: var(--color-terong-100);
+}
+
+/* Commodity filter (CommodityFilter): hide items that do not match. */
+[data-filter='covered'] [data-coverage='pending'],
+[data-filtered-out] {
+  display: none !important;
+}

@@ -12,6 +12,12 @@
 
   body {
     min-height: 100dvh;
+    /*
+     * Long words wrap instead of overflowing. `break-word` (not `anywhere`) keeps min-content
+     * sizes, so tables and names do not get squeezed mid-word; identifiers that are truly
+     * unbreakable (model and data versions) use `break-all` where they are shown.
+     */
+    overflow-wrap: break-word;
   }
 
   :focus-visible {
@@ -29,6 +35,28 @@
       transition-duration: 1ms !important;
       scroll-behavior: auto !important;
     }
+  }
+}
+
+/*
+ * A grid without an explicit template uses one implicit 'auto' column, which cannot shrink below
+ * its content and overflows narrow or zoomed screens. Default to a shrinkable column; every
+ * grid-cols-* utility (utilities layer) still overrides this.
+ */
+@layer components {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /*
+   * Visually hidden text (.sr-only) is absolutely positioned. Inside a clipping container without
+   * a positioned ancestor it would be placed against the viewport and widen the page (found with
+   * wide scrollable tables at 200% text). Clipping containers are therefore containing blocks.
+   */
+  .overflow-hidden,
+  .overflow-auto,
+  .overflow-x-auto {
+    position: relative;
   }
 }
 

@@ -5,7 +5,12 @@ import { StatePanel } from '../molecules/StatePanel';
 import { RetryButton } from './RetryButton';
 
 export type SystemStateKind =
-  'forecast_pending' | 'market_unavailable' | 'price_stale' | 'load_failed' | 'coming_soon';
+  | 'forecast_pending'
+  | 'forecast_unavailable'
+  | 'market_unavailable'
+  | 'price_stale'
+  | 'load_failed'
+  | 'coming_soon';
 
 /**
  * The public system states of v0.4 (plus "coming soon" for pages of later phases), with fixed,
@@ -36,6 +41,17 @@ export function SystemState({
           chip="Menyusul"
           title={`Prediksi ${commodityName ?? 'komoditas ini'} belum tersedia`}
           body="Harga hari ini tetap bisa Anda pantau. Prediksi untuk komoditas ini menyusul pada tahap pengembangan berikutnya."
+          action={<Button href="/harga">Lihat harga hari ini</Button>}
+        />
+      );
+    case 'forecast_unavailable':
+      return (
+        <StatePanel
+          headingLevel={headingLevel}
+          pose="istirahat"
+          chip="Belum tersedia"
+          title={`Prediksi ${commodityName ?? 'komoditas ini'} belum tersedia`}
+          body="Belum ada prediksi terbaru yang lolos pemeriksaan untuk komoditas ini. Harga hari ini tetap bisa Anda pantau."
           action={<Button href="/harga">Lihat harga hari ini</Button>}
         />
       );
