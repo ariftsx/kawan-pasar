@@ -20,9 +20,11 @@ http:
       loadBalancer:
         servers:
           - url: http://web:3000
+        # With a single web replica, a health check that fails under CPU pressure turns slowness
+        # into a full outage (every request 503). Generous timeout; replicas are decided in Fase 1D.
         healthCheck:
           path: /api/health
           interval: 10s
-          timeout: 3s
+          timeout: 8s
         responseForwarding:
           flushInterval: 100ms

@@ -158,6 +158,8 @@ services:
     build:
       context: ../..
       dockerfile: apps/web/Dockerfile
+      args:
+        PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://127.0.0.1:8080}
     image: kawan-pasar/web:local
     cap_drop: [ALL]
     read_only: true
@@ -173,6 +175,7 @@ services:
       NODE_ENV: production
       API_INTERNAL_URL: http://api:3001
       API_TIMEOUT_MS: '3000'
+      PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://127.0.0.1:8080}
       SERVICE_TOKEN: ${SERVICE_TOKEN:?set SERVICE_TOKEN}
       WEB_REVALIDATE_TOKEN: ${WEB_REVALIDATE_TOKEN:?set WEB_REVALIDATE_TOKEN}
     networks:
