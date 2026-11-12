@@ -1,0 +1,17 @@
+{
+  "extends": "@kawan-pasar/tsconfig/nextjs.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "paths": { "@/*": ["./src/*"] }
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    ".next/types/**/*.ts",
+    "*.config.ts",
+    "vitest.setup.ts",
+    "test/**/*.ts"
+  ],
+  "exclude": ["node_modules", ".next/cache"]
+}

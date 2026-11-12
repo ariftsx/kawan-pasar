@@ -1,0 +1,161 @@
+/*
+ * Kapa motion (v0.4 "Gerak"): float 5px with arm/leaf gesture (900 ms ease-in-out), then a
+ * 140 ms blink: one 3.2 s cycle each time Kapa scrolls into view (never longer than 5 s, WCAG
+ * 2.2.2). Transform/opacity only. Runs only inside a playing <KapaMotion>; disabled entirely
+ * under prefers-reduced-motion.
+ */
+.kapa-motion {
+  display: inline-block;
+  line-height: 0;
+}
+
+.kapa .kapa-rig,
+.kapa .kapa-shadow,
+.kapa .kapa-leaf,
+.kapa .kapa-arm,
+.kapa .kapa-eyes,
+.kapa .kapa-prop-float,
+.kapa .kapa-prop-pulse {
+  transform-box: fill-box;
+}
+
+.kapa .kapa-shadow,
+.kapa .kapa-eyes {
+  transform-origin: 50% 50%;
+}
+
+.kapa .kapa-leaf {
+  transform-origin: 50% 100%;
+}
+
+.kapa .kapa-arm {
+  transform-origin: var(--kapa-origin, 0% 0%);
+}
+
+[data-playing] .kapa .kapa-rig {
+  animation: kapa-bob 3200ms ease-in-out 1;
+}
+
+[data-playing] .kapa .kapa-shadow {
+  animation: kapa-shadow 3200ms ease-in-out 1;
+}
+
+[data-playing] .kapa .kapa-leaf {
+  animation: kapa-leaf 3200ms ease-in-out 1;
+}
+
+[data-playing] .kapa .kapa-arm {
+  animation: kapa-arm 3200ms ease-in-out 1;
+}
+
+[data-playing] .kapa .kapa-eyes {
+  animation: kapa-blink 3200ms linear 1;
+}
+
+[data-playing] .kapa .kapa-prop-float {
+  animation: kapa-float 3200ms ease-in-out 1;
+}
+
+[data-playing] .kapa .kapa-prop-pulse {
+  animation: kapa-pulse 3200ms ease-in-out 1;
+}
+
+/* 0–9 %: rest (≈300 ms), 9–37 %: up (900 ms), 37–65 %: down (900 ms), then rest and blink. */
+@keyframes kapa-bob {
+  0%,
+  9%,
+  65%,
+  100% {
+    transform: translateY(0);
+  }
+  37% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes kapa-shadow {
+  0%,
+  9%,
+  65%,
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  37% {
+    transform: scaleX(0.86);
+    opacity: 0.67;
+  }
+}
+
+@keyframes kapa-leaf {
+  0%,
+  9%,
+  65%,
+  100% {
+    transform: rotate(0deg);
+  }
+  37% {
+    transform: rotate(-5deg);
+  }
+}
+
+@keyframes kapa-arm {
+  0%,
+  9%,
+  65%,
+  100% {
+    transform: rotate(0deg);
+  }
+  37% {
+    transform: rotate(var(--kapa-swing, 0deg));
+  }
+}
+
+/* 140 ms of 3200 ms ≈ 4.4 %. */
+@keyframes kapa-blink {
+  0%,
+  92%,
+  96.4%,
+  100% {
+    transform: scaleY(1);
+  }
+  94.2% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes kapa-float {
+  0%,
+  9%,
+  65%,
+  100% {
+    transform: translateY(0);
+  }
+  37% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes kapa-pulse {
+  0%,
+  9%,
+  65%,
+  100% {
+    opacity: 0.6;
+  }
+  37% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kapa .kapa-rig,
+  .kapa .kapa-shadow,
+  .kapa .kapa-leaf,
+  .kapa .kapa-arm,
+  .kapa .kapa-eyes,
+  .kapa .kapa-prop-float,
+  .kapa .kapa-prop-pulse {
+    animation: none !important;
+  }
+}
