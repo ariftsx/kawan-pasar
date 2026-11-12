@@ -1,0 +1,20 @@
+{
+  "name": "@kawan-pasar/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "e2e": "playwright test",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@kawan-pasar/eslint-config": "workspace:*",
+    "@kawan-pasar/tsconfig": "workspace:*",
+    "@playwright/test": "1.65.0",
+    "@types/node": "24.19.2",
+    "eslint": "10.14.0",
+    "typescript": "6.0.3"
+  }
+}

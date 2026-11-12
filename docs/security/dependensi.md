@@ -21,6 +21,19 @@ Didefinisikan di `pnpm-workspace.yaml` (`overrides`). Setiap override wajib terc
 
 Keduanya hanya ada di dependensi pengembangan dan tidak ikut ke image produksi (`pnpm deploy --prod`). Override tetap dipasang agar gerbang audit bersih dan tidak ada pengecualian yang dibiarkan.
 
+## Dependensi web (Fase 1B)
+
+| Paket                                                                                      | Versi                         | Catatan                                                                                                                                                             |
+| ------------------------------------------------------------------------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `next`, `@next/eslint-plugin-next`                                                         | 16.4.6                        | Runtime web. `sharp` (dependensi opsional Next) tidak diizinkan menjalankan skrip instalasi, dan memang tidak dibutuhkan: `images.unoptimized`, tanpa gambar raster |
+| `react`, `react-dom`                                                                       | 19.3.1                        |                                                                                                                                                                     |
+| `tailwindcss`, `@tailwindcss/postcss`                                                      | 4.3.5                         | Build-time saja                                                                                                                                                     |
+| `server-only`                                                                              | 0.0.1                         | Mencegah modul server (token, env) ikut ke bundle klien                                                                                                             |
+| `@testing-library/react`, `@testing-library/dom`, `happy-dom`, `eslint-plugin-react-hooks` | 16.3.3, 10.4.2, 21.0.4, 7.1.1 | Dev-only                                                                                                                                                            |
+| `@playwright/test`, `@axe-core/playwright`                                                 | 1.65.0, 4.14.0                | Dev-only (`tests/e2e`); browser Chromium diunduh sekali dengan `playwright install chromium`                                                                        |
+
+Image `web` hanya memuat output `standalone` Next (dependensi yang benar-benar dipakai saat runtime) dan aset statis. Image berjalan sebagai `node` dengan filesystem read-only.
+
 ## Prosedur peningkatan versi
 
 1. Cek versi stabil terbaru dan tanggal rilisnya (`npm view <pkg> time`).

@@ -1,0 +1,5 @@
+{
+  "extends": "@kawan-pasar/tsconfig/base.json",
+  "compilerOptions": { "noEmit": true, "types": ["node"], "lib": ["ES2023", "DOM"] },
+  "include": ["specs/**/*.ts", "*.config.ts"]
+}

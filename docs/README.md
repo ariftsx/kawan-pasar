@@ -19,7 +19,8 @@ Sumber kebenaran proyek. Jika kode dan dokumen berbeda, perbedaan itu adalah tem
 Dokumen utama:
 
 - [Desain sistem](design/2026-11-11-kawan-pasar-design.md)
-- [Rencana Fase 0 — Fondasi](plans/2026-11-11-fase-0-fondasi.md)
+- [Rencana Fase 0 — Fondasi](plans/2026-11-11-fase-0-fondasi.md), [Fase 1A — API publik](plans/2026-11-12-fase-1a-api-publik.md), [Fase 1B — Fondasi web](plans/2026-11-12-fase-1b-fondasi-web.md)
+- [Sistem desain](design-system/README.md) · [Kontrak API](api/v1.md) · [Menjalankan lokal](operations/menjalankan-lokal.md)
 - [Panduan kontribusi](../CONTRIBUTING.md)
 
 ## Format ADR

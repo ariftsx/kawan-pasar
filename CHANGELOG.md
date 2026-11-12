@@ -2,6 +2,39 @@
 
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/). Versi produk mengikuti fase pengembangan.
 
+## [Fase 1B — Fondasi web] — 2026-11-12
+
+### Ditambahkan
+
+- Paket `@kawan-pasar/tokens`: palet Brand v0.4, skala tipe, spasi, radius, dan gerak sebagai satu sumber untuk `@theme` Tailwind 4. Kontras AA diuji, dan tiga varian teks gelap ditambahkan untuk teks kecil.
+- `apps/web` (Next.js 16.4, React 19.3, Tailwind 4.3):
+  - Font Plus Jakarta Sans dan Geist Mono di-self-host (subset WOFF2, OFL).
+  - Env tervalidasi; CSP hibrida (ADR 0008).
+- Brand:
+  - Logo, 5 ikon komoditas, 19 ikon fitur, 4 ilustrasi (SVG inline).
+  - Maskot Kapa 7 pose dengan animasi CSS (melayang, gestur, berkedip) yang dijeda di luar layar dan mati di `prefers-reduced-motion`.
+- Komponen atomik v0.4 (atom, molekul, organisme, template):
+  - Kerangka responsif: NavBar desktop, TopBar + TabBar mobile, Footer.
+  - Status sistem publik: prediksi menyusul, pasar belum tersedia, harga terlambat, gagal memuat, segera hadir.
+- Klien API server-only:
+  - Validasi ganda dengan `@kawan-pasar/contracts` dan cache data bertag.
+  - Galat upstream tidak pernah di-cache ISR.
+  - Rute data per pasar (`/[market]/…` + rewrites + penjaga `proxy.ts`); `/pasar` sebagai halaman data pertama.
+- Revalidasi bertag: API → `POST /api/internal/revalidate` (token tersendiri), dipicu invalidasi cache dan promosi bundel (ADR 0009). Nama tag dibagi lewat `cacheTags` di `@kawan-pasar/contracts`.
+- Rate limit API: ember `internal` untuk render server web (1200/menit), terpisah dari batas per pengunjung (120/menit).
+- Kontainer `web`:
+  - Di 172.30.0.10, non-root, read-only, dengan tmpfs terbatas untuk cache ISR.
+  - Router Traefik ke web; `/api/internal/*` diblokir dari luar; kompresi brotli di Traefik.
+- Uji asap e2e Playwright + axe (`tests/e2e`):
+  - 6 lebar layar dan reflow 320 px.
+  - WCAG 2.2 AA, gerak dikurangi, dan anggaran JS (≈136 KB dari 170 KB).
+- `gen-env --add-missing`, gerbang audit baru (`web-build`, `stack-rebuild`, `e2e-smoke`), dokumentasi `docs/design-system/`, ADR 0008–0009, dan laporan `docs/audits/fase-1b.md`.
+
+### Diperbaiki
+
+- Cache `tsx` (`apps/api/undefined/…`) yang ikut ter-commit di Fase 0 dihapus dan diabaikan. Isinya hanya kode sumber hasil transpilasi, tanpa rahasia.
+- `.prettierignore` mengabaikan setiap folder bernama `data` di level mana pun. Sekarang hanya `/data/` di root; dokumen `docs/data/*` kini ikut diformat.
+
 ## [Fase 1A — API publik] — 2026-11-12
 
 ### Ditambahkan
