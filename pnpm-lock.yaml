@@ -30,6 +30,9 @@ importers:
       '@kawan-pasar/catalog':
         specifier: workspace:*
         version: link:../../packages/catalog
+      '@kawan-pasar/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@nestjs/common':
         specifier: 12.4.2
         version: 12.4.2(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -108,6 +111,34 @@ importers:
         version: 5.1.0(@types/node@24.19.2)(vite@8.3.7(@types/node@24.19.2)(esbuild@0.28.2)(tsx@4.23.15))
 
   packages/catalog:
+    devDependencies:
+      '@kawan-pasar/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@kawan-pasar/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      '@types/node':
+        specifier: 24.19.2
+        version: 24.19.2
+      eslint:
+        specifier: 10.14.0
+        version: 10.14.0
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 5.1.0
+        version: 5.1.0(@types/node@24.19.2)(vite@8.3.7(@types/node@24.19.2)(esbuild@0.28.2)(tsx@4.23.15))
+
+  packages/contracts:
+    dependencies:
+      '@kawan-pasar/catalog':
+        specifier: workspace:*
+        version: link:../catalog
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@kawan-pasar/eslint-config':
         specifier: workspace:*

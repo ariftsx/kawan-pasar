@@ -20,8 +20,8 @@ Komoditas 4 dan 5 tetap tampil di antarmuka dengan harga "—" dan status "Data 
 
 | Kode   | Nama                     | Kota      | Status                      |
 | ------ | ------------------------ | --------- | --------------------------- |
-| `PIKJ` | Pasar Kramat Jati        | Jakarta   | `available`                 |
-| `PSEN` | Pasar Senen              | Jakarta   | `coming_soon` (belum tersedia) |
+| `PIKJ` | Pasar Kramat Jati        | Jakarta Timur | `available`                 |
+| `PSEN` | Pasar Senen              | Jakarta Pusat | `coming_soon` (belum tersedia) |
 | `PITT` | Pasar Induk Tanah Tinggi | Tangerang | `coming_soon`               |
 | `PBKS` | Pasar Bekasi             | Bekasi    | `coming_soon`               |
 

@@ -10,8 +10,8 @@ export interface Market {
 }
 
 export const MARKETS = [
-  { code: 'PIKJ', name: 'Pasar Kramat Jati', city: 'Jakarta', status: 'available' },
-  { code: 'PSEN', name: 'Pasar Senen', city: 'Jakarta', status: 'coming_soon' },
+  { code: 'PIKJ', name: 'Pasar Kramat Jati', city: 'Jakarta Timur', status: 'available' },
+  { code: 'PSEN', name: 'Pasar Senen', city: 'Jakarta Pusat', status: 'coming_soon' },
   { code: 'PITT', name: 'Pasar Induk Tanah Tinggi', city: 'Tangerang', status: 'coming_soon' },
   { code: 'PBKS', name: 'Pasar Bekasi', city: 'Bekasi', status: 'coming_soon' },
 ] as const satisfies readonly Market[];
