@@ -3,6 +3,9 @@
 # The build never needs the API: data pages are rendered on first request (ADR 0009).
 
 FROM node:24-alpine AS build
+# Public origin for canonical URLs and the sitemap; static pages bake it in at build time.
+ARG PUBLIC_SITE_URL=http://127.0.0.1:8080
+ENV PUBLIC_SITE_URL=$PUBLIC_SITE_URL
 RUN npm install -g pnpm@11.15.1
 ENV NEXT_TELEMETRY_DISABLED=1
 WORKDIR /repo
@@ -16,10 +19,12 @@ RUN pnpm --filter "@kawan-pasar/web^..." run --if-present build \
  && pnpm --filter @kawan-pasar/web build
 
 FROM node:24-alpine AS runtime
+ARG PUBLIC_SITE_URL=http://127.0.0.1:8080
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     HOSTNAME=0.0.0.0 \
-    PORT=3000
+    PORT=3000 \
+    PUBLIC_SITE_URL=$PUBLIC_SITE_URL
 WORKDIR /app
 # Standalone server (traced node_modules) + static assets. Owned by root, run as `node`, so the
 # application cannot modify its own code; only .next/cache (tmpfs in compose) is writable.

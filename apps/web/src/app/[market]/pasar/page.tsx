@@ -8,6 +8,7 @@ import { SectionHeader } from '@/components/molecules/SectionHeader';
 import { PageContainer } from '@/components/templates/SiteShell';
 import { requireData } from '@/lib/api/client';
 import { api } from '@/lib/api/endpoints';
+import { pageMetadata } from '@/lib/seo';
 
 /*
  * Data pages live under [market] and are reached through rewrites (`/pasar` → `/PIKJ/pasar`).
@@ -21,7 +22,11 @@ export function generateStaticParams(): { market: string }[] {
   return [];
 }
 
-export const metadata: Metadata = { title: 'Pilih pasar' };
+export const metadata: Metadata = pageMetadata({
+  title: 'Pilih pasar',
+  description: 'Pasar yang datanya tersedia di Kawan Pasar dan yang segera menyusul.',
+  path: '/pasar',
+});
 
 export default async function MarketsPage({
   params,
@@ -54,7 +59,7 @@ export default async function MarketsPage({
             </span>
             {m.status === 'available' ? (
               <Chip tone="green" size="S">
-                Tersedia
+                {m.code === market.data ? '✓ Dipilih' : 'Tersedia'}
               </Chip>
             ) : (
               <Chip tone="neutral" size="S">
