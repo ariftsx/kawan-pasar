@@ -11,6 +11,7 @@ import { Redis } from 'ioredis';
 import pg from 'pg';
 import { z } from 'zod';
 import { CacheService } from '../cache/cache.service.js';
+import { notifyApiInvalidate } from './notify-api.js';
 import { createDb } from '../database/client.js';
 import type { Db } from '../database/client.js';
 import { promoteBundle } from './bundle-promoter.js';
@@ -95,6 +96,13 @@ async function main(): Promise<number> {
         // The bundle is already active; stale cache entries expire with their TTL (≤ 1 hour).
         process.stderr.write(
           'warning: cache invalidation failed; cached forecasts expire by TTL\n',
+        );
+      }
+      const apiUrl = process.env['API_INTERNAL_URL'] ?? 'http://127.0.0.1:3001';
+      const notified = await notifyApiInvalidate(apiUrl, requireEnv('SERVICE_TOKEN'), 'forecasts');
+      if (!notified) {
+        process.stderr.write(
+          'warning: API not reachable; web pages refresh by their revalidation interval\n',
         );
       }
     };

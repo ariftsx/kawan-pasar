@@ -7,7 +7,7 @@ import { VALKEY_CACHE } from '../cache/tokens.js';
 import { ENV } from '../config/config.module.js';
 import type { Env } from '../config/env.js';
 import { rateLimited } from './api-errors.js';
-import { clientIp } from './client-ip.js';
+import { rateLimitBucket } from './client-ip.js';
 import { IS_PUBLIC } from './public.decorator.js';
 import { ThrottledWarning } from './throttled-log.js';
 
@@ -25,6 +25,8 @@ export class RateLimitGuard implements CanActivate {
     this.log.warn(m);
   });
   private readonly limit: number;
+  private readonly internalLimit: number;
+  private readonly trustedProxies: ReadonlySet<string>;
 
   constructor(
     @Inject(ENV) env: Env,
@@ -32,6 +34,8 @@ export class RateLimitGuard implements CanActivate {
     private readonly reflector: Reflector,
   ) {
     this.limit = env.RATE_LIMIT_PER_MINUTE;
+    this.internalLimit = env.RATE_LIMIT_INTERNAL_PER_MINUTE;
+    this.trustedProxies = new Set(env.TRUSTED_PROXY_IPS);
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -43,7 +47,10 @@ export class RateLimitGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<FastifyRequest>();
     const window = Math.floor(Date.now() / 1000 / WINDOW_SECONDS);
-    const key = `kp:v1:ratelimit:${context.getClass().name}:${clientIp(request)}:${String(window)}`;
+    const bucket = rateLimitBucket(request, this.trustedProxies);
+    const who = bucket.kind === 'internal' ? 'internal' : `ip:${bucket.ip}`;
+    const limit = bucket.kind === 'internal' ? this.internalLimit : this.limit;
+    const key = `kp:v1:ratelimit:${context.getClass().name}:${who}:${String(window)}`;
 
     let count: number;
     try {
@@ -66,7 +73,7 @@ export class RateLimitGuard implements CanActivate {
       return true;
     }
 
-    if (count > this.limit) {
+    if (count > limit) {
       const retryAfter = WINDOW_SECONDS - (Math.floor(Date.now() / 1000) % WINDOW_SECONDS);
       throw rateLimited(retryAfter);
     }

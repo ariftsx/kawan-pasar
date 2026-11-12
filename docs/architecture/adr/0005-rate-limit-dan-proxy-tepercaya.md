@@ -28,3 +28,7 @@ Core API hanya boleh dipanggil oleh Next.js (BFF) dan job internal. Rate limit p
 
 - Kontainer web (Fase 1B) **wajib** memakai `ipv4_address: 172.30.0.10` dan meneruskan IP klien di `X-Forwarded-For`.
 - Akses dev langsung ke `127.0.0.1:3001` tidak dipercaya sebagai proxy, sehingga rate limit memakai alamat gateway Docker.
+
+## Tambahan Fase 1B: ember `internal`
+
+Render dan revalidasi server Next.js datang dari kontainer web tanpa `X-Forwarded-For`, sehingga semuanya berbagi satu IP. Permintaan seperti itu (alamat socket ada di `TRUSTED_PROXY_IPS` **dan** tanpa `X-Forwarded-For`) kini memakai ember terpisah `internal` dengan `RATE_LIMIT_INTERNAL_PER_MINUTE` (default 1200). Permintaan yang meneruskan IP pengunjung tetap dibatasi per IP. Pemanggil di luar proxy tepercaya tidak pernah masuk ember ini, karena yang menentukan adalah alamat socket, bukan header (diuji di `rate-limit.int.test.ts`). Lihat ADR 0009.

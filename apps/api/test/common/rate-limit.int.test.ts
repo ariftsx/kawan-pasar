@@ -29,12 +29,17 @@ const uniqueIp = (): string =>
 async function hit(
   target: NestFastifyApplication,
   ip: string,
+  forwardedFor?: string,
 ): Promise<{ status: number; retryAfter: string | undefined }> {
   const res = await target.inject({
     method: 'GET',
     url: '/v1/limited',
     remoteAddress: ip,
-    headers: { 'x-service-token': serviceToken(), 'x-test-run': randomUUID() },
+    headers: {
+      'x-service-token': serviceToken(),
+      'x-test-run': randomUUID(),
+      ...(forwardedFor === undefined ? {} : { 'x-forwarded-for': forwardedFor }),
+    },
   });
   const retry = res.headers['retry-after'];
   return { status: res.statusCode, retryAfter: typeof retry === 'string' ? retry : undefined };
@@ -69,5 +74,52 @@ describe('rate limit', () => {
     });
     const ip = uniqueIp();
     expect([(await hit(app, ip)).status, (await hit(app, ip)).status]).toEqual([200, 200]);
+  });
+
+  describe('internal bucket for server-side rendering', () => {
+    const statuses = async (n: number, ip: string, xff?: string): Promise<number[]> => {
+      if (app === undefined) throw new Error('app not started');
+      const out: number[] = [];
+      for (let i = 0; i < n; i += 1) out.push((await hit(app, ip, xff)).status);
+      return out;
+    };
+
+    it('gives requests from the trusted proxy without X-Forwarded-For their own, larger budget', async () => {
+      const proxy = uniqueIp();
+      app = await startApp({
+        env: testEnv({
+          RATE_LIMIT_PER_MINUTE: '2',
+          RATE_LIMIT_INTERNAL_PER_MINUTE: '5',
+          TRUSTED_PROXY_IPS: proxy,
+        }),
+        imports: [LimitedModule],
+      });
+      expect(await statuses(6, proxy)).toEqual([200, 200, 200, 200, 200, 429]);
+    });
+
+    it('still limits each visitor forwarded by the proxy separately', async () => {
+      const proxy = uniqueIp();
+      app = await startApp({
+        env: testEnv({
+          RATE_LIMIT_PER_MINUTE: '2',
+          RATE_LIMIT_INTERNAL_PER_MINUTE: '50',
+          TRUSTED_PROXY_IPS: proxy,
+        }),
+        imports: [LimitedModule],
+      });
+      expect(await statuses(3, proxy, uniqueIp())).toEqual([200, 200, 429]);
+    });
+
+    it('never puts an untrusted caller in the internal bucket', async () => {
+      app = await startApp({
+        env: testEnv({
+          RATE_LIMIT_PER_MINUTE: '2',
+          RATE_LIMIT_INTERNAL_PER_MINUTE: '50',
+          TRUSTED_PROXY_IPS: uniqueIp(),
+        }),
+        imports: [LimitedModule],
+      });
+      expect(await statuses(3, uniqueIp())).toEqual([200, 200, 429]);
+    });
   });
 });

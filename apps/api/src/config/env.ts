@@ -14,6 +14,11 @@ export const EnvSchema = z.object({
   SERVICE_TOKEN: z.string().min(32),
   /** Requests per minute per client and route group (second layer after Traefik). */
   RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).max(100_000).default(120),
+  /**
+   * Budget for the web server's own requests (rendering/revalidation: from a trusted proxy and
+   * without X-Forwarded-For). Shared by all of those requests, so it is larger.
+   */
+  RATE_LIMIT_INTERNAL_PER_MINUTE: z.coerce.number().int().min(1).max(100_000).default(1200),
   /** Comma-separated proxy IPs allowed to set X-Forwarded-For (the web/BFF container). */
   TRUSTED_PROXY_IPS: z
     .string()
@@ -25,10 +30,21 @@ export const EnvSchema = z.object({
         .filter((s) => s.length > 0),
     )
     .pipe(z.array(z.ipv4())),
+  /** Web server (Next.js) that is told to revalidate its cache tags after data changes. */
+  WEB_INTERNAL_URL: z.url({ protocol: /^https?$/ }).optional(),
+  WEB_REVALIDATE_TOKEN: z.string().min(32).optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
+
+const EnvWithRulesSchema = EnvSchema.refine(
+  (env) => (env.WEB_INTERNAL_URL === undefined) === (env.WEB_REVALIDATE_TOKEN === undefined),
+  {
+    path: ['WEB_REVALIDATE_TOKEN'],
+    message: 'WEB_INTERNAL_URL and WEB_REVALIDATE_TOKEN go together',
+  },
+);
 
 /** Thrown when the environment is invalid. Carries variable names only, never their values. */
 export class EnvValidationError extends Error {
@@ -42,7 +58,7 @@ export class EnvValidationError extends Error {
 }
 
 export function loadEnv(source: NodeJS.ProcessEnv): Env {
-  const result = EnvSchema.safeParse(source);
+  const result = EnvWithRulesSchema.safeParse(source);
   if (result.success) return result.data;
   const names = [...new Set(result.error.issues.map((issue) => String(issue.path[0] ?? '?')))];
   throw new EnvValidationError(names.sort());

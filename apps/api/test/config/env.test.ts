@@ -42,4 +42,17 @@ describe('loadEnv', () => {
   it('rejects a database URL that is not postgres', () => {
     expect(() => loadEnv({ ...valid, DATABASE_URL: 'mysql://x@y/z' })).toThrow(/DATABASE_URL/);
   });
+
+  it('requires the web revalidation URL and token together', () => {
+    expect(() => loadEnv({ ...valid, WEB_INTERNAL_URL: 'http://web:3000' })).toThrow(
+      /WEB_REVALIDATE_TOKEN/,
+    );
+    const env = loadEnv({
+      ...valid,
+      WEB_INTERNAL_URL: 'http://web:3000',
+      WEB_REVALIDATE_TOKEN: 'w'.repeat(40),
+    });
+    expect(env.WEB_INTERNAL_URL).toBe('http://web:3000');
+    expect(loadEnv(valid).RATE_LIMIT_INTERNAL_PER_MINUTE).toBe(1200);
+  });
 });
