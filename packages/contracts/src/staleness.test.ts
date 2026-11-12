@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { businessDaysBetween, dataStatus, wibDate } from '../../src/modules/prices/staleness.js';
+import { businessDaysBetween, dataStatus, wibDate } from './staleness.js';
 
 describe('businessDaysBetween', () => {
   it('counts Monday–Friday days after `from` up to and including `to`', () => {

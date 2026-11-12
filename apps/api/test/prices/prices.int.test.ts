@@ -118,6 +118,11 @@ describe('GET /v1/markets/:market/prices', () => {
     expect((await get('/v1/markets/pikj/prices')).statusCode).toBe(404);
   });
 
+  it('has no forecast artifact while no bundle is active', async () => {
+    const body = PriceSummaryResponseSchema.parse((await get('/v1/markets/PIKJ/prices')).json());
+    expect(body.forecastArtifact).toBeNull();
+  });
+
   it('uses at most 2 queries on a cache miss and none on a hit', async () => {
     const spy = vi.spyOn(pg.Client.prototype, 'query');
     try {
@@ -209,6 +214,10 @@ describe('summary forecast status against the active bundle', () => {
       q50Change: null,
       direction: null,
     });
+    // Every forecast shown in the summary carries its model metadata (design anti-goal).
+    expect(body.forecastArtifact?.modelVersion).toBeTruthy();
+    expect(body.forecastArtifact?.dataVersion).toBeTruthy();
+    expect(body.forecastArtifact).toMatchObject({ isDemo: false, ageDays: 1 });
     const ttl = await redis.ttl('kp:v1:json:prices:summary:PIKJ');
     expect(ttl).toBeGreaterThan(0);
     expect(ttl).toBeLessThanOrEqual(3600);

@@ -1,4 +1,4 @@
-import type { DataStatus } from '@kawan-pasar/contracts';
+import type { DataStatus } from './prices.js';
 
 /** Prices older than this many business days are "terlambat" (FR-04). */
 export const STALE_AFTER_BUSINESS_DAYS = 2;

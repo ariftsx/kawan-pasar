@@ -7,7 +7,7 @@ import {
   ModelCoverageSchema,
   PricePointSchema,
 } from './common.js';
-import { ForecastStatusSchema } from './forecasts.js';
+import { ForecastArtifactSchema, ForecastStatusSchema } from './forecasts.js';
 import { MarketSchema } from './markets.js';
 
 export const DataStatusSchema = z.enum(['fresh', 'stale', 'no_data']);
@@ -38,6 +38,8 @@ export const PriceSummaryResponseSchema = z.strictObject({
   market: MarketSchema,
   latestObservedOn: IsoDate.nullable(),
   items: z.array(CommoditySummarySchema),
+  /** Bundle behind every `forecast7d` (version metadata must accompany any forecast shown). */
+  forecastArtifact: ForecastArtifactSchema.nullable(),
 });
 export type PriceSummaryResponse = z.infer<typeof PriceSummaryResponseSchema>;
 

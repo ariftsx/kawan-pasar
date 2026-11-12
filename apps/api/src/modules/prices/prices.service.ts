@@ -1,6 +1,11 @@
 import { COMMODITIES } from '@kawan-pasar/catalog';
 import type { Market } from '@kawan-pasar/catalog';
-import { HistoryResponseSchema, PriceSummaryResponseSchema } from '@kawan-pasar/contracts';
+import {
+  dataStatus,
+  HistoryResponseSchema,
+  PriceSummaryResponseSchema,
+  wibDate,
+} from '@kawan-pasar/contracts';
 import type {
   CommoditySummary,
   Direction,
@@ -13,10 +18,9 @@ import { resolveCommodity, toMarketDto } from '../../common/catalog-lookup.js';
 import { CLOCK } from '../../common/clock.js';
 import type { Clock } from '../../common/clock.js';
 import { ActiveArtifactRepository } from '../forecasts/active-artifact.repository.js';
-import { forecastStatus } from '../forecasts/forecast-status.js';
+import { ageDays, forecastStatus } from '../forecasts/forecast-status.js';
 import { PricesRepository } from './prices.repository.js';
 import type { SummaryRow } from './prices.repository.js';
-import { dataStatus, wibDate } from './staleness.js';
 import { SUMMARY_MAX_TTL_SECONDS, summaryTtlSeconds } from './summary-ttl.js';
 
 const TTL_SECONDS = 3_600;
@@ -89,7 +93,12 @@ export class PricesService {
   ): Promise<{ value: PriceSummaryResponse; ttlSeconds: number }> {
     if (market.status !== 'available') {
       return {
-        value: { market: toMarketDto(market), latestObservedOn: null, items: [] },
+        value: {
+          market: toMarketDto(market),
+          latestObservedOn: null,
+          items: [],
+          forecastArtifact: null,
+        },
         ttlSeconds: SUMMARY_MAX_TTL_SECONDS,
       };
     }
@@ -133,12 +142,32 @@ export class PricesService {
       };
     });
 
+    // Hidden bundles show no forecast at all, so they expose no metadata either.
+    const a = forecast.artifact;
+    const shown =
+      a !== null && forecastStatus('covered', { issuedAt: a.issuedAt }, now) !== 'hidden';
+    const forecastArtifact =
+      a === null || !shown
+        ? null
+        : {
+            modelName: a.modelName,
+            modelVersion: a.modelVersion,
+            dataVersion: a.dataVersion,
+            preprocessVersion: a.preprocessVersion,
+            dataCutoff: a.dataCutoff.toISOString(),
+            issuedAt: a.issuedAt.toISOString(),
+            isDemo: a.isDemo,
+            // Cached with the summary; its TTL ends at the next age boundary (summaryTtlSeconds).
+            ageDays: ageDays(a.issuedAt, now),
+          };
+
     const observed = items.flatMap((i) => (i.latest === null ? [] : [i.latest.observedOn]));
     return {
       value: {
         market: toMarketDto(market),
         latestObservedOn: observed.length === 0 ? null : (observed.sort().at(-1) ?? null),
         items,
+        forecastArtifact,
       },
       ttlSeconds: summaryTtlSeconds(now, forecast.issuedAt),
     };
