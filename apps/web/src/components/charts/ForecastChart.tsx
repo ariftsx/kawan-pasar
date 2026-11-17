@@ -13,11 +13,10 @@ import {
   dateTicks,
   linearScale,
   pathFrom,
+  pct,
   priceTicks,
   timeScale,
 } from './scale';
-
-const pct = (v: number, max: number): number => (v / max) * 100;
 
 interface Known {
   h: ForecastHorizon;

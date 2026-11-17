@@ -1,0 +1,13 @@
+{
+  "name": "@kawan-pasar/perf",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lighthouse": "node lighthouse.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0",
+    "lighthouse": "13.6.0"
+  }
+}

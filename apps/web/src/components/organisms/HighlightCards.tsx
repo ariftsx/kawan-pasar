@@ -65,40 +65,45 @@ export function HighlightCards({ highlights }: { highlights: WeeklyHighlights })
           f.flat > 0 ? `${String(f.flat)} stabil` : null,
         ].filter((p): p is string => p !== null);
   return (
-    <div className="grid gap-4 md:grid-cols-[repeat(3,minmax(0,1fr))]">
-      <MoverCard
-        overline="Paling naik minggu ini"
-        item={highlights.topRise}
-        emptyText="Tidak ada yang naik minggu ini"
-      />
-      <MoverCard
-        overline="Paling turun minggu ini"
-        item={highlights.topFall}
-        emptyText="Tidak ada yang turun minggu ini"
-      />
-      <StatCard
-        icon={
-          <IconBox tone="terong">
-            <FeatureIcon name="prediksi" size={28} />
-          </IconBox>
-        }
-        overline={f?.expired === true ? 'Prediksi 7 hari · Kedaluwarsa' : 'Prediksi 7 hari'}
-        name={
-          f === null
-            ? 'Prediksi belum tersedia'
-            : `${String(f.up + f.down + f.flat)} komoditas diprediksi`
-        }
-        value={
-          <span className="font-mono text-numeric-m-24 font-semibold">
-            {parts.length === 0 ? '—' : parts.join(' · ')}
-          </span>
-        }
-        note={
-          f?.expired === true
-            ? 'Kedaluwarsa: prediksi ini lebih dari 8 hari; tunggu prediksi baru. Estimasi, bukan jaminan harga.'
-            : 'Arah perkiraan median 7 hari ke depan; estimasi, bukan jaminan harga.'
-        }
-      />
-    </div>
+    <section aria-labelledby="sorotan-title">
+      <h2 id="sorotan-title" className="sr-only">
+        Sorotan minggu ini
+      </h2>
+      <div className="grid gap-4 md:grid-cols-[repeat(3,minmax(0,1fr))]">
+        <MoverCard
+          overline="Paling naik minggu ini"
+          item={highlights.topRise}
+          emptyText="Tidak ada yang naik minggu ini"
+        />
+        <MoverCard
+          overline="Paling turun minggu ini"
+          item={highlights.topFall}
+          emptyText="Tidak ada yang turun minggu ini"
+        />
+        <StatCard
+          icon={
+            <IconBox tone="terong">
+              <FeatureIcon name="prediksi" size={28} />
+            </IconBox>
+          }
+          overline={f?.expired === true ? 'Prediksi 7 hari · Kedaluwarsa' : 'Prediksi 7 hari'}
+          name={
+            f === null
+              ? 'Prediksi belum tersedia'
+              : `${String(f.up + f.down + f.flat)} komoditas diprediksi`
+          }
+          value={
+            <span className="font-mono text-numeric-m-24 font-semibold">
+              {parts.length === 0 ? '—' : parts.join(' · ')}
+            </span>
+          }
+          note={
+            f?.expired === true
+              ? 'Kedaluwarsa: prediksi ini lebih dari 8 hari; tunggu prediksi baru. Estimasi, bukan jaminan harga.'
+              : 'Arah perkiraan median 7 hari ke depan; estimasi, bukan jaminan harga.'
+          }
+        />
+      </div>
+    </section>
   );
 }

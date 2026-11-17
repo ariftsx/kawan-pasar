@@ -1,0 +1,8 @@
+{
+  "$comment": "Design §3/§11 budgets, Lighthouse mobile profile (simulated slow 4G, 4x CPU). TBT stands in for INP in a lab run.",
+  "lcpMs": 2500,
+  "cls": 0.1,
+  "tbtMs": 200,
+  "scriptKb": 170,
+  "accessibility": 1
+}

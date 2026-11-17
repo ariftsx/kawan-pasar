@@ -12,14 +12,13 @@ import {
   dateTicks,
   linearScale,
   pathFrom,
+  pct,
   priceTicks,
   rangeSlices,
   timeScale,
 } from './scale';
 import type { RangeKey } from './scale';
 import { Switch } from './Switch';
-
-const pct = (v: number, max: number): number => (v / max) * 100;
 
 /** One sentence describing a range, for everyone (also the chart's text alternative). */
 function summary(points: readonly PricePoint[], range: RangeKey): string {
@@ -192,9 +191,9 @@ export function PriceChart({
     <figure aria-labelledby={`${id}-title`} className="min-w-0">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 id={`${id}-title`} className="text-heading-card-16 sm:text-heading-title-20">
+          <h2 id={`${id}-title`} className="text-heading-card-16 sm:text-heading-title-20">
             {title}
-          </h3>
+          </h2>
           {description === undefined ? null : (
             <p className="text-body-small-13 text-muted-text">{description}</p>
           )}

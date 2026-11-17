@@ -6,6 +6,12 @@ export { compactRupiah };
 /** Chart geometry (viewBox units). Labels are HTML around the SVG, so they never scale. */
 export const VIEW = { width: 640, height: 220, padTop: 10, padBottom: 10 } as const;
 
+/**
+ * Position in % of the plot box, rounded to 0.1 % (under one pixel at any chart width). The
+ * tooltip ships every point to the browser, so full float precision would double its payload.
+ */
+export const pct = (v: number, max: number): number => Math.round((v / max) * 1000) / 10;
+
 const DAY_MS = 86_400_000;
 const dayNumber = (iso: string): number => Date.parse(`${iso}T00:00:00Z`) / DAY_MS;
 

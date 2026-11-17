@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./staleness": {
+      "types": "./dist/staleness.d.ts",
+      "default": "./dist/staleness.js"
     }
   },
   "files": [

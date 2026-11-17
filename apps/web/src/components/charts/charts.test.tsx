@@ -10,6 +10,7 @@ import {
   dateTicks,
   linearScale,
   pathFrom,
+  pct,
   priceTicks,
   rangeSlices,
   timeScale,
@@ -22,6 +23,15 @@ const days = (from: string, n: number, price: (i: number) => number): PricePoint
       .slice(0, 10),
     priceIdr: price(i),
   }));
+
+describe('pct', () => {
+  it('rounds to 0.1 % of the plot box (under a pixel) to keep the client payload small', () => {
+    expect(pct(474.35821401338643, 640)).toBe(74.1);
+    expect(pct(0, 640)).toBe(0);
+    expect(pct(640, 640)).toBe(100);
+    expect(String(pct(1, 3))).toBe('33.3');
+  });
+});
 
 describe('scale', () => {
   it('maps dates and prices into the drawing box', () => {
@@ -70,6 +80,11 @@ describe('scale', () => {
 
 describe('PriceChart', () => {
   const pts = days('2025-10-01', 365, (i) => 40_000 + i * 10);
+
+  it('titles the chart as a section heading (level 2: it sits right under the page title)', () => {
+    render(<PriceChart id="c0" title="Riwayat harga" points365={pts} pointsAll={pts} />);
+    expect(screen.getByRole('heading', { level: 2, name: 'Riwayat harga' })).toBeDefined();
+  });
 
   it('renders all ranges with 90 days active by default (works without JavaScript)', () => {
     const { container } = render(
