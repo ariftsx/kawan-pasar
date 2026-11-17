@@ -29,6 +29,8 @@ export function CommodityFilter({
   );
   const [mode, setMode] = useState<'all' | 'covered'>('all');
   const query = useRef('');
+  // The query that matched nothing (shown in the status message), or '' when something matches.
+  const [noMatch, setNoMatch] = useState('');
   if (!hydrated) return null;
 
   const apply = (nextMode: 'all' | 'covered', query: string): void => {
@@ -36,10 +38,15 @@ export function CommodityFilter({
     if (list === null) return;
     list.setAttribute('data-filter', nextMode);
     const q = query.trim().toLowerCase();
+    let visible = 0;
     for (const item of list.querySelectorAll<HTMLElement>('[data-name]')) {
       const match = q === '' || (item.dataset['name'] ?? '').includes(q);
       item.toggleAttribute('data-filtered-out', !match);
+      // Same rule as charts.css: the coverage tab hides commodities still awaiting a forecast.
+      const shownByTab = nextMode === 'all' || item.dataset['coverage'] !== 'pending';
+      if (match && shownByTab) visible += 1;
     }
+    setNoMatch(q !== '' && visible === 0 ? query.trim() : '');
   };
 
   return (
@@ -88,6 +95,9 @@ export function CommodityFilter({
           />
         </label>
       ) : null}
+      <p role="status" className="basis-full text-body-small-13 text-muted-text empty:hidden">
+        {noMatch === '' ? '' : `Tidak ada komoditas yang cocok dengan “${noMatch}”.`}
+      </p>
     </div>
   );
 }

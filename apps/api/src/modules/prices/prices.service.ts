@@ -157,7 +157,9 @@ export class PricesService {
             dataCutoff: a.dataCutoff.toISOString(),
             issuedAt: a.issuedAt.toISOString(),
             isDemo: a.isDemo,
-            // Cached with the summary; its TTL ends at the next age boundary (summaryTtlSeconds).
+            // Computed when the summary is cached, so it can lag the true age by up to the summary
+            // TTL (≤ 1 h, summaryTtlSeconds) around a 24-hour boundary. The status label is
+            // computed the same way; docs/api/v1.md states this.
             ageDays: ageDays(a.issuedAt, now),
           };
 

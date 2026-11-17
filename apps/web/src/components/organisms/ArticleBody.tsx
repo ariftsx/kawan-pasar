@@ -15,14 +15,47 @@ export function slugify(text: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-const plain = (md: string): string => md.replace(/[*_`]/g, '').trim();
+/** Heading text as the renderer shows it: link text kept, link targets and emphasis dropped. */
+const plain = (md: string): string =>
+  md
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[*_`]/g, '')
+    .replace(/\s+#+\s*$/, '')
+    .trim();
+
+/** Ids in document order; a repeated heading gets -2, -3, … (same rule for body and contents). */
+function uniqueIds(): (text: string) => string {
+  const seen = new Map<string, number>();
+  return (text) => {
+    const base = slugify(text);
+    const n = (seen.get(base) ?? 0) + 1;
+    seen.set(base, n);
+    return n === 1 ? base : `${base}-${String(n)}`;
+  };
+}
+
+const FENCE = /^ {0,3}(`{3,}|~{3,})/;
 
 /** Level-2 headings (table of contents), with the ids ArticleBody gives them. */
 export function headingsOf(markdown: string): { id: string; text: string }[] {
-  return [...markdown.matchAll(/^## (.+)$/gm)].map((m) => {
+  const nextId = uniqueIds();
+  const out: { id: string; text: string }[] = [];
+  let fence: string | null = null;
+  for (const line of markdown.split(/\r?\n/)) {
+    const marker = FENCE.exec(line)?.[1];
+    if (marker !== undefined) {
+      const kind = marker.slice(0, 3);
+      if (fence === null) fence = kind;
+      else if (fence === kind) fence = null;
+      continue;
+    }
+    if (fence !== null) continue;
+    const m = /^ {0,3}## (.+)$/.exec(line);
+    if (m === null) continue;
     const text = plain(m[1] ?? '');
-    return { id: slugify(text), text };
-  });
+    out.push({ id: nextId(text), text });
+  }
+  return out;
 }
 
 function textOf(node: Element | ElementContent | undefined): string {
@@ -32,9 +65,9 @@ function textOf(node: Element | ElementContent | undefined): string {
   return '';
 }
 
-const components: Components = {
+const components = (nextId: (text: string) => string): Components => ({
   h2: ({ node, children }) => (
-    <h2 id={slugify(textOf(node))} className="mt-8 scroll-mt-28 text-heading-title-20 first:mt-0">
+    <h2 id={nextId(textOf(node))} className="mt-8 scroll-mt-28 text-heading-title-20 first:mt-0">
       {children}
     </h2>
   ),
@@ -67,7 +100,7 @@ const components: Components = {
       </a>
     );
   },
-};
+});
 
 /**
  * Article Markdown rendered on the server (no client JavaScript). Raw HTML is skipped, only the
@@ -82,7 +115,7 @@ export function ArticleBody({ markdown }: { markdown: string }): ReactNode {
         allowedElements={ALLOWED}
         unwrapDisallowed
         urlTransform={defaultUrlTransform}
-        components={components}
+        components={components(uniqueIds())}
       >
         {markdown}
       </Markdown>

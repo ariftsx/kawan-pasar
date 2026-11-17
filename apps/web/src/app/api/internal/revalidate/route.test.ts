@@ -61,6 +61,46 @@ describe('POST /api/internal/revalidate', () => {
     expect((await call('not json', TOKEN)).status).toBe(400);
   });
 
+  it('rejects a declared length over 8 KiB without reading the body', async () => {
+    const { POST } = await import('./route');
+    let pulled = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulled += 1;
+        controller.enqueue(new TextEncoder().encode('x'));
+      },
+    });
+    // undici's Request drops a hand-set content-length; the server's request carries the real one.
+    const request = {
+      headers: new Headers({ 'x-revalidate-token': TOKEN, 'content-length': '9000' }),
+      body,
+    } as unknown as Request;
+    const res = await POST(request);
+    expect(res.status).toBe(413);
+    expect(pulled).toBeLessThanOrEqual(1);
+  });
+
+  it('stops reading an endless body at 8 KiB', async () => {
+    const { POST } = await import('./route');
+    let sent = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        sent += 1024;
+        controller.enqueue(new Uint8Array(1024).fill(32));
+      },
+    });
+    const res = await POST(
+      new Request('http://web:3000/api/internal/revalidate', {
+        method: 'POST',
+        headers: { 'x-revalidate-token': TOKEN },
+        body,
+        duplex: 'half',
+      } as RequestInit),
+    );
+    expect(res.status).toBe(413);
+    expect(sent).toBeLessThan(16 * 1024);
+  });
+
   it('rejects bodies larger than 8 KiB', async () => {
     const big = JSON.stringify({ tags: ['articles'], pad: 'x'.repeat(9000) });
     expect((await call(big, TOKEN)).status).toBe(413);

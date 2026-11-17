@@ -60,4 +60,30 @@ describe('headingsOf / slugify', () => {
     ]);
     expect(slugify('Apa dampaknya ke pengeluaran Anda?')).toBe('apa-dampaknya-ke-pengeluaran-anda');
   });
+
+  const tricky = [
+    '## Lihat [data BPS](https://bps.go.id) dulu',
+    'teks',
+    '```',
+    '## bukan judul',
+    '```',
+    '## Ringkasan',
+    'a',
+    '## Ringkasan',
+    'b',
+  ].join('\n');
+
+  it('handles links, duplicates and code blocks like the renderer does', () => {
+    expect(headingsOf(tricky)).toEqual([
+      { id: 'lihat-data-bps-dulu', text: 'Lihat data BPS dulu' },
+      { id: 'ringkasan', text: 'Ringkasan' },
+      { id: 'ringkasan-2', text: 'Ringkasan' },
+    ]);
+  });
+
+  it('every table-of-contents id exists exactly once in the rendered body', () => {
+    const { container } = render(<ArticleBody markdown={tricky} />);
+    const ids = [...container.querySelectorAll('h2')].map((h) => h.id);
+    expect(ids).toEqual(headingsOf(tricky).map((h) => h.id));
+  });
 });

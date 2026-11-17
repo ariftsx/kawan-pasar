@@ -24,6 +24,30 @@ const BodySchema = z.strictObject({
     }),
 });
 
+/**
+ * Reads at most `limit` bytes of the body: a declared larger length is refused unread, and a body
+ * without (or with a false) length stops being read as soon as it passes the limit. null = too large.
+ */
+async function readLimited(request: Request, limit: number): Promise<string | null> {
+  const declared = Number(request.headers.get('content-length') ?? '0');
+  if (declared > limit) return null;
+  if (request.body === null) return '';
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > limit) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks).toString('utf8');
+}
+
 const problem = (status: number, code: string): Response =>
   Response.json({ error: { code } }, { status, headers: { 'cache-control': 'no-store' } });
 
@@ -35,8 +59,8 @@ export async function POST(request: Request): Promise<Response> {
   if (!tokenMatches(request.headers.get('x-revalidate-token'), serverEnv().WEB_REVALIDATE_TOKEN)) {
     return problem(401, 'unauthorized');
   }
-  const raw = await request.text();
-  if (Buffer.byteLength(raw) > MAX_BODY_BYTES) return problem(413, 'payload_too_large');
+  const raw = await readLimited(request, MAX_BODY_BYTES);
+  if (raw === null) return problem(413, 'payload_too_large');
   let json: unknown;
   try {
     json = JSON.parse(raw);
