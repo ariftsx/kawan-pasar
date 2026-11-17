@@ -31,7 +31,23 @@ export const EnvSchema = z.object({
     )
     .pipe(z.array(z.ipv4())),
   /** Web server (Next.js) that is told to revalidate its cache tags after data changes. */
-  WEB_INTERNAL_URL: z.url({ protocol: /^https?$/ }).optional(),
+  // One or more web replicas (comma-separated). Each one is revalidated: with a shared page cache
+  // one is enough, but a replica that is down must not stop the others (ADR 0010).
+  WEB_INTERNAL_URL: z
+    .string()
+    .transform((v) =>
+      v
+        .split(',')
+        .map((u) => u.trim())
+        .filter((u) => u !== ''),
+    )
+    .pipe(
+      z
+        .array(z.url({ protocol: /^https?$/ }))
+        .min(1)
+        .max(10),
+    )
+    .optional(),
   WEB_REVALIDATE_TOKEN: z.string().min(32).optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });

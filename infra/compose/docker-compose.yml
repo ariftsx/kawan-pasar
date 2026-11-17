@@ -5,6 +5,37 @@ x-hardening: &hardening
   security_opt:
     - no-new-privileges:true
 
+# Both web replicas run the same image and settings; only the fixed address differs (ADR 0010).
+x-web: &web
+  <<: *hardening
+  build:
+    context: ../..
+    dockerfile: apps/web/Dockerfile
+    args:
+      PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://127.0.0.1:8080}
+  image: kawan-pasar/web:local
+  cap_drop: [ALL]
+  read_only: true
+  mem_limit: 512m
+  pids_limit: 256
+  # Pages and data are cached in Valkey (shared by the replicas), so the writable directories only
+  # hold Next.js housekeeping files. Size-limited so nothing can fill the host disk.
+  tmpfs:
+    - /app/apps/web/.next/cache:size=64m,uid=1000,gid=1000,mode=0700
+    - /app/apps/web/.next/server/route-cache:size=16m,uid=1000,gid=1000,mode=0700
+    - /tmp:size=16m
+  # No depends_on: static pages are served without the API, and a missing cache only means
+  # rendering without it (fail-open).
+  environment:
+    NODE_ENV: production
+    API_INTERNAL_URL: http://api:3001
+    API_TIMEOUT_MS: '3000'
+    PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://127.0.0.1:8080}
+    SERVICE_TOKEN: ${SERVICE_TOKEN:?set SERVICE_TOKEN}
+    WEB_REVALIDATE_TOKEN: ${WEB_REVALIDATE_TOKEN:?set WEB_REVALIDATE_TOKEN}
+    # Database 1 of the cache Valkey (the API uses 0; tests use 14 and 15).
+    VALKEY_WEB_CACHE_URL: redis://:${VALKEY_PASSWORD}@valkey-cache:6379/1
+
 networks:
   edge:
     name: kp-edge
@@ -12,7 +43,8 @@ networks:
     name: kp-backend
     internal: true
     # Fixed subnet so the API can trust exactly one proxy address (the web/BFF container).
-    #   static (below .128): 172.30.0.2 traefik, 172.30.0.10 web (Fase 1B)
+    #   static (below .128): 172.30.0.2 traefik, 172.30.0.10 web-1, 172.30.0.11 web-2
+    #                        (172.30.0.12 is reserved for the load-test client, Fase 1D)
     #   dynamic (ip_range):  172.30.0.128/25 for every other container
     ipam:
       config:
@@ -133,6 +165,8 @@ services:
     image: kawan-pasar/api:local
     cap_drop: [ALL]
     read_only: true
+    mem_limit: 512m
+    pids_limit: 256
     depends_on:
       pgbouncer: { condition: service_healthy }
       valkey-cache: { condition: service_healthy }
@@ -147,41 +181,26 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       RATE_LIMIT_PER_MINUTE: '120'
       RATE_LIMIT_INTERNAL_PER_MINUTE: '1200'
-      TRUSTED_PROXY_IPS: 172.30.0.10
-      # The API tells the web server which cache tags to revalidate after data changes.
-      WEB_INTERNAL_URL: http://web:3000
+      TRUSTED_PROXY_IPS: 172.30.0.10,172.30.0.11
+      # The API tells the web servers which cache tags to revalidate after data changes. The
+      # page cache is shared, so one accepted call is enough; every replica is called so that a
+      # replica that is down (or a failed shared write) does not lose the revalidation.
+      WEB_INTERNAL_URL: http://web-1:3000,http://web-2:3000
       WEB_REVALIDATE_TOKEN: ${WEB_REVALIDATE_TOKEN:?set WEB_REVALIDATE_TOKEN (node scripts/gen-env.mjs --add-missing)}
     networks: [backend]
 
-  web:
-    <<: *hardening
-    build:
-      context: ../..
-      dockerfile: apps/web/Dockerfile
-      args:
-        PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://127.0.0.1:8080}
-    image: kawan-pasar/web:local
-    cap_drop: [ALL]
-    read_only: true
-    # ISR/data cache. Size-limited so a flood of distinct pages cannot fill the host disk.
-    tmpfs:
-      - /app/apps/web/.next/cache:size=256m,uid=1000,gid=1000,mode=0700
-      # Next.js writes regenerated ISR pages here (everything else under .next stays read-only).
-      - /app/apps/web/.next/server/route-cache:size=128m,uid=1000,gid=1000,mode=0700
-      - /tmp:size=16m
-    depends_on:
-      api: { condition: service_healthy }
-    environment:
-      NODE_ENV: production
-      API_INTERNAL_URL: http://api:3001
-      API_TIMEOUT_MS: '3000'
-      PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://127.0.0.1:8080}
-      SERVICE_TOKEN: ${SERVICE_TOKEN:?set SERVICE_TOKEN}
-      WEB_REVALIDATE_TOKEN: ${WEB_REVALIDATE_TOKEN:?set WEB_REVALIDATE_TOKEN}
+  web-1:
+    <<: *web
     networks:
       backend:
-        # The only address the API trusts to forward client IPs (TRUSTED_PROXY_IPS).
+        # Trusted to forward client IPs (TRUSTED_PROXY_IPS on the API).
         ipv4_address: 172.30.0.10
+
+  web-2:
+    <<: *web
+    networks:
+      backend:
+        ipv4_address: 172.30.0.11
 
   ingest:
     profiles: [jobs]

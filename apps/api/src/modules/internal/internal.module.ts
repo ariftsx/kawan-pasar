@@ -19,7 +19,7 @@ const warnings = new ThrottledWarning(10_000, (m) => {
       useFactory: (env: Env): WebRevalidator =>
         new WebRevalidator(
           env.WEB_INTERNAL_URL !== undefined && env.WEB_REVALIDATE_TOKEN !== undefined
-            ? { url: env.WEB_INTERNAL_URL, token: env.WEB_REVALIDATE_TOKEN }
+            ? { urls: env.WEB_INTERNAL_URL, token: env.WEB_REVALIDATE_TOKEN }
             : null,
           fetch,
           (m) => {

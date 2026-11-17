@@ -31,7 +31,8 @@ export function tagsForScope(scope: InvalidateScope): string[] {
 }
 
 export interface WebTarget {
-  url: string;
+  /** Every web replica; each is revalidated independently. */
+  urls: readonly string[];
   token: string;
 }
 
@@ -46,10 +47,17 @@ export class WebRevalidator {
     private readonly warn: (message: string) => void = () => undefined,
   ) {}
 
-  /** `true` when every chunk was accepted (or nothing is configured). */
+  /** `true` when every replica accepted every chunk (or nothing is configured). */
   async revalidate(tags: readonly string[]): Promise<boolean> {
     if (this.target === null || tags.length === 0) return true;
-    const endpoint = new URL('/api/internal/revalidate', this.target.url).href;
+    const results = await Promise.all(this.target.urls.map((url) => this.revalidateOne(url, tags)));
+    return results.every(Boolean);
+  }
+
+  private async revalidateOne(base: string, tags: readonly string[]): Promise<boolean> {
+    if (this.target === null) return true;
+    const endpoint = new URL('/api/internal/revalidate', base).href;
+    const host = new URL(base).host;
     let ok = true;
     for (let i = 0; i < tags.length; i += CHUNK) {
       try {
@@ -61,11 +69,11 @@ export class WebRevalidator {
         });
         if (!res.ok) {
           ok = false;
-          this.warn(`web revalidation rejected with status ${String(res.status)}`);
+          this.warn(`web revalidation at ${host} rejected with status ${String(res.status)}`);
         }
       } catch (e) {
         ok = false;
-        this.warn(`web revalidation failed: ${e instanceof Error ? e.name : 'error'}`);
+        this.warn(`web revalidation at ${host} failed: ${e instanceof Error ? e.name : 'error'}`);
       }
     }
     return ok;

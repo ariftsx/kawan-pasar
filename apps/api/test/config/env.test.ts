@@ -52,7 +52,20 @@ describe('loadEnv', () => {
       WEB_INTERNAL_URL: 'http://web:3000',
       WEB_REVALIDATE_TOKEN: 'w'.repeat(40),
     });
-    expect(env.WEB_INTERNAL_URL).toBe('http://web:3000');
+    expect(env.WEB_INTERNAL_URL).toEqual(['http://web:3000']);
+    const two = loadEnv({
+      ...valid,
+      WEB_INTERNAL_URL: 'http://web-1:3000, http://web-2:3000',
+      WEB_REVALIDATE_TOKEN: 'w'.repeat(40),
+    });
+    expect(two.WEB_INTERNAL_URL).toEqual(['http://web-1:3000', 'http://web-2:3000']);
+    expect(() =>
+      loadEnv({
+        ...valid,
+        WEB_INTERNAL_URL: 'http://web-1:3000,ftp://x',
+        WEB_REVALIDATE_TOKEN: 'w'.repeat(40),
+      }),
+    ).toThrow(/WEB_INTERNAL_URL/);
     expect(loadEnv(valid).RATE_LIMIT_INTERNAL_PER_MINUTE).toBe(1200);
   });
 });

@@ -24,7 +24,21 @@ http:
       buffering:
         maxRequestBodyBytes: 1048576
         memRequestBodyBytes: 1048576
-    compress:
+    # Pages: compressed on every view, so the cheap encoding comes first (Go brotli costs ~50 ms
+    # per 200 KB page at 0.25 vCPU; gzip ~2 ms). Clients that ask for br first still get br.
+    compress-html:
+      compress:
+        encodings: [gzip, br]
+        minResponseBodyBytes: 1024
+    # Static JS/CSS/fonts are immutable and cached by the browser: compressed once per visitor,
+    # so the smaller encoding is worth its CPU.
+    compress-static:
       compress:
         encodings: [br, gzip]
         minResponseBodyBytes: 1024
+    # Retries only when the replica could not be reached (connection refused/reset), on the
+    # other replica. A slow or failing response is never repeated.
+    retry:
+      retry:
+        attempts: 2
+        initialInterval: 50ms

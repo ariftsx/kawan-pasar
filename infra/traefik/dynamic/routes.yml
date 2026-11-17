@@ -5,6 +5,16 @@ http:
       entryPoints: [web]
       rule: PathPrefix(`/`)
       priority: 1
+      # A request that reaches a replica which just stopped is retried on the other one.
+      middlewares: [retry@file, compress-html@file]
+      service: web
+
+    # Immutable build assets (hashed file names): same service, brotli compression.
+    static:
+      entryPoints: [web]
+      rule: PathPrefix(`/_next/static/`)
+      priority: 50
+      middlewares: [retry@file, compress-static@file]
       service: web
 
     # Internal endpoints (cache revalidation) are for the Docker network only. Traefik refuses
@@ -18,10 +28,11 @@ http:
   services:
     web:
       loadBalancer:
+        # Round-robin over two replicas sharing one page cache (ADR 0010). The generous timeout
+        # keeps a replica that is slow under CPU pressure in rotation instead of dropping it.
         servers:
-          - url: http://web:3000
-        # With a single web replica, a health check that fails under CPU pressure turns slowness
-        # into a full outage (every request 503). Generous timeout; replicas are decided in Fase 1D.
+          - url: http://web-1:3000
+          - url: http://web-2:3000
         healthCheck:
           path: /api/health
           interval: 10s

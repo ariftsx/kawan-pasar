@@ -18,7 +18,7 @@ entryPoints:
         - rate-limit@file
         - in-flight@file
         - body-limit@file
-        - compress@file
+        # Compression is chosen per router (routes.yml): gzip for pages, brotli for static assets.
   ping:
     address: ':8082'
 
