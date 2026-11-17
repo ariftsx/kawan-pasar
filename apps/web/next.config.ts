@@ -26,6 +26,13 @@ const config: NextConfig = {
   images: { unoptimized: true },
   transpilePackages: ['@kawan-pasar/catalog', '@kawan-pasar/contracts', '@kawan-pasar/tokens'],
   experimental: { sri: { algorithm: 'sha256' } },
+  // ISR pages and the data cache live in Valkey, shared by every web replica (ADR 0010). Built to
+  // JavaScript first (`pnpm build:cache-handler`): Next.js loads this file as-is at run time.
+  cacheHandler: fileURLToPath(
+    new URL('./dist/cache-handler/valkey-cache-handler.js', import.meta.url),
+  ),
+  // No per-process copy: a replica must see another replica's revalidation on its next read.
+  cacheMaxMemorySize: 0,
   // Public URLs stay market-free; data pages render under /[market]/… (ADR 0009).
   rewrites() {
     return Promise.resolve({
