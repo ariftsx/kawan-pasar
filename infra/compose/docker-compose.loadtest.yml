@@ -1,0 +1,33 @@
+# Load-test overlay (Fase 1D). Applied ONLY by `node scripts/loadtest.mjs`, which also generates the
+# Traefik configuration mounted below (.audit/loadtest-traefik, git-ignored) from the real files.
+#
+# Fixed CPU split on a 4-vCPU laptop: the stack gets 3 vCPU, the k6 client 1 vCPU (`docker run
+# --cpus 1`), so the client cannot starve the servers it measures. Results are a lower bound for a
+# small server, not production numbers (docs/testing/uji-beban.md).
+#
+# The split follows the measured profile of public traffic: cached pages never reach the API or
+# the database (API ~8 %, PostgreSQL ~3 % CPU in the first runs), while the web replicas and the
+# edge (compression) saturate. PostgreSQL keeps enough for cold renders (0.2 vCPU made
+# first-render queries take 1.6 s). Total 3.0 vCPU.
+services:
+  postgres:
+    cpus: 0.3
+  pgbouncer:
+    cpus: 0.05
+  valkey-cache:
+    cpus: 0.2
+  api:
+    cpus: 0.4
+    environment:
+      # The k6 container (172.30.0.12) may forward client IPs, so the API test can give every
+      # virtual user its own rate-limit bucket. Never part of the normal stack.
+      TRUSTED_PROXY_IPS: 172.30.0.10,172.30.0.11,172.30.0.12
+  web-1:
+    cpus: ${KP_LOADTEST_WEB1_CPUS:-0.75}
+  web-2:
+    cpus: 0.75
+  traefik:
+    cpus: 0.55
+    volumes:
+      - ../../.audit/loadtest-traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ../../.audit/loadtest-traefik/dynamic:/etc/traefik/dynamic:ro

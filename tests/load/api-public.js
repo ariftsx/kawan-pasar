@@ -1,10 +1,11 @@
 // k6 load test for the public read API (Fase 1A audit).
-// Runs inside the backend network AS the web/BFF container (172.30.0.10, the only trusted proxy),
-// and every virtual user sends its own X-Forwarded-For — exactly how real traffic will arrive.
+// Runs inside the backend network from 172.30.0.12, trusted as a proxy only in the load-test overlay
+// (scripts/loadtest.mjs api); every virtual user sends its own X-Forwarded-For, like real traffic.
 // Usage: see docs/testing/uji-beban.md
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Rate } from 'k6/metrics';
+import { summary } from './lib/site.js';
 
 const BASE = __ENV.API_URL || 'http://api:3001';
 const TOKEN = __ENV.SERVICE_TOKEN;
@@ -52,4 +53,8 @@ export function browse() {
   }
   // ≈ 3 requests per 1.6 s per client ≈ 112/min: just under the 120/min per-client API limit.
   sleep(1.6);
+}
+
+export function handleSummary(data) {
+  return summary('api-public', data);
 }
