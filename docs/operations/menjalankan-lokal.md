@@ -32,6 +32,8 @@ curl -s http://127.0.0.1:3001/health/ready  # Core API: {"status":"ok",...}
 
 Situs web: buka **http://127.0.0.1:8080** (lewat Traefik). Halaman data dirender pada kunjungan pertama, lalu disajikan dari cache (ADR 0009).
 
+Sejak Fase 1D web berjalan sebagai **dua replika** (`web-1`, `web-2`) dengan cache halaman bersama di Valkey basis data 1 (ADR 0010). Traefik membagi permintaan ke keduanya, dan bila satu replika mati, permintaannya diulang ke replika lain.
+
 ### Memperbarui `.env` dari fase sebelumnya
 
 Fase 1B menambah `WEB_REVALIDATE_TOKEN`. Untuk `.env` yang sudah ada, jalankan perintah di bawah. Perintah ini hanya menambah rahasia yang belum ada, tidak mengubah nilai lama, dan tidak menyentuh volume data:
@@ -43,10 +45,13 @@ node scripts/gen-env.mjs --add-missing
 ### Mengembangkan web
 
 ```bash
+pnpm --filter @kawan-pasar/web build:cache-handler   # sekali, dan setelah mengubah src/cache
 API_INTERNAL_URL=http://127.0.0.1:3001 node --env-file=.env apps/web/node_modules/next/dist/bin/next dev apps/web
 ```
 
-Setelah mengubah kode web, image harus dibangun ulang agar terlihat di :8080: `node scripts/compose.mjs up -d --wait --build web`.
+Tanpa `VALKEY_WEB_CACHE_URL`, server web lokal memakai cache memori di prosesnya sendiri.
+
+Setelah mengubah kode web, image harus dibangun ulang agar terlihat di :8080: `node scripts/compose.mjs up -d --wait --build web-1 web-2`. Entri cache dibatasi per build (`BUILD_ID`), jadi build baru tidak pernah menyajikan halaman build lama.
 
 > Semua perintah `docker compose` dijalankan lewat `node scripts/compose.mjs …` (atau skrip `pnpm infra:*`). Skrip itu selalu memakai kedua berkas compose; memanggil compose dengan set berkas lain akan membuat ulang kontainer tanpa port dev.
 
@@ -56,6 +61,8 @@ Setelah mengubah kode web, image harus dibangun ulang agar terlihat di :8080: `n
 pnpm --filter @kawan-pasar/api db:test:reset   # wajib sebelum uji Python pertama kali (DB uji dimigrasi)
 pnpm audit:all                                   # semua gerbang mutu (melakukan reset di atas sendiri)
 pnpm --filter @kawan-pasar/e2e e2e               # simulasi pengguna (Playwright) lewat :8080
+pnpm --filter @kawan-pasar/perf lighthouse       # anggaran Lighthouse profil seluler 4G
+node scripts/loadtest.mjs browse spike edge api  # uji beban dengan CPU dibatasi (docs/testing/uji-beban.md)
 ```
 
 Sekali di setiap mesin: `pnpm --filter @kawan-pasar/e2e exec playwright install chromium`.
@@ -112,4 +119,4 @@ pnpm infra:up
 | `password authentication failed` setelah membuat ulang `.env`             | Volume lama menyimpan password lama                                                               | Ikuti bagian rotasi (`down -v`)                                                                                                                                                                                            |
 | `pnpm install` menolak sebuah versi (`MINIMUM_RELEASE_AGE_VIOLATION`)     | Versi tersebut terlalu baru dirilis (gerbang rantai pasok)                                        | Pakai versi stabil sebelumnya; jangan menambah pengecualian tanpa ADR                                                                                                                                                      |
 | Perubahan `infra/traefik/dynamic/*.yml` tidak berlaku                     | Docker Desktop di Windows tidak meneruskan event perubahan berkas bind mount ke kontainer         | `node scripts/compose.mjs restart traefik`                                                                                                                                                                                 |
-| `:8080` menampilkan versi web lama                                        | Image `web` belum dibangun ulang                                                                  | `node scripts/compose.mjs up -d --wait --build web`                                                                                                                                                                        |
+| `:8080` menampilkan versi web lama                                        | Image `web-1`/`web-2` belum dibangun ulang                                                        | `node scripts/compose.mjs up -d --wait --build web-1 web-2`                                                                                                                                                                |

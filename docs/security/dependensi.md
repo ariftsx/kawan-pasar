@@ -47,3 +47,12 @@ Image `web` hanya memuat output `standalone` Next (dependensi yang benar-benar d
 | ---------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------- |
 | `react-markdown` | 10.1.0 | Keputusan pemilik. Dijalankan hanya di server (Server Component), 0 KB di browser. `skipHtml`, daftar putih elemen, URL aman |
 | `@types/hast`    | 3.0.5  | Dev-only; tipe pohon HTML yang dipakai renderer artikel                                                                      |
+
+## Dependensi Fase 1D
+
+| Paket                             | Versi  | Catatan                                                                                                                             |
+| --------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `ioredis` (web)                   | 6.0.0  | Versi yang sama dengan API. Hanya di cache handler server; tanpa antrean offline, tanpa retry, batas 200 ms per operasi (fail-open) |
+| `lighthouse` (`tests/perf`)       | 13.6.0 | Dev-only, tidak pernah ikut image. Telemetri Sentry bawaan tidak aktif kecuali diminta lewat flag (tidak dipakai)                   |
+| `@playwright/test` (`tests/perf`) | 1.65.0 | Dev-only; menyediakan Chromium yang sama dengan uji e2e                                                                             |
+| `grafana/k6` (image)              | 2.3.0  | Dijalankan di jaringan backend hanya oleh `scripts/loadtest.mjs`                                                                    |

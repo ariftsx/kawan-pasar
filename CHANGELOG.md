@@ -2,6 +2,40 @@
 
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/). Versi produk mengikuti fase pengembangan.
 
+## [Fase 1D — Kinerja, beban, dan replika] — 2026-11-17
+
+### Ditambahkan
+
+- **Cache halaman dan data bersama di Valkey** (`apps/web/src/cache`, ADR 0010), dipakai dua replika web.
+  - Kesegaran mengikuti aturan tag Next.js sendiri.
+  - Fail-open dengan batas 200 ms per operasi.
+  - Entri dibatasi per build.
+- **Dua replika web** (`web-1`, `web-2`) di belakang Traefik.
+  - Round-robin, health check, dan `retry` saat satu replika mati.
+  - `mem_limit` dan `pids_limit` untuk web dan API.
+  - Web tidak lagi menunggu API saat start.
+- **Kompresi per jenis respons di tepi:** gzip untuk halaman, brotli untuk aset statis.
+- **Uji beban dengan CPU dibatasi:** `scripts/loadtest.mjs` (overlay `docker-compose.loadtest.yml`), dengan skenario `web-browse`, `web-spike`, `edge-rate-limit`, dan `api-public`.
+- **Anggaran Lighthouse:** `tests/perf` mengukur profil seluler 4G (LCP, CLS, TBT, JS, aksesibilitas) dan menjadi gerbang `lighthouse` di `pnpm audit:all`.
+- **Uji integrasi cache web** terhadap Valkey asli (database 14).
+- **Pemeriksaan infra baru:**
+  - pembagian beban ke kedua replika;
+  - HIT lintas replika;
+  - revalidasi lintas replika;
+  - entri per build;
+  - tidak ada pustaka validasi di bundel browser.
+
+### Diperbaiki
+
+- Zod (±30 KB terkompresi) ikut terkirim ke browser di setiap halaman data. `FreshnessNotice` kini mengimpor `@kawan-pasar/contracts/staleness`, sehingga JS halaman data turun dari 175 KB menjadi 144 KB.
+- Halaman build lama bisa tersaji setelah deploy bila cache dibagi. Sekarang entri dibatasi `BUILD_ID`.
+- Payload tooltip grafik memakai presisi penuh. Posisi kini dibulatkan 0,1%, dan `/harga` turun dari 242 KB menjadi 222 KB.
+- Urutan judul (axe `heading-order`) di Beranda (sorotan mingguan) dan grafik riwayat harga.
+- Route revalidasi tidak lagi membaca body tanpa batas: panjang > 8 KiB ditolak sebelum dibaca, dan body tanpa panjang dihentikan di 8 KiB.
+- `/api/health` memvalidasi env server, sehingga replika yang salah konfigurasi langsung tidak sehat.
+- Daftar isi artikel: tautan, judul ganda, dan `##` di blok kode.
+- Pencarian komoditas tanpa hasil kini menampilkan pesan.
+
 ## [Fase 1C — Halaman publik] — 2026-11-13
 
 ### Ditambahkan
