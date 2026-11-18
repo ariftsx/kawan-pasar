@@ -22,7 +22,8 @@ export function NavItem({
       href={href}
       aria-current={active ? 'page' : undefined}
       className={cx(
-        'inline-flex min-h-11 items-center gap-2 rounded-full py-2.5 pr-4 pl-3.5 text-[15px] transition-colors',
+        // Tighter below 1440 px so the desktop bar stays on one row at 1280 (touch target stays 44 px).
+        'inline-flex min-h-11 items-center gap-2 rounded-full py-2.5 pr-3 pl-2.5 text-[15px] transition-colors min-[1440px]:pr-4 min-[1440px]:pl-3.5',
         active
           ? 'bg-green-100 font-bold text-green-900'
           : 'font-medium text-ink-2 hover:bg-surface-2',

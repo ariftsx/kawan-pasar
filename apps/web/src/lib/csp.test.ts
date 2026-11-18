@@ -25,4 +25,14 @@ describe('buildCsp', () => {
   it('allows no external origin at all', () => {
     expect(prod).not.toMatch(/https?:|\*/);
   });
+
+  it('account pages (nonce): only scripts carrying the nonce, no inline allowance (ADR 0011)', () => {
+    const csp = buildCsp({ dev: false, nonce: 'abc123' });
+    expect(csp).toContain("script-src 'nonce-abc123' 'strict-dynamic';");
+    expect(csp.split(';').find((d) => d.trim().startsWith('script-src'))).not.toContain(
+      'unsafe-inline',
+    );
+    expect(csp).toContain("frame-ancestors 'none'");
+    expect(csp).toContain("form-action 'self'");
+  });
 });

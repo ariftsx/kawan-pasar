@@ -2,6 +2,9 @@ import { COMMODITIES, MARKETS } from '@kawan-pasar/catalog';
 import { ArticleSlugSchema } from '@kawan-pasar/contracts';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { SESSION_COOKIE } from './lib/auth/cookie';
+import { ACCOUNT_HOME, AUTH_PAGES } from './lib/auth/redirect';
+import { buildCsp } from './lib/csp';
 import { DATA_SECTIONS, NOT_FOUND_PATH, SECTION_PARAM } from './lib/routes';
 import type { DataSection } from './lib/routes';
 
@@ -33,8 +36,42 @@ function validParam(section: DataSection, value: string): boolean {
  *    are refused here, so a flood of random paths creates no render work and no ISR entries.
  *    Static pages and assets never reach this function (see `matcher`).
  */
+/** Account pages (ADR 0011): rendered per request, never cached, scripts need the nonce. */
+const ACCOUNT_PREFIXES = ['/akun', ...AUTH_PAGES] as const;
+/** Pages opened from e-mailed links that carry a token: the URL must not leak via Referer. */
+const TOKEN_PAGES = new Set<string>(['/atur-ulang-sandi', '/verifikasi-email']);
+
+const isAccountPath = (pathname: string): boolean =>
+  ACCOUNT_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+
+function accountPage(request: NextRequest): NextResponse {
+  const { pathname } = request.nextUrl;
+  const privateHeaders = (res: NextResponse): NextResponse => {
+    res.headers.set('cache-control', 'private, no-store');
+    if (TOKEN_PAGES.has(pathname)) res.headers.set('referrer-policy', 'no-referrer');
+    return res;
+  };
+  const isAccountHome = pathname === ACCOUNT_HOME || pathname.startsWith(`${ACCOUNT_HOME}/`);
+  if (isAccountHome && request.cookies.get(SESSION_COOKIE) === undefined) {
+    const to = new URL('/masuk', request.url);
+    to.searchParams.set('ke', pathname);
+    return privateHeaders(NextResponse.redirect(to, 307));
+  }
+  // 128 random bits per request. Next.js reads the nonce from the forwarded request CSP header
+  // and puts it on every script it emits; the response header replaces the static policy.
+  const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString('base64');
+  const csp = buildCsp({ dev: process.env.NODE_ENV === 'development', nonce });
+  const forwarded = new Headers(request.headers);
+  forwarded.set('x-nonce', nonce);
+  forwarded.set('content-security-policy', csp);
+  const res = NextResponse.next({ request: { headers: forwarded } });
+  res.headers.set('content-security-policy', csp);
+  return privateHeaders(res);
+}
+
 export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
+  if (isAccountPath(pathname)) return accountPage(request);
   if (pathname === '/') {
     return request.cookies.get(ONBOARDED_COOKIE)?.value === '1'
       ? NextResponse.redirect(new URL('/beranda', request.url), 307)
@@ -59,6 +96,13 @@ export function proxy(request: NextRequest): NextResponse {
 export const config = {
   // Literal (read statically by Next). proxy.test.ts checks it covers every data rewrite.
   matcher: [
+    // Account pages (ADR 0011): nonce CSP, private, sign-in redirect.
+    '/akun/:path*',
+    '/masuk',
+    '/daftar',
+    '/lupa-sandi',
+    '/atur-ulang-sandi',
+    '/verifikasi-email',
     '/',
     '/beranda/:path*',
     '/harga/:path*',

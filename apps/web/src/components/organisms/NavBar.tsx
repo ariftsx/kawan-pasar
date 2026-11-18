@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { AccountIcon } from '@/brand/AccountIcon';
 import { FeatureIcon } from '@/brand/FeatureIcon';
 import { Logo } from '@/brand/Logo';
 import { MarketPicker } from '../molecules/MarketPicker';
@@ -23,6 +24,14 @@ export function NavBar({ marketName }: { marketName: string }): ReactNode {
             className="inline-flex size-11 items-center justify-center rounded-full border border-line bg-surface hover:bg-surface-2"
           >
             <FeatureIcon name="peringatan" size={22} />
+          </Link>
+          {/* Static link: public pages never render per-user state (ADR 0011). */}
+          <Link
+            href="/akun"
+            aria-label="Akun"
+            className="inline-flex size-11 items-center justify-center rounded-full border border-line bg-surface hover:bg-surface-2"
+          >
+            <AccountIcon size={22} />
           </Link>
           <MarketPicker name={marketName} shortName={marketName} variant="desktop" />
         </div>

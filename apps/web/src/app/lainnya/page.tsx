@@ -24,6 +24,13 @@ const ITEMS: readonly {
   body: string;
 }[] = [
   {
+    href: '/akun',
+    icon: 'centang',
+    tone: 'green',
+    title: 'Akun',
+    body: 'Masuk, daftar, dan pengaturan akun',
+  },
+  {
     href: '/peringatan',
     icon: 'peringatan',
     tone: 'kunyit',

@@ -4,12 +4,15 @@
  * come from our own origin (with SRI); no third-party origin is allowed anywhere. Pages that
  * render per request (accounts, Fase 2) get a nonce-based policy instead.
  */
-export function buildCsp({ dev }: { dev: boolean }): string {
+export function buildCsp({ dev, nonce }: { dev: boolean; nonce?: string }): string {
+  // Account pages (ADR 0011): rendered per request, so every Next.js script carries the nonce.
+  const scripts =
+    nonce === undefined ? ["'self'", "'unsafe-inline'"] : [`'nonce-${nonce}'`, "'strict-dynamic'"];
   const directives: Record<string, string[]> = {
     'default-src': ["'self'"],
     // 'unsafe-inline' only because the RSC payload of static pages is inline and changes per
     // page/revalidation (no stable hash, no per-request nonce). External scripts carry SRI.
-    'script-src': ["'self'", "'unsafe-inline'", ...(dev ? ["'unsafe-eval'"] : [])],
+    'script-src': [...scripts, ...(dev ? ["'unsafe-eval'"] : [])],
     // React/Next inject inline style attributes; styles cannot execute code.
     'style-src': ["'self'", "'unsafe-inline'"],
     'img-src': ["'self'", 'data:'],

@@ -97,3 +97,71 @@ describe('rewrites and matcher stay in sync', () => {
     expect(isNotFound('/pasar/x')).toBe(true);
   });
 });
+
+describe('proxy: account pages (ADR 0011)', () => {
+  const account = (path: string, session?: string) => {
+    const request = new NextRequest(`http://web:3000${path}`);
+    if (session !== undefined) request.cookies.set('__Host-kp_session', session);
+    return proxy(request);
+  };
+  const scriptSrc = (csp: string | null): string =>
+    (csp ?? '').split(';').find((d) => d.trim().startsWith('script-src')) ?? '';
+
+  it('sends visitors without a session from /akun to sign-in, coming back afterwards', () => {
+    const res = account('/akun');
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toBe('http://web:3000/masuk?ke=%2Fakun');
+    expect(res.headers.get('cache-control')).toBe('private, no-store');
+  });
+
+  it('renders account pages with a per-request nonce CSP, never cached', () => {
+    for (const path of [
+      '/akun',
+      '/masuk',
+      '/daftar',
+      '/lupa-sandi',
+      '/atur-ulang-sandi',
+      '/verifikasi-email',
+    ]) {
+      const res = account(path, 's'.repeat(43));
+      expect(res.headers.get('x-middleware-next'), path).toBe('1');
+      expect(res.headers.get('cache-control'), path).toBe('private, no-store');
+      const src = scriptSrc(res.headers.get('content-security-policy'));
+      expect(src, path).toMatch(/'nonce-[A-Za-z0-9+/=]{22,}' 'strict-dynamic'/);
+      expect(src, path).not.toContain('unsafe-inline');
+      // Next reads the nonce from the request CSP header it forwards.
+      expect(res.headers.get('x-middleware-request-content-security-policy'), path).toContain(
+        "'strict-dynamic'",
+      );
+    }
+  });
+
+  it('uses a fresh nonce for every request', () => {
+    const a = scriptSrc(account('/masuk').headers.get('content-security-policy'));
+    const b = scriptSrc(account('/masuk').headers.get('content-security-policy'));
+    expect(a).not.toBe(b);
+  });
+
+  it('keeps tokens in links out of the Referer header', () => {
+    expect(account('/atur-ulang-sandi').headers.get('referrer-policy')).toBe('no-referrer');
+    expect(account('/verifikasi-email').headers.get('referrer-policy')).toBe('no-referrer');
+  });
+
+  it('covers every account page in the matcher', () => {
+    const matchers = config.matcher.map(matcherRegExp);
+    for (const path of [
+      '/akun',
+      '/akun/sesi',
+      '/masuk',
+      '/daftar',
+      '/lupa-sandi',
+      '/atur-ulang-sandi',
+      '/verifikasi-email',
+    ]) {
+      expect(
+        matchers.some((m) => m.test(path)),
+        path,
+      ).toBe(true);
+    }
+  });
+});
