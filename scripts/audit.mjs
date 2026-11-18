@@ -22,7 +22,8 @@ const steps = [
   // Containers must run the code under audit, not an image from an earlier build.
   {
     name: 'stack-rebuild',
-    cmd: 'node scripts/compose.mjs up -d --wait --build --remove-orphans api web-1 web-2',
+    // The worker runs the API image: list it too, or it keeps running the previous build.
+    cmd: 'node scripts/compose.mjs up -d --wait --build --remove-orphans api worker web-1 web-2',
   },
   { name: 'infra', cmd: 'pnpm infra:check' },
   { name: 'integration-tests', cmd: 'pnpm test:int' },

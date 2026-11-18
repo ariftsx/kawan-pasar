@@ -19,6 +19,13 @@ services:
   valkey-queue:
     ports: ['127.0.0.1:16380:6379']
     networks: [backend, devtools]
+  valkey-session:
+    ports: ['127.0.0.1:16381:6379']
+    networks: [backend, devtools]
+  # Inbox of the local mail catcher (SMTP stays inside the backend network).
+  mailpit:
+    ports: ['127.0.0.1:18025:8025', '127.0.0.1:11025:1025']
+    networks: [backend, devtools]
   api:
     ports: ['127.0.0.1:3001:3001']
     networks: [backend, devtools]

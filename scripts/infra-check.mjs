@@ -18,11 +18,25 @@ const SERVICES = [
   'pgbouncer',
   'valkey-cache',
   'valkey-queue',
+  'valkey-session',
+  'mailpit',
   'traefik',
   'api',
+  'worker',
   ...WEB_REPLICAS,
 ];
-const EXPECTED_HOST_PORTS = new Set(['15432', '16432', '16379', '16380', '8080', '3001']);
+// 18025: Mailpit inbox (dev-tools overlay only).
+const EXPECTED_HOST_PORTS = new Set([
+  '15432',
+  '16432',
+  '16379',
+  '16380',
+  '16381',
+  '8080',
+  '3001',
+  '18025',
+  '11025',
+]);
 const results = [];
 const secrets = Object.entries(env)
   .filter(([k, v]) => /PASSWORD|TOKEN|SECRET/.test(k) && v.length > 0)
@@ -108,7 +122,7 @@ check('pgbouncer rejects wrong password', () => {
   }
 });
 
-for (const s of ['valkey-cache', 'valkey-queue']) {
+for (const s of ['valkey-cache', 'valkey-queue', 'valkey-session']) {
   check(`${s} rejects unauthenticated clients`, () =>
     docker(['exec', containerId(s), 'valkey-cli', 'ping']).includes('NOAUTH'),
   );
@@ -120,7 +134,7 @@ for (const s of ['valkey-cache', 'valkey-queue']) {
       }).trim() === 'PONG',
   );
 }
-check('valkey-cache evicts (allkeys-lru), valkey-queue never evicts', () => {
+check('valkey-cache evicts (allkeys-lru); queue and sessions never evict', () => {
   const policy = (s) =>
     docker(
       [
@@ -137,7 +151,11 @@ check('valkey-cache evicts (allkeys-lru), valkey-queue never evicts', () => {
     )
       .trim()
       .split(/\s+/)[1];
-  return policy('valkey-cache') === 'allkeys-lru' && policy('valkey-queue') === 'noeviction';
+  return (
+    policy('valkey-cache') === 'allkeys-lru' &&
+    policy('valkey-queue') === 'noeviction' &&
+    policy('valkey-session') === 'noeviction'
+  );
 });
 
 check('only expected host ports, all bound to 127.0.0.1', () => {
@@ -210,6 +228,28 @@ await checkAsync('no validation library in the browser bundle of a data page', a
   return true;
 });
 
+// The edge must not overwrite the page's own Referrer-Policy: pages opened from e-mailed links
+// carry a token in the URL and send no-referrer (Fase 2A).
+await checkAsync('token pages reach the browser with Referrer-Policy: no-referrer', async () => {
+  const res = await edge('/atur-ulang-sandi');
+  const page = await edge('/harga');
+  return (
+    res.headers.get('referrer-policy') === 'no-referrer' &&
+    page.headers.get('referrer-policy') === 'strict-origin-when-cross-origin'
+  );
+});
+
+// Reset and verification links carry a single-use token in the query string: the edge access
+// log must not record it (Fase 2A review).
+await checkAsync('the edge access log does not record e-mailed tokens', async () => {
+  const token = `Zz${String(Date.now())}`.padEnd(43, 'Q');
+  const since = new Date(Date.now() - 1000).toISOString();
+  await edge(`/atur-ulang-sandi?t=${token}`);
+  await new Promise((r) => setTimeout(r, 500));
+  const log = docker(['logs', '--since', since, containerId('traefik')]);
+  return log.includes('"RouterName":"web@file"') && !log.includes(token);
+});
+
 await checkAsync('internal revalidation is unreachable from outside', async () => {
   const res = await edge('/api/internal/revalidate', {
     method: 'POST',
@@ -258,6 +298,38 @@ for (const service of WEB_REPLICAS) {
     );
   });
 }
+
+check('worker publishes no port and is not a trusted proxy address', () => {
+  const id = containerId('worker');
+  const out = docker([
+    'inspect',
+    '-f',
+    '{{json .NetworkSettings.Ports}} {{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}',
+    id,
+  ]).trim();
+  const [ports = '', ...ips] = out.split(' ').filter(Boolean);
+  const exposed = Object.values(JSON.parse(ports) ?? {}).some((v) => v !== null);
+  // Trusted proxies use fixed addresses below .128; dynamic ones come from 172.30.0.128/25.
+  const trusted = ips.some(
+    (ip) => /^172\.30\.0\.(\d+)$/.test(ip) && Number(ip.split('.')[3]) < 128,
+  );
+  return !exposed && !trusted;
+});
+
+check('api reaches the mail server (SMTP) inside the backend network', () => {
+  const out = docker([
+    'compose',
+    '-p',
+    'kawan-pasar',
+    'exec',
+    '-T',
+    'api',
+    'node',
+    '-e',
+    "const s=require('node:net').connect(1025,'mailpit');s.once('data',d=>{console.log(String(d).slice(0,3));s.destroy()});s.once('error',()=>console.log('err'))",
+  ]).trim();
+  return out === '220';
+});
 
 await checkAsync('traefik balances requests over both web replicas', async () => {
   const since = new Date(Date.now() - 1000).toISOString();

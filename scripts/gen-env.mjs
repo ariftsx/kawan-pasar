@@ -11,7 +11,7 @@ const target = new URL('../.env', import.meta.url);
 const secret = () => randomBytes(32).toString('base64url');
 
 // Secrets added after Fase 0. They do not affect any data volume, so they can be added safely.
-const LATER_SECRETS = ['WEB_REVALIDATE_TOKEN'];
+const LATER_SECRETS = ['WEB_REVALIDATE_TOKEN', 'AUTH_SECRET'];
 
 if (process.argv.includes('--add-missing')) {
   if (!existsSync(target)) {
@@ -23,12 +23,27 @@ if (process.argv.includes('--add-missing')) {
   const filled = new Set(
     lines.filter((l) => /^[A-Z0-9_]+=.+/.test(l)).map((l) => l.slice(0, l.indexOf('='))),
   );
-  const missing = LATER_SECRETS.filter((k) => !filled.has(k));
+  const value = (key) => {
+    const line = lines.find((l) => l.startsWith(`${key}=`));
+    return line === undefined ? '' : line.slice(key.length + 1);
+  };
+  // Host-side URLs added after Fase 0, derived from secrets already in .env.
+  const laterUrls = {
+    VALKEY_SESSION_URL: () => `redis://:${value('VALKEY_PASSWORD')}@127.0.0.1:16381/0`,
+    SMTP_URL: () => 'smtp://127.0.0.1:11025',
+    MAILPIT_API_URL: () => 'http://127.0.0.1:18025',
+  };
+  const missingSecrets = LATER_SECRETS.filter((k) => !filled.has(k));
+  const missingUrls = Object.keys(laterUrls).filter((k) => !filled.has(k));
+  const missing = [...missingSecrets, ...missingUrls];
   if (missing.length > 0) {
     // Drop empty placeholders and never glue onto a last line without a newline.
     const kept = lines.filter((l) => !missing.some((k) => l.startsWith(`${k}=`)));
     const head = kept.join('\n').replace(/\n*$/, '\n');
-    const added = missing.map((k) => `${k}=${secret()}`).join('\n');
+    const added = [
+      ...missingSecrets.map((k) => `${k}=${secret()}`),
+      ...missingUrls.map((k) => `${k}=${laterUrls[k]()}`),
+    ].join('\n');
     writeFileSync(target, `${head}${added}\n`, { mode: 0o600 });
   }
   console.log(
@@ -51,6 +66,7 @@ const s = {
   VALKEY_PASSWORD: secret(),
   SERVICE_TOKEN: secret(),
   WEB_REVALIDATE_TOKEN: secret(),
+  AUTH_SECRET: secret(),
 };
 
 const pg = (user, pw, port, db) => `postgres://${user}:${pw}@127.0.0.1:${port}/${db}`;
@@ -71,6 +87,9 @@ const lines = [
   `TEST_INGEST_DATABASE_URL=${pg('ingest_w', s.INGEST_W_PASSWORD, 16432, 'kawanpasar_test')}`,
   `VALKEY_CACHE_URL=redis://:${s.VALKEY_PASSWORD}@127.0.0.1:16379/0`,
   `VALKEY_QUEUE_URL=redis://:${s.VALKEY_PASSWORD}@127.0.0.1:16380/0`,
+  `VALKEY_SESSION_URL=redis://:${s.VALKEY_PASSWORD}@127.0.0.1:16381/0`,
+  'SMTP_URL=smtp://127.0.0.1:11025',
+  'MAILPIT_API_URL=http://127.0.0.1:18025',
   '',
 ];
 

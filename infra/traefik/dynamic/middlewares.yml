@@ -4,7 +4,8 @@ http:
       headers:
         frameDeny: true
         contentTypeNosniff: true
-        referrerPolicy: strict-origin-when-cross-origin
+        # Referrer-Policy comes from the web app (strict-origin-when-cross-origin, no-referrer on
+        # pages opened from e-mailed links): the edge must not overwrite it (Fase 2A).
         permissionsPolicy: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()'
         customResponseHeaders:
           X-Powered-By: ''

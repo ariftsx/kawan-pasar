@@ -40,5 +40,9 @@ log:
 accessLog:
   format: json
   fields:
+    # The path carries single-use tokens from e-mailed links (?t=…): never log it (Fase 2A).
+    # Router, status, duration and backend stay for diagnosis.
+    names:
+      RequestPath: drop
     headers:
       defaultMode: drop

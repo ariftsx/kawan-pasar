@@ -5,6 +5,14 @@ x-hardening: &hardening
   security_opt:
     - no-new-privileges:true
 
+# Account settings shared by the API and the worker (Fase 2A).
+x-account-env: &account-env
+  VALKEY_SESSION_URL: redis://:${VALKEY_PASSWORD}@valkey-session:6379/0
+  SMTP_URL: smtp://mailpit:1025
+  MAIL_FROM: 'Kawan Pasar <no-reply@kawanpasar.local>'
+  PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://127.0.0.1:8080}
+  AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET (node scripts/gen-env.mjs --add-missing)}
+
 # Both web replicas run the same image and settings; only the fixed address differs (ADR 0010).
 x-web: &web
   <<: *hardening
@@ -138,6 +146,44 @@ services:
       timeout: 3s
       retries: 20
 
+  # Sessions (Fase 2A): never evicted (a full cache must not log users out), no disk: a restart
+  # only means signing in again (ADR 0011, design Fase 2 §3).
+  valkey-session:
+    <<: *hardening
+    image: valkey/valkey:9-alpine
+    environment:
+      VALKEY_PASSWORD: ${VALKEY_PASSWORD:?set VALKEY_PASSWORD}
+    command:
+      - sh
+      - -c
+      - exec valkey-server --requirepass "$VALKEY_PASSWORD" --maxmemory 64mb --maxmemory-policy noeviction --save '' --appendonly no
+    networks: [backend]
+    healthcheck:
+      test: ['CMD-SHELL', 'valkey-cli --no-auth-warning -a "$VALKEY_PASSWORD" ping | grep -q PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Local mail catcher (Fase 2A, owner decision): SMTP inside the backend network only; its web
+  # inbox is published by the dev-tools overlay. A real provider only needs a different SMTP_URL.
+  mailpit:
+    <<: *hardening
+    image: axllent/mailpit:v1.33.1
+    read_only: true
+    # Messages live in a temporary database under /tmp (nothing kept across restarts).
+    tmpfs:
+      - /tmp:size=32m
+    environment:
+      MP_MAX_MESSAGES: '500'
+      MP_SMTP_AUTH_ACCEPT_ANY: 'false'
+      MP_SMTP_AUTH_ALLOW_INSECURE: 'false'
+    networks: [backend]
+    healthcheck:
+      test: ['CMD', '/mailpit', 'readyz']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   traefik:
     <<: *hardening
     image: traefik:v3.7.18
@@ -187,6 +233,38 @@ services:
       # replica that is down (or a failed shared write) does not lose the revalidation.
       WEB_INTERNAL_URL: http://web-1:3000,http://web-2:3000
       WEB_REVALIDATE_TOKEN: ${WEB_REVALIDATE_TOKEN:?set WEB_REVALIDATE_TOKEN (node scripts/gen-env.mjs --add-missing)}
+      <<: *account-env
+    networks: [backend]
+
+  # Background jobs (e-mail from Fase 2A). Same image as the API, no port, dynamic address: it is
+  # never a trusted proxy. Healthy while its heartbeat file is fresh.
+  worker:
+    <<: *hardening
+    image: kawan-pasar/api:local
+    command: ['node', 'dist/worker.js']
+    cap_drop: [ALL]
+    read_only: true
+    mem_limit: 256m
+    pids_limit: 128
+    tmpfs:
+      - /tmp:size=8m,uid=1000,gid=1000
+    depends_on:
+      api: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://app_rw:${APP_RW_PASSWORD}@pgbouncer:6432/kawanpasar
+      DATABASE_POOL_MAX: '4'
+      VALKEY_CACHE_URL: redis://:${VALKEY_PASSWORD}@valkey-cache:6379/0
+      VALKEY_QUEUE_URL: redis://:${VALKEY_PASSWORD}@valkey-queue:6379/0
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?set SERVICE_TOKEN}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      <<: *account-env
+    healthcheck:
+      test: ['CMD', 'node', 'dist/worker/healthcheck.js']
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
     networks: [backend]
 
   web-1:

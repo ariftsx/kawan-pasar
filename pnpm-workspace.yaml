@@ -7,6 +7,8 @@ packages:
 allowBuilds:
   '@swc/core': true
   esbuild: true
+  # Optional native speed-up of BullMQ's msgpack codec; the pure-JS fallback is used instead.
+  msgpackr-extract: false
 
 # Security overrides (pnpm audit). Each one is documented in docs/security/dependensi.md.
 overrides:

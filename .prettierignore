@@ -5,3 +5,4 @@ figcraft-Kawan_Pasar/
 *.pdf
 services/**/.venv/
 apps/web/next-env.d.ts
+.superpowers/
