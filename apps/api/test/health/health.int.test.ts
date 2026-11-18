@@ -3,20 +3,8 @@ import type pg from 'pg';
 import { afterEach, describe, expect, it } from 'vitest';
 import { PG_POOL } from '../../src/database/database.module.js';
 import { createApp } from '../../src/app.factory.js';
-import { loadEnv } from '../../src/config/env.js';
 import type { Env } from '../../src/config/env.js';
-
-function testEnv(overrides: Record<string, string> = {}): Env {
-  return loadEnv({
-    NODE_ENV: 'test',
-    LOG_LEVEL: 'silent',
-    DATABASE_URL: process.env['TEST_DATABASE_URL'] ?? '',
-    VALKEY_CACHE_URL: process.env['VALKEY_CACHE_URL'] ?? '',
-    VALKEY_QUEUE_URL: process.env['VALKEY_QUEUE_URL'] ?? '',
-    SERVICE_TOKEN: process.env['SERVICE_TOKEN'] ?? '',
-    ...overrides,
-  });
-}
+import { testEnv } from '../helpers/test-app.js';
 
 let app: NestFastifyApplication | undefined;
 

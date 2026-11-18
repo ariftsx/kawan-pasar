@@ -12,6 +12,7 @@ import { ConfigModule } from './config/config.module.js';
 import type { Env } from './config/env.js';
 import { DatabaseModule } from './database/database.module.js';
 import { ArticlesModule } from './modules/articles/articles.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
 import { ForecastsModule } from './modules/forecasts/forecasts.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { InternalModule } from './modules/internal/internal.module.js';
@@ -23,6 +24,8 @@ const REDACT = [
   'req.headers.authorization',
   'req.headers.cookie',
   'req.headers["x-service-token"]',
+  'req.headers["x-session-token"]',
+  'req.headers["x-csrf-token"]',
   'res.headers["set-cookie"]',
   '*.password',
   '*.token',
@@ -59,6 +62,7 @@ export class AppModule {
         PricesModule,
         ForecastsModule,
         ArticlesModule,
+        AuthModule,
         ...(options.imports ?? []),
       ],
       providers: [

@@ -14,6 +14,11 @@ export function testEnv(overrides: Record<string, string> = {}): Env {
     VALKEY_CACHE_URL: process.env['VALKEY_CACHE_URL'] ?? '',
     VALKEY_QUEUE_URL: process.env['VALKEY_QUEUE_URL'] ?? '',
     SERVICE_TOKEN: process.env['SERVICE_TOKEN'] ?? '',
+    VALKEY_SESSION_URL: process.env['VALKEY_SESSION_URL'] ?? '',
+    AUTH_SECRET: process.env['AUTH_SECRET'] ?? '',
+    SMTP_URL: process.env['SMTP_URL'] ?? '',
+    MAIL_FROM: 'Kawan Pasar <no-reply@kawanpasar.local>',
+    PUBLIC_SITE_URL: 'http://127.0.0.1:8080',
     ...overrides,
   });
 }

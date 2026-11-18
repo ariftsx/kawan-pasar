@@ -11,7 +11,7 @@ if (existsSync(envFile)) process.loadEnvFile(envFile);
  * by the dev stack. The database index only separates keys; no extra container is needed.
  */
 const TEST_VALKEY_DB = '15';
-for (const name of ['VALKEY_CACHE_URL', 'VALKEY_QUEUE_URL']) {
+for (const name of ['VALKEY_CACHE_URL', 'VALKEY_QUEUE_URL', 'VALKEY_SESSION_URL']) {
   const value = process.env[name];
   if (value === undefined || value === '') continue;
   const url = new URL(value);

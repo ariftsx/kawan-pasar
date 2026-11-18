@@ -49,6 +49,19 @@ export const EnvSchema = z.object({
     )
     .optional(),
   WEB_REVALIDATE_TOKEN: z.string().min(32).optional(),
+  // --- accounts (Fase 2A) ---
+  /** Sessions, lockouts and account rate limits (valkey-session: noeviction, ADR 0011). */
+  VALKEY_SESSION_URL: redisUrl,
+  /** Keys the HMACs of e-mail addresses (lockout) and client IPs (audit). Never logged. */
+  AUTH_SECRET: z.string().min(32),
+  /** Argon2 hashes that may run at once (≈ API cores) and may wait (HashGate, Fase 2A). */
+  AUTH_HASH_CONCURRENCY: z.coerce.number().int().min(1).max(32).default(2),
+  AUTH_HASH_QUEUE: z.coerce.number().int().min(0).max(1000).default(16),
+  /** Outgoing mail (Mailpit locally). Only the worker connects; the API just queues. */
+  SMTP_URL: z.url({ protocol: /^smtps?$/ }),
+  MAIL_FROM: z.string().min(3).max(200),
+  /** Origin used in e-mailed links. */
+  PUBLIC_SITE_URL: z.url({ protocol: /^https?$/ }),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });
 

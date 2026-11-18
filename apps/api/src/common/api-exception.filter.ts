@@ -14,6 +14,23 @@ const GENERIC: Partial<Record<number, ApiError>> = {
 const INTERNAL: ApiError = { error: { code: 'internal', message: 'internal error' } };
 
 /**
+ * What an unexpected error may write to the log: its kind and, for database errors, the SQLSTATE
+ * and driver error kind. Never the message or the stack: a database error message quotes the
+ * query parameters (an e-mail address, Fase 2A load test), and the stack repeats the message.
+ */
+export function describeUnexpected(e: unknown): string {
+  if (!(e instanceof Error)) return 'unexpected non-error thrown';
+  const cause: unknown = e.cause;
+  const parts = [`unexpected ${e.name}`];
+  if (cause instanceof Error) {
+    parts.push(`cause ${cause.name}`);
+    const code: unknown = Reflect.get(cause, 'code');
+    if (typeof code === 'string' && /^[A-Z0-9_]{1,32}$/.test(code)) parts.push(`code ${code}`);
+  }
+  return parts.join(', ');
+}
+
+/**
  * Maps every error to the contract shape. Framework messages ("Cannot GET /x"), raw input and
  * stack traces never reach the client; unexpected errors are logged server-side only.
  */
@@ -47,7 +64,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
       }
     }
 
-    this.log.error(exception instanceof Error ? exception : new Error('non-error thrown'));
+    this.log.error(describeUnexpected(exception));
     void reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send(INTERNAL);
   }
 }

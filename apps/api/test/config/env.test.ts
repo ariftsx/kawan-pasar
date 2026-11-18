@@ -9,6 +9,11 @@ const valid = {
   VALKEY_CACHE_URL: 'redis://:pw@127.0.0.1:16379/0',
   VALKEY_QUEUE_URL: 'redis://:pw@127.0.0.1:16380/0',
   SERVICE_TOKEN: SECRET_TOKEN,
+  VALKEY_SESSION_URL: 'redis://:pw@127.0.0.1:16381/0',
+  AUTH_SECRET: 'a'.repeat(43),
+  SMTP_URL: 'smtp://127.0.0.1:11025',
+  MAIL_FROM: 'Kawan Pasar <no-reply@kawanpasar.local>',
+  PUBLIC_SITE_URL: 'http://127.0.0.1:8080',
 };
 
 describe('loadEnv', () => {

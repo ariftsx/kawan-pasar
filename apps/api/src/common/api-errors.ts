@@ -38,3 +38,26 @@ export const rateLimited = (retryAfterSeconds: number): ApiHttpError =>
   new ApiHttpError(HttpStatus.TOO_MANY_REQUESTS, 'rate_limited', 'too many requests', {
     retryAfterSeconds,
   });
+
+// --- accounts (Fase 2A): generic messages, never the reason a lookup failed ---
+
+export const unauthenticated = (): ApiHttpError =>
+  new ApiHttpError(HttpStatus.UNAUTHORIZED, 'unauthenticated', 'sign-in required');
+
+export const invalidCredentials = (): ApiHttpError =>
+  new ApiHttpError(HttpStatus.UNAUTHORIZED, 'invalid_credentials', 'invalid credentials');
+
+export const locked = (retryAfterSeconds: number): ApiHttpError =>
+  new ApiHttpError(HttpStatus.TOO_MANY_REQUESTS, 'locked', 'temporarily locked', {
+    retryAfterSeconds,
+  });
+
+/** `problem` is the policy rule (too_short, too_long, breached, same_as_email), not the input. */
+export const weakPassword = (problem: string, field = 'password'): ApiHttpError =>
+  new ApiHttpError(HttpStatus.UNPROCESSABLE_ENTITY, 'weak_password', problem, { fields: [field] });
+
+export const invalidToken = (): ApiHttpError =>
+  new ApiHttpError(HttpStatus.BAD_REQUEST, 'invalid_token', 'invalid or expired link');
+
+export const csrfRejected = (): ApiHttpError =>
+  new ApiHttpError(HttpStatus.FORBIDDEN, 'csrf', 'invalid request origin');
