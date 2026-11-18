@@ -56,3 +56,14 @@ Image `web` hanya memuat output `standalone` Next (dependensi yang benar-benar d
 | `lighthouse` (`tests/perf`)       | 13.6.0 | Dev-only, tidak pernah ikut image. Telemetri Sentry bawaan tidak aktif kecuali diminta lewat flag (tidak dipakai)                   |
 | `@playwright/test` (`tests/perf`) | 1.65.0 | Dev-only; menyediakan Chromium yang sama dengan uji e2e                                                                             |
 | `grafana/k6` (image)              | 2.3.0  | Dijalankan di jaringan backend hanya oleh `scripts/loadtest.mjs`                                                                    |
+
+## Dependensi Fase 2A
+
+| Paket               | Versi   | Catatan                                                                                                  |
+| ------------------- | ------- | -------------------------------------------------------------------------------------------------------- |
+| `@node-rs/argon2`   | 2.2.2   | Biner prabangun (tanpa skrip instal). Argon2id dengan parameter OWASP                                    |
+| `bullmq`            | 6.7.6   | Antrean email. `msgpackr-extract` (opsional, native) diblokir di `allowBuilds`; dipakai versi JavaScript |
+| `nodemailer`        | 10.5.0  | Hanya di worker; versi 10.6.0 belum melewati gerbang usia rilis saat dipasang                            |
+| `@types/nodemailer` | 8.0.2   | Dev-only                                                                                                 |
+| `axllent/mailpit`   | v1.33.1 | Image penangkap SMTP lokal (dev); SMTP hanya di jaringan backend                                         |
+| Daftar sandi bocor  | –       | SecLists (MIT), `apps/api/data/` beserta lisensi dan cara membuat ulang                                  |

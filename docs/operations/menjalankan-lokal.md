@@ -88,6 +88,9 @@ Semua port hanya terikat ke `127.0.0.1`, tidak terbuka ke jaringan lain.
 | Core API                  | 3001      | Hanya untuk alat dev; di produksi tidak terbuka           |
 | Valkey cache              | 16379     |                                                           |
 | Valkey antrean            | 16380     |                                                           |
+| Valkey sesi               | 16381     | Sesi, lockout, rate limit akun (Fase 2A)                  |
+| Mailpit (kotak masuk web) | 18025     | Email lokal: buka http://127.0.0.1:18025 (Fase 2A)        |
+| Mailpit (SMTP)            | 11025     | Untuk uji integrasi worker email                          |
 
 Port 5432, 6379, dan sejenisnya sengaja **tidak** dipakai agar tidak bentrok dengan PostgreSQL atau Redis yang mungkin sudah terpasang di Windows.
 

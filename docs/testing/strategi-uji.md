@@ -2,19 +2,20 @@
 
 ## Lapisan
 
-| Lapisan                                     | Alat                                                      | Lokasi                                                      | Perintah                                            |
-| ------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------- |
-| Unit TypeScript                             | Vitest 5                                                  | `packages/*/src/**/*.test.ts`, `apps/api/test/**/*.test.ts` | `pnpm test`                                         |
-| Komponen & web (server-only, route handler) | Vitest 5 + Testing Library + happy-dom                    | `apps/web/src/**/*.test.{ts,tsx}`                           | `pnpm --filter @kawan-pasar/web test`               |
-| Build web tanpa API                         | `next build` (tanpa `.env`)                               | `apps/web`                                                  | `pnpm --filter @kawan-pasar/web build`              |
-| Integrasi API & database (DB + cache asli)  | Vitest 5 + SWC                                            | `apps/api/test/**/*.int.test.ts`                            | `pnpm test:int`                                     |
-| Integrasi cache web (Valkey asli)           | Vitest 5                                                  | `apps/web/src/**/*.int.test.ts`                             | `pnpm test:int`                                     |
-| Ingest Python (unit + integrasi DB)         | pytest + coverage (≥ 90%)                                 | `services/ingest/tests/`                                    | `uv run pytest --cov=kp_ingest --cov-fail-under=90` |
-| Kontrak infrastruktur                       | skrip Node                                                | `scripts/infra-check.mjs`                                   | `pnpm infra:check`                                  |
-| Lint & tipe                                 | ESLint 10 (type-aware), tsc strict, ruff, mypy `--strict` |                                                             | `pnpm lint`, `pnpm typecheck`                       |
-| End-to-end + aksesibilitas                  | Playwright 1.65 + axe 4.14 (lewat Traefik :8080)          | `tests/e2e/specs/`                                          | `pnpm --filter @kawan-pasar/e2e e2e`                |
-| Kinerja halaman                             | Lighthouse 13.6 (profil seluler, 4G lambat, CPU 4×)       | `tests/perf/`                                               | `pnpm --filter @kawan-pasar/perf lighthouse`        |
-| Beban                                       | k6 2.3 (CPU dibatasi: tumpukan 3 vCPU, k6 1 vCPU)         | `tests/load/`                                               | `node scripts/loadtest.mjs …`                       |
+| Lapisan                                            | Alat                                                      | Lokasi                                                      | Perintah                                            |
+| -------------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------- |
+| Unit TypeScript                                    | Vitest 5                                                  | `packages/*/src/**/*.test.ts`, `apps/api/test/**/*.test.ts` | `pnpm test`                                         |
+| Komponen & web (server-only, route handler)        | Vitest 5 + Testing Library + happy-dom                    | `apps/web/src/**/*.test.{ts,tsx}`                           | `pnpm --filter @kawan-pasar/web test`               |
+| Build web tanpa API                                | `next build` (tanpa `.env`)                               | `apps/web`                                                  | `pnpm --filter @kawan-pasar/web build`              |
+| Integrasi API & database (DB + cache asli)         | Vitest 5 + SWC                                            | `apps/api/test/**/*.int.test.ts`                            | `pnpm test:int`                                     |
+| Integrasi akun (DB, Valkey sesi, antrean, Mailpit) | Vitest 5 + SWC                                            | `apps/api/test/{auth,mail,maintenance}/*.int.test.ts`       | `pnpm test:int`                                     |
+| Integrasi cache web (Valkey asli)                  | Vitest 5                                                  | `apps/web/src/**/*.int.test.ts`                             | `pnpm test:int`                                     |
+| Ingest Python (unit + integrasi DB)                | pytest + coverage (≥ 90%)                                 | `services/ingest/tests/`                                    | `uv run pytest --cov=kp_ingest --cov-fail-under=90` |
+| Kontrak infrastruktur                              | skrip Node                                                | `scripts/infra-check.mjs`                                   | `pnpm infra:check`                                  |
+| Lint & tipe                                        | ESLint 10 (type-aware), tsc strict, ruff, mypy `--strict` |                                                             | `pnpm lint`, `pnpm typecheck`                       |
+| End-to-end + aksesibilitas                         | Playwright 1.65 + axe 4.14 (lewat Traefik :8080)          | `tests/e2e/specs/`                                          | `pnpm --filter @kawan-pasar/e2e e2e`                |
+| Kinerja halaman                                    | Lighthouse 13.6 (profil seluler, 4G lambat, CPU 4×)       | `tests/perf/`                                               | `pnpm --filter @kawan-pasar/perf lighthouse`        |
+| Beban                                              | k6 2.3 (CPU dibatasi: tumpukan 3 vCPU, k6 1 vCPU)         | `tests/load/`                                               | `node scripts/loadtest.mjs …`                       |
 
 Semua gerbang dijalankan dengan `pnpm audit:all`. Log setiap gerbang ada di `.audit/<gerbang>.log`.
 
@@ -26,6 +27,10 @@ Semua gerbang dijalankan dengan `pnpm audit:all`. Log setiap gerbang ada di `.au
 - Uji integrasi API berjalan serial (`fileParallelism: false`) karena berbagi satu basis data uji.
 - Aturan produk diuji secara eksplisit, misalnya "harga 0 ditolak" (CHECK), "tanpa versi tidak tampil", dan "impor ulang idempoten".
 - Keluaran yang bisa memuat rahasia diuji tidak membocorkannya (pesan galat env, CLI ingest, skrip pemeriksa infra, log klien API web).
+- Uji akun e2e:
+  - `account.spec.ts`: daftar → email di Mailpit → verifikasi → masuk → ganti/atur ulang sandi → sesi → hapus akun, juga tanpa JavaScript.
+  - `account-security.spec.ts`: cookie, CSP ber-nonce, `?ke=`, token di URL, enumerasi, lockout, Origin asing.
+  - Sebelum tiap uji akun, penghitung rate limit akun dikosongkan karena semua uji browser datang dari satu alamat. Lockout tidak dikosongkan.
 - Uji integrasi cache web memakai **database Valkey 14** (`apps/web/test/load-env.ts`); tumpukan dev memakai 1 (web) dan 0 (API).
 - `infra-check` membuktikan perilaku dua replika: keduanya menerima lalu lintas, halaman dari `web-1` menjadi HIT di `web-2`, revalidasi di `web-1` membuat `web-2` menyajikan STALE, entri cache dibatasi per build, dan tidak ada pustaka validasi di bundel browser.
 - Uji integrasi API memakai **database Valkey 15** (`test/helpers/load-env.ts`), bukan database 0 milik tumpukan dev. Sebelum Fase 1C keduanya berbagi database 0, sehingga data uji (bundel prediksi uji) sempat tersaji oleh API dev.

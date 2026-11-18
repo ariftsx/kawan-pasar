@@ -2,6 +2,45 @@
 
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/). Versi produk mengikuti fase pengembangan.
 
+## [Fase 2A — Akun dan keamanan] — 2026-11-18
+
+### Ditambahkan
+
+- **Akun dengan email dan kata sandi:**
+  - daftar dan verifikasi email (wajib sebelum peringatan);
+  - masuk dan keluar;
+  - lupa, atur ulang, dan ganti kata sandi;
+  - sesi aktif (lihat dan cabut);
+  - hapus akun.
+  - Halaman: `/masuk`, `/daftar`, `/lupa-sandi`, `/atur-ulang-sandi`, `/verifikasi-email`, `/akun`, `/privasi`.
+- **Keamanan:**
+  - Argon2id (OWASP) dengan batas kapasitas hash.
+  - Daftar sandi bocor.
+  - Sesi hanya sebagai hash di `valkey-session` (noeviction).
+  - Lockout bertahap dan rate limit akun.
+  - Token email sekali pakai.
+  - Token CSRF per sesi.
+  - Cookie `__Host-`.
+  - CSP ber-nonce di halaman akun (ADR 0011).
+  - Jawaban yang tidak membocorkan keberadaan akun.
+- **Infrastruktur:** `valkey-session`, Mailpit (lokal), `worker` (antrean email BullMQ dan retensi data akun 90 hari). Rahasia baru `AUTH_SECRET` (`gen-env --add-missing`).
+- **Uji:**
+  - Integrasi API: akun, worker↔Mailpit, retensi, kapasitas hash, log galat.
+  - E2E perjalanan akun dan keamanan (total 292 uji).
+  - Uji beban banjir login.
+
+### Diperbaiki
+
+- Traefik menimpa `Referrer-Policy` halaman. Kini halaman bertoken tetap `no-referrer`.
+- Penghapusan cookie `__Host-` tanpa `Secure` diabaikan browser, sehingga sesi tidak benar-benar keluar di sisi browser.
+- Galat database tak terduga mencatat parameter kueri (alamat email) ke log. Kini hanya jenis galat dan kode.
+- Tinjauan independen:
+  - Token email tidak lagi tercatat di log akses Traefik.
+  - "Lupa sandi" tidak lagi membedakan alamat lewat waktu jawaban (diselesaikan worker).
+  - Sesi yang dicabut tidak bisa hidup lagi lewat penulisan "terakhir dilihat".
+  - Masuk ulang mengakhiri sesi lama.
+- Navigasi desktop tetap satu baris di 1280 px.
+
 ## [Fase 1D — Kinerja, beban, dan replika] — 2026-11-17
 
 ### Ditambahkan

@@ -96,6 +96,27 @@ Batas Traefik (50/detik, burst 100, 100 permintaan bersamaan) **tetap nilai asli
 
 Ketiganya dibatasi CPU, bukan database atau desain cache. Opsinya dicatat di audit Fase 1D (§ Keputusan pemilik).
 
+## Hasil Fase 2A: banjir login (18 Nov 2026)
+
+`node scripts/loadtest.mjs auth`. Selama 60 detik:
+
+- 50 penyerang dari satu alamat;
+- 50 penyerang dari 50 alamat;
+- 20 pengunjung biasa.
+
+Semua penyerang mencoba masuk dengan sandi salah langsung ke API (melewati batas tepi).
+
+| Kondisi           | 429   | 401 | 5xx               | p95 halaman pengunjung |
+| ----------------- | ----- | --- | ----------------- | ---------------------- |
+| Tanpa `HashGate`  | 1.438 | 272 | 133–185 (5–7%)    | 3.113 ms               |
+| Dengan `HashGate` | 3.952 | 258 | 15–150 (0,3–3,4%) | 332–460 ms ✔           |
+
+Hasilnya:
+
+- Membatasi hash Argon2 yang berjalan bersamaan (2) membuat banjir ditolak dengan murah, dan halaman publik tetap normal.
+- Sisa 5xx adalah kelebihan beban permintaan (~500/detik ke API 0,4 vCPU).
+- Tidak ada crash, tidak ada lockout palsu, dan tidak ada email di log.
+
 ## Hasil Fase 1A (12 Nov 2026, laptop dev, tanpa pembagian CPU)
 
 | Kondisi                                       | Permintaan | Galat  | Median | p95        | Transaksi DB          |
