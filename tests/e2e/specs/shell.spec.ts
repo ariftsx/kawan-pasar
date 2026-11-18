@@ -179,3 +179,16 @@ test.describe('performance budget', () => {
     });
   }
 });
+
+test.describe('desktop navigation', () => {
+  for (const width of [1280, 1440] as const) {
+    test(`stays on one row at ${String(width)} px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto('/beranda');
+      const box = await page.locator('header').first().boundingBox();
+      expect(box?.height ?? 0).toBeGreaterThan(0);
+      // One row: logo (40 px) + vertical padding; a wrapped bar is well over 100 px tall.
+      expect(box?.height ?? 999).toBeLessThanOrEqual(90);
+    });
+  }
+});

@@ -43,6 +43,8 @@ const SCRIPTS = {
   // The edge limit is tested with the real Traefik configuration, unchanged.
   edge: { file: 'edge-rate-limit.js', traefik: 'real' },
   api: { file: 'api-public.js', traefik: 'per-client' },
+  // Fase 2A: wrong-password flood on sign-in (Argon2) while visitors browse.
+  auth: { file: 'auth-flood.js', traefik: 'per-client' },
 };
 for (const s of scenarios) if (!(s in SCRIPTS)) throw new Error(`unknown scenario ${s}`);
 if (scenarios.length === 0)
@@ -298,7 +300,7 @@ try {
       currentTraefik = traefik;
     }
     flushCaches();
-    const warmup = name === 'api' || name === 'edge' ? [] : await warmUp();
+    const warmup = ['api', 'edge'].includes(name) ? [] : await warmUp();
     // A page that failed to warm up leaves part of the run cold: say so in the report.
     const coldFailures = warmup.filter((w) => w.status !== 200);
     if (coldFailures.length > 0) {

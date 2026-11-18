@@ -1,4 +1,4 @@
-/** Every public page, used by the layout, accessibility and budget checks. */
+/** Every page, used by the layout, accessibility and budget checks. */
 export const ALL_PAGES = [
   '/',
   '/beranda',
@@ -14,4 +14,12 @@ export const ALL_PAGES = [
   '/pasar',
   '/lainnya',
   '/peringatan',
+  '/privasi',
+  // Account pages (Fase 2A). Without a session /akun shows the sign-in page.
+  '/masuk',
+  '/daftar',
+  '/lupa-sandi',
+  '/atur-ulang-sandi',
+  '/verifikasi-email',
+  '/akun',
 ] as const;
