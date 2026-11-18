@@ -17,3 +17,19 @@ export const articleCategory = pgEnum('article_category', [
 ]);
 export const ingestStatus = pgEnum('ingest_status', ['running', 'succeeded', 'partial', 'failed']);
 export const priceSource = pgEnum('price_source', ['seed_csv', 'pihps']);
+// Fase 2A — accounts. Analyst and admin roles arrive in Fase 3.
+export const userRole = pgEnum('user_role', ['user']);
+export const authTokenPurpose = pgEnum('auth_token_purpose', ['verify_email', 'reset_password']);
+export const authEventType = pgEnum('auth_event_type', [
+  'register',
+  'login_ok',
+  'login_fail',
+  'locked',
+  'logout',
+  'verify',
+  'reset_request',
+  'reset_done',
+  'password_change',
+  'session_revoke',
+  'account_delete',
+]);
