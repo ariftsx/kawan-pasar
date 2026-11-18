@@ -6,6 +6,13 @@ export const ApiErrorCodeSchema = z.enum([
   'not_found',
   'rate_limited',
   'internal',
+  // Accounts (Fase 2A)
+  'unauthenticated',
+  'invalid_credentials',
+  'locked',
+  'weak_password',
+  'invalid_token',
+  'csrf',
 ]);
 export type ApiErrorCode = z.infer<typeof ApiErrorCodeSchema>;
 

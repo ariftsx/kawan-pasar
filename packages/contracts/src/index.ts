@@ -7,3 +7,4 @@ export * from './errors.js';
 export * from './bundle.js';
 export * from './cache-tags.js';
 export * from './staleness.js';
+export * from './auth.js';

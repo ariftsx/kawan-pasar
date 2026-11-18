@@ -11,6 +11,10 @@
     "./staleness": {
       "types": "./dist/staleness.d.ts",
       "default": "./dist/staleness.js"
+    },
+    "./auth": {
+      "types": "./dist/auth.d.ts",
+      "default": "./dist/auth.js"
     }
   },
   "files": [
