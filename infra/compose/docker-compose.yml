@@ -13,6 +13,8 @@ x-account-env: &account-env
   PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://127.0.0.1:8080}
   AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET (node scripts/gen-env.mjs --add-missing)}
   PHONE_ENC_KEY: ${PHONE_ENC_KEY:?set PHONE_ENC_KEY (node scripts/gen-env.mjs --add-missing)}
+  # Only during a key rotation (docs/security/autentikasi.md): the previous PHONE_ENC_KEY.
+  PHONE_ENC_KEY_PREVIOUS: ${PHONE_ENC_KEY_PREVIOUS:-}
 
 # Both web replicas run the same image and settings; only the fixed address differs (ADR 0010).
 x-web: &web
@@ -294,7 +296,9 @@ services:
     read_only: true
     network_mode: none
     volumes:
-      - ../../services/model-arifnet/artifacts:/artifacts
+      # Input read-only; output in its own folder, so the job cannot touch other bundles.
+      - ../../services/model-arifnet/artifacts/.input:/input:ro
+      - ../../services/model-arifnet/artifacts/arifnet:/out
     deploy:
       resources:
         limits: { cpus: '1', memory: 512M }

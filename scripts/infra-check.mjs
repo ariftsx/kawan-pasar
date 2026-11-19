@@ -347,7 +347,7 @@ check('model-export job: no network, no ports, read-only, no capabilities (ADR 0
     job.read_only === true &&
     (job.cap_drop ?? []).includes('ALL') &&
     job.environment === undefined &&
-    volumes.join(',') === '/artifacts:rw'
+    volumes.sort().join(',') === '/input:ro,/out:rw'
   );
 });
 

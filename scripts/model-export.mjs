@@ -21,6 +21,13 @@ const inputPath = path.join(inputDir, inputName);
 const fromApi = (...parts) =>
   ['..', '..', 'services', 'model-arifnet', 'artifacts', ...parts].join('/');
 
+class StepFailed extends Error {
+  constructor(message, code) {
+    super(message);
+    this.code = code;
+  }
+}
+
 function run(cmd, args, options = {}) {
   const res = spawnSync(cmd, args, {
     cwd: root,
@@ -29,39 +36,33 @@ function run(cmd, args, options = {}) {
     shell: process.platform === 'win32' && cmd === 'pnpm',
   });
   if (res.status !== 0) {
-    process.stderr.write(`model-export: step failed: ${cmd} ${args.join(' ')}\n`);
-    process.exit(res.status ?? 1);
+    // Thrown, not process.exit(): the finally below must still remove the price file.
+    throw new StepFailed(`step failed: ${cmd} ${args.join(' ')}`, res.status ?? 1);
   }
   return res.stdout ?? '';
 }
 
 mkdirSync(inputDir, { recursive: true });
+mkdirSync(path.join(artifacts, 'arifnet'), { recursive: true });
 try {
   run('pnpm', ['--filter', '@kawan-pasar/api', 'bundle:prices', fromApi('.input', inputName)]);
   const compose = [path.join(root, 'scripts', 'compose.mjs'), '--profile', 'model'];
   run('node', [...compose, 'build', 'model-export']);
   const out = run(
     'node',
-    [
-      ...compose,
-      'run',
-      '--rm',
-      'model-export',
-      '--prices',
-      `/artifacts/.input/${inputName}`,
-      '--out',
-      '/artifacts',
-    ],
+    [...compose, 'run', '--rm', 'model-export', '--prices', `/input/${inputName}`, '--out', '/out'],
     { capture: true },
   );
   const written = out.trim().split('\n').at(-1) ?? '';
   const bundleId = path.posix.basename(written);
   if (!/^arifnet-[a-z0-9._-]+$/.test(bundleId)) {
-    process.stderr.write(`model-export: unexpected job output: ${written}\n`);
-    process.exit(1);
+    throw new StepFailed(`unexpected job output: ${written}`, 1);
   }
   process.stdout.write(`bundle written: ${bundleId}\n`);
-  run('pnpm', ['--filter', '@kawan-pasar/api', 'bundle:promote', fromApi(bundleId)]);
+  run('pnpm', ['--filter', '@kawan-pasar/api', 'bundle:promote', fromApi('arifnet', bundleId)]);
+} catch (e) {
+  process.stderr.write(`model-export: ${e instanceof Error ? e.message : 'failed'}\n`);
+  process.exitCode = e instanceof StepFailed ? e.code : 1;
 } finally {
   // The price file was only the job's input.
   rmSync(inputPath, { force: true });
