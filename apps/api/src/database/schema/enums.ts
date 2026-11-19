@@ -19,7 +19,12 @@ export const ingestStatus = pgEnum('ingest_status', ['running', 'succeeded', 'pa
 export const priceSource = pgEnum('price_source', ['seed_csv', 'pihps']);
 // Fase 2A — accounts. Analyst and admin roles arrive in Fase 3.
 export const userRole = pgEnum('user_role', ['user']);
-export const authTokenPurpose = pgEnum('auth_token_purpose', ['verify_email', 'reset_password']);
+export const authTokenPurpose = pgEnum('auth_token_purpose', [
+  'verify_email',
+  'reset_password',
+  // Fase 2B: one-click unsubscribe from the weekly summary e-mail.
+  'weekly_unsubscribe',
+]);
 export const authEventType = pgEnum('auth_event_type', [
   'register',
   'login_ok',
@@ -32,4 +37,13 @@ export const authEventType = pgEnum('auth_event_type', [
   'password_change',
   'session_revoke',
   'account_delete',
+  'phone_change',
+]);
+// Fase 2B — alerts and in-app news.
+export const alertDirection = pgEnum('alert_direction', ['above', 'below']);
+export const notificationKind = pgEnum('notification_kind', [
+  'unusual_move',
+  'forecast_rise',
+  'price_threshold',
+  'weekly',
 ]);

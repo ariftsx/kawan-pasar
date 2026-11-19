@@ -9,3 +9,4 @@ export { articles } from './articles.js';
 export { users } from './users.js';
 export { authTokens } from './auth-tokens.js';
 export { authEvents } from './auth-events.js';
+export { alertPreferences, alertWatches, notifications } from './alerts.js';
