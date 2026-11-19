@@ -40,6 +40,7 @@ describe('alert contracts', () => {
       dataDate: '2026-09-30',
       modelVersion: null,
       read: false,
+      sentWhatsapp: false,
       createdAt: '2026-11-19T00:00:00.000Z',
     };
     expect(NotificationSchema.safeParse({ ...base, link: '/harga/bawang-merah' }).success).toBe(
@@ -69,6 +70,7 @@ describe('alert contracts', () => {
       unusualMove: true,
       forecastRise: true,
       priceThreshold: true,
+      whatsapp: true,
     };
     expect(
       AlertsResponseSchema.safeParse({ preferences: prefs, watches: [], emailVerified: true })

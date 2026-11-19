@@ -19,6 +19,10 @@
     "./alerts": {
       "types": "./dist/alerts.d.ts",
       "default": "./dist/alerts.js"
+    },
+    "./whatsapp": {
+      "types": "./dist/whatsapp.d.ts",
+      "default": "./dist/whatsapp.js"
     }
   },
   "files": [

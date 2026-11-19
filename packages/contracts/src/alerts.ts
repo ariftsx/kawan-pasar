@@ -15,6 +15,8 @@ export const AlertPreferencesSchema = z.strictObject({
   forecastRise: z.boolean(),
   /** Rule: the price crosses the user's own limit. */
   priceThreshold: z.boolean(),
+  /** WhatsApp (Fase 2C): news and the weekly summary, once the channel is verified. */
+  whatsapp: z.boolean(),
 });
 export type AlertPreferences = z.infer<typeof AlertPreferencesSchema>;
 
@@ -84,6 +86,8 @@ export const NotificationSchema = z.strictObject({
   dataDate: z.iso.date(),
   modelVersion: z.string().max(64).nullable(),
   read: z.boolean(),
+  /** Also delivered by WhatsApp (Fase 2C). */
+  sentWhatsapp: z.boolean(),
   createdAt: IsoDateTime,
 });
 export type NotificationItem = z.infer<typeof NotificationSchema>;
