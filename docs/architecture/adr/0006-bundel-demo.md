@@ -1,6 +1,6 @@
 # ADR 0006 — Bundel prediksi demo berlabel
 
-- **Status:** Diterima (12 Nov 2026)
+- **Status:** Diterima (12 Nov 2026). Sejak 19 Nov 2026 bundel ARIF-Net aktif ([ADR 0012](0012-penerapan-arif-net.md)); bundel demo tetap sebagai cadangan pengembangan dan tergeser otomatis (§ 4).
 
 ## Konteks
 

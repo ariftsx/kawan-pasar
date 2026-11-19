@@ -67,3 +67,11 @@ Banjir masuk dengan sandi salah, selama 60 detik:
 | Dengan `HashGate` | 3.952 | 150 (0,3–3,4%) | **460 ms**             |
 
 Sisa 5xx terjadi pada ~500 permintaan per detik yang langsung ke API 0,4 vCPU (melewati batas Traefik). API tidak crash, tidak ada lockout palsu, dan tidak ada email di log.
+
+## Tambahan Fase 2B
+
+- **Nomor HP opsional** (daftar dan `/akun`): dinormalisasi ke E.164 (`+628…`), disimpan dengan AES-256-GCM. Kunci enkripsi dan kunci HMAC pencarian diturunkan dengan HKDF dari `PHONE_ENC_KEY`; id pengguna menjadi AAD, sehingga ciphertext yang dipindah ke baris lain tidak bisa dibuka. API hanya mengembalikan bentuk tersamar (`+62 812 •••• 7890`), dan nomor tidak pernah dicatat di log (diuji). Daftar dengan alamat yang sudah ada tidak mengubah nomornya. Nomor belum diverifikasi; verifikasi kepemilikan ada di Fase 2C.
+- **Konfirmasi kata sandi** (daftar, atur ulang, ganti) diperiksa di Server Action dan tidak pernah dikirim ke API.
+- **Tombol lihat/sembunyikan kata sandi** di semua isian sandi. Tombol baru muncul sesudah hidrasi: tanpa JavaScript tidak ada tombol mati. `aria-pressed` dan label yang berganti.
+- **Peringatan**: semua endpoint memakai sesi + CSRF yang sama; kepemilikan diperiksa di kueri (uji IDOR). Tautan berhenti berlangganan ringkasan mingguan memakai token sekali pakai (`weekly_unsubscribe`, 14 hari, SHA-256 di `auth_tokens`); halaman `/berhenti-ringkasan` tidak bertindak saat dibuka (pemindai tautan email), hanya saat tombol ditekan, dan memakai `Referrer-Policy: no-referrer`.
+- **Server Action**: hanya fungsi aksi yang diekspor dari modul `'use server'` (fungsi lain yang diekspor akan menjadi endpoint yang bisa dipanggil); helper ada di `lib/auth/action-helpers.ts`.

@@ -67,3 +67,9 @@ Image `web` hanya memuat output `standalone` Next (dependensi yang benar-benar d
 | `@types/nodemailer` | 8.0.2   | Dev-only                                                                                                 |
 | `axllent/mailpit`   | v1.33.1 | Image penangkap SMTP lokal (dev); SMTP hanya di jaringan backend                                         |
 | Daftar sandi bocor  | –       | SecLists (MIT), `apps/api/data/` beserta lisensi dan cara membuat ulang                                  |
+
+## Advisory yang ditinjau (Fase 2B)
+
+| Advisory                                  | Status                                                                                                                                                                                                                                                                                                                                            |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GHSA-fc5q-39xc-vjpf (`picomatch` ≤ 4.0.7) | Menggagalkan gerbang `dependency-audit` di audit Fase 2A (18 Nov 2026), tanpa versi perbaikan. Pemilik memutuskan "abaikan dengan alasan tercatat" (19 Nov). Saat akan diterapkan, advisory itu sudah **dicabut** oleh GitHub (`withdrawn_at` 2026-11-18T15:38:56Z), dan `pnpm audit` bersih. Karena itu tidak ada pengecualian di `auditConfig`. |

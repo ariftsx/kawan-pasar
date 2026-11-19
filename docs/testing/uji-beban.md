@@ -124,3 +124,22 @@ Hasilnya:
 | Sebelum optimasi                              | 5.853      | 0,10%  | —      | 9,75 s     | 52                    |
 | Setelah cache JSON-text (ADR 0007), 1 replika | 20.082     | **0%** | 47 ms  | **378 ms** | **34**                |
 | Rate limit                                    | 150        | —      | —      | —          | 120 × 200, 30 × 429 ✔ |
+
+## Hasil Fase 2B: evaluasi peringatan saat pengunjung menjelajah (19 Nov 2026)
+
+Data: 5.000 akun terverifikasi × 3 komoditas = 15.039 pantauan (5.000 dengan batas yang dilewati data terakhir). Worker dibatasi 0,3 vCPU di overlay.
+
+| Ukuran                                           | Hasil                                |
+| ------------------------------------------------ | ------------------------------------ |
+| Satu evaluasi, membuat 5.000 kabar (stack biasa) | 10,7 s                               |
+| Satu evaluasi, tanpa kabar baru (stack biasa)    | 1,6–2,4 s                            |
+| Evaluasi di overlay (0,3 vCPU)                   | 4,7–7,4 s, berturut-turut selama uji |
+
+| `browse`, 100 pengguna × 60 s | Permintaan    | Galat | p95 halaman      |
+| ----------------------------- | ------------- | ----- | ---------------- |
+| Tanpa evaluasi (dua kali)     | 4.443 / 4.790 | 0     | 3.028 / 1.948 ms |
+| Dengan evaluasi terus-menerus | 4.188         | 0     | 3.840 ms         |
+
+- Tidak ada galat di ketiga uji, dan evaluasi tidak menyentuh halaman publik (ISR, cache bersama).
+- **Anggaran p95 < 500 ms tidak dapat dinilai pada pengukuran ini.** _Baseline_ sendiri 1,9–3,0 s, jauh di atas hasil Fase 1D (±120 pengguna pada < 500 ms), karena host sedang terbebani (proses editor dan VM Docker 3,7 GB). Selisih dengan evaluasi (+27% terhadap _baseline_ terburuk) berada di dalam rentang derau. Ulangi di mesin yang tenang sebelum klaim kapasitas.
+- Lima evaluasi gagal tepat saat overlay memulai ulang PostgreSQL. Evaluasi berikutnya berhasil, dan kabar idempoten, jadi tidak ada yang hilang atau ganda.

@@ -27,3 +27,10 @@ Ringkasan untuk pengguna ada di halaman `/privasi`. Rinciannya:
 - **Yang disimpan:** email, hash Argon2id, sesi (sidik token, jenis peramban/OS, waktu), dan catatan keamanan 90 hari tanpa email dengan IP sebagai HMAC harian.
 - **Hapus akun:** dari `/akun`, permanen. Token dan sesi ikut terhapus; catatan keamanan kehilangan `user_id`.
 - Lihat `docs/security/autentikasi.md`.
+
+## Data peringatan (Fase 2B)
+
+- Tidak ada cookie baru. Halaman Peringatan adalah halaman akun (privat, tidak di-cache).
+- Kabar di aplikasi disimpan **180 hari**, lalu dihapus otomatis oleh worker (retensi harian). Pantauan dan pengaturan dihapus bersama akun.
+- Nomor HP (opsional) disimpan terenkripsi dan hanya ditampilkan tersamar (`/privasi`).
+- Email ringkasan mingguan hanya memuat harga dan perubahan komoditas yang dipantau, tanpa data pribadi lain, dan tautan berhenti berlangganan satu klik.

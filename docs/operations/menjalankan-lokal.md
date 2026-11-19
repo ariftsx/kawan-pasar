@@ -73,6 +73,7 @@ Uji ingest (`cd services/ingest && uv run pytest`) memakai database `kawanpasar_
 
 ```bash
 pnpm --filter @kawan-pasar/api bundle:demo        # bundel prediksi demo berlabel (ADR 0006)
+pnpm model:export                                 # bundel ARIF-Net (ADR 0012); menggeser bundel demo
 pnpm --filter @kawan-pasar/api db:seed:articles   # artikel dari content/articles (lihat docs/product/konten-artikel.md)
 ```
 

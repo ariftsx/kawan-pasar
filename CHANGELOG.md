@@ -2,6 +2,40 @@
 
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/). Versi produk mengikuti fase pengembangan.
 
+## [Fase 2B — ARIF-Net, peringatan, dan kabar] — 2026-11-19
+
+### Ditambahkan
+
+- **ARIF-Net A0 (v1.1.0) di produk** (ADR 0012):
+  - inferensi numpy di `services/model-arifnet` (setara kode riset, dibuktikan uji golden);
+  - bobot `.npz` tanpa pickle, diperiksa sha256;
+  - kontainer sekali jalan `model-export` tanpa jaringan dan database;
+  - `pnpm model:export` (ekspor harga → bundel → promosi).
+  - Halaman Prediksi kini memakai ARIF-Net (bukan data demo). Status uji "Sebagian" untuk sel yang di validasi tidak lebih baik dari "harga tetap".
+  - Halaman ARIF-Net dan Keterbatasan memuat skor validasi v1.1, tabel per komoditas × horizon, dan catatan uji prospektif.
+- **Peringatan** (`/peringatan`, prototipe d_peringatan):
+  - daftar pantau komoditas dengan batas harga sendiri;
+  - tiga aturan: pergerakan di luar kebiasaan, prediksi naik > 2% (hanya dari model nyata), harga melewati batas;
+  - kabar di aplikasi dengan tab Semua / Belum dibaca / Ringkasan mingguan dan "Tandai semua dibaca";
+  - evaluasi berkelompok di worker setelah impor harga atau promosi bundel (jumlah kueri tetap, idempoten per tanggal data);
+  - ringkasan mingguan Senin 06.00 WIB di aplikasi dan email, dengan tautan berhenti berlangganan satu klik (`/berhenti-ringkasan`).
+- **Akun:**
+  - nomor HP opsional (terenkripsi AES-256-GCM, ditampilkan tersamar, bisa diubah/dihapus di `/akun`);
+  - konfirmasi kata sandi;
+  - tombol lihat/sembunyikan di semua isian kata sandi.
+- Migrasi `0006_user_phone`, `0007_alerts`. Rahasia baru `PHONE_ENC_KEY` (`gen-env --add-missing`).
+- Gerbang audit baru: `model-tests`, `model-mypy`, `model-ruff`; `infra-check` memeriksa isolasi `model-export` (40 pemeriksaan).
+
+### Diubah
+
+- Retensi kabar di aplikasi: 180 hari (`/privasi`).
+- CLI bundel keluar dengan `process.exitCode` (sebelumnya `process.exit` dapat memicu assertion libuv di Windows setelah promosi berhasil).
+
+### Keamanan
+
+- Tautan kabar hanya boleh path produk; `//host` ditolak di kontrak dan CHECK database.
+- Advisory `picomatch` GHSA-fc5q-39xc-vjpf dicabut GitHub (18 Nov 2026): tidak ada pengecualian audit.
+
 ## [Fase 2A — Akun dan keamanan] — 2026-11-18
 
 ### Ditambahkan

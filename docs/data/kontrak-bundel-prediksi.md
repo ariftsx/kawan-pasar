@@ -77,3 +77,16 @@ hex(SHA256(body))     ← body kosong = SHA256 dari string kosong
 Penerima menolak dengan `401` bila: selisih waktu lebih dari ±60 detik, nonce sudah pernah dipakai dalam 120 detik terakhir (disimpan di Valkey), atau tanda tangan tidak cocok. Perbandingan tanda tangan wajib constant-time. Kunci HMAC berbeda dari `SERVICE_TOKEN` dan dirotasi lewat env.
 
 > Catatan: dokumen desain awal hanya menyebut timestamp. `X-KP-Nonce` ditambahkan di kontrak ini karena desain sudah mensyaratkan anti-replay dengan nonce.
+
+## 4. Bundel ARIF-Net (sejak 19 Nov 2026, ADR 0012)
+
+| Field                | Nilai                                                                                 |
+| -------------------- | ------------------------------------------------------------------------------------- |
+| `bundle_id`          | `arifnet-<tanggal dasar>-<YYYYMMDDHHMM terbit, UTC>-<8 hex sha forecasts.csv>`        |
+| `model_name`         | `arif-net`                                                                            |
+| `model_version`      | `arifnet-a0-v1.1.0+<8 hex sha256 gabungan bobot>`                                     |
+| `data_version`       | `pihps-<tanggal observasi terakhir>-<8 hex sha256 berkas harga>`                      |
+| `preprocess_version` | `arifnet-features-v1.1.0`                                                             |
+| `eval_status`        | `available` bila relMAE validasi sel < 1, selain itu `partial` (keputusan pemilik K2) |
+
+Ditulis oleh `services/model-arifnet` (kontainer `model-export`) dari berkas harga `commodity_code,observed_on,price_idr` yang diekspor `bundle:prices`. Jalur promosinya sama dengan bundel lain.
