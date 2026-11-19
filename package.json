@@ -15,6 +15,7 @@
     "infra:up": "node scripts/compose.mjs up -d --wait",
     "infra:down": "node scripts/compose.mjs down",
     "infra:check": "node scripts/infra-check.mjs",
+    "model:export": "node scripts/model-export.mjs",
     "env:init": "node scripts/gen-env.mjs",
     "audit:all": "node scripts/audit.mjs",
     "ingest:import": "node scripts/compose.mjs --profile jobs run --rm ingest import-csv --file /data/seed/prices_combined.csv"

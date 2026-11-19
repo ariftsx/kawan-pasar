@@ -22,6 +22,9 @@ services:
       # The k6 container (172.30.0.12) may forward client IPs, so the API test can give every
       # virtual user its own rate-limit bucket. Never part of the normal stack.
       TRUSTED_PROXY_IPS: 172.30.0.10,172.30.0.11,172.30.0.12
+  # Alerts evaluation and mail (Fase 2B): measured while visitors browse (docs/testing/uji-beban.md).
+  worker:
+    cpus: 0.3
   web-1:
     cpus: ${KP_LOADTEST_WEB1_CPUS:-0.75}
   web-2:

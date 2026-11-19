@@ -6,3 +6,6 @@ figcraft-Kawan_Pasar/
 services/**/.venv/
 apps/web/next-env.d.ts
 .superpowers/
+# Written by services/model-arifnet/tools/convert_from_arifnet.py (generated, kept byte-stable).
+services/model-arifnet/model/
+services/model-arifnet/tests/fixtures/

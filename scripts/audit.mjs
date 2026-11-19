@@ -10,6 +10,7 @@ const logDir = path.join(root, '.audit');
 mkdirSync(logDir, { recursive: true });
 
 const ingest = path.join(root, 'services', 'ingest');
+const model = path.join(root, 'services', 'model-arifnet');
 
 /** @type {Array<{ name: string, cmd: string, cwd?: string } | { name: string, fn: () => string[] }>} */
 const steps = [
@@ -39,6 +40,14 @@ const steps = [
   },
   { name: 'ingest-mypy', cmd: 'uv run mypy --strict src tests', cwd: ingest },
   { name: 'ingest-ruff', cmd: 'uv run ruff check && uv run ruff format --check', cwd: ingest },
+  // ARIF-Net inference (numpy): equivalence with the research code, bundle contract, CLI.
+  {
+    name: 'model-tests',
+    cmd: 'uv run pytest -q --cov=kp_model --cov-fail-under=90',
+    cwd: model,
+  },
+  { name: 'model-mypy', cmd: 'uv run mypy --strict src tests', cwd: model },
+  { name: 'model-ruff', cmd: 'uv run ruff check && uv run ruff format --check', cwd: model },
   { name: 'dependency-audit', cmd: 'pnpm audit --audit-level=moderate' },
   { name: 'no-any-scan', fn: scanForAny },
   { name: 'no-ai-attribution-scan', fn: scanForAttribution },

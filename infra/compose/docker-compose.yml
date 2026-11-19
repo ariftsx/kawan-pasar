@@ -12,6 +12,7 @@ x-account-env: &account-env
   MAIL_FROM: 'Kawan Pasar <no-reply@kawanpasar.local>'
   PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://127.0.0.1:8080}
   AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET (node scripts/gen-env.mjs --add-missing)}
+  PHONE_ENC_KEY: ${PHONE_ENC_KEY:?set PHONE_ENC_KEY (node scripts/gen-env.mjs --add-missing)}
 
 # Both web replicas run the same image and settings; only the fixed address differs (ADR 0010).
 x-web: &web
@@ -279,6 +280,24 @@ services:
     networks:
       backend:
         ipv4_address: 172.30.0.11
+
+  # ARIF-Net inference (Fase 2B, ADR 0012): one-shot, started by scripts/model-export.mjs. It gets
+  # the price file the API exported and writes one bundle. No database, no network, no ports.
+  model-export:
+    profiles: [model]
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    build:
+      context: ../../services/model-arifnet
+    image: kawan-pasar/model-arifnet:local
+    read_only: true
+    network_mode: none
+    volumes:
+      - ../../services/model-arifnet/artifacts:/artifacts
+    deploy:
+      resources:
+        limits: { cpus: '1', memory: 512M }
 
   ingest:
     profiles: [jobs]

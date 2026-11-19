@@ -316,6 +316,41 @@ check('worker publishes no port and is not a trusted proxy address', () => {
   return !exposed && !trusted;
 });
 
+check('model-export job: no network, no ports, read-only, no capabilities (ADR 0012)', () => {
+  // One-shot job (profile "model"), so its rendered compose config is checked, not a container.
+  const config = JSON.parse(
+    docker([
+      'compose',
+      '-p',
+      'kawan-pasar',
+      '-f',
+      'infra/compose/docker-compose.yml',
+      '-f',
+      'infra/compose/docker-compose.dev-tools.yml',
+      '--env-file',
+      '.env',
+      '--profile',
+      'model',
+      'config',
+      '--format',
+      'json',
+    ]),
+  );
+  const job = config.services?.['model-export'];
+  if (job === undefined) throw new Error('model-export service missing');
+  const volumes = (job.volumes ?? []).map(
+    (v) => `${v.target}:${v.read_only === true ? 'ro' : 'rw'}`,
+  );
+  return (
+    job.network_mode === 'none' &&
+    job.ports === undefined &&
+    job.read_only === true &&
+    (job.cap_drop ?? []).includes('ALL') &&
+    job.environment === undefined &&
+    volumes.join(',') === '/artifacts:rw'
+  );
+});
+
 check('api reaches the mail server (SMTP) inside the backend network', () => {
   const out = docker([
     'compose',

@@ -11,7 +11,7 @@ const target = new URL('../.env', import.meta.url);
 const secret = () => randomBytes(32).toString('base64url');
 
 // Secrets added after Fase 0. They do not affect any data volume, so they can be added safely.
-const LATER_SECRETS = ['WEB_REVALIDATE_TOKEN', 'AUTH_SECRET'];
+const LATER_SECRETS = ['WEB_REVALIDATE_TOKEN', 'AUTH_SECRET', 'PHONE_ENC_KEY'];
 
 if (process.argv.includes('--add-missing')) {
   if (!existsSync(target)) {
@@ -67,6 +67,7 @@ const s = {
   SERVICE_TOKEN: secret(),
   WEB_REVALIDATE_TOKEN: secret(),
   AUTH_SECRET: secret(),
+  PHONE_ENC_KEY: secret(),
 };
 
 const pg = (user, pw, port, db) => `postgres://${user}:${pw}@127.0.0.1:${port}/${db}`;
