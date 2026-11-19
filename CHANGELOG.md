@@ -2,6 +2,25 @@
 
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/). Versi produk mengikuti fase pengembangan.
 
+## [Fase 2C — WhatsApp (adapter tiruan)] — 2026-11-19
+
+### Ditambahkan
+
+- **WhatsApp** di `/peringatan` (ADR 0013):
+  - hubungkan nomor dengan kode 6 digit, lalu status "Peringatan WhatsApp aktif!";
+  - kabar peringatan (digabung per evaluasi) dan ringkasan mingguan juga dikirim ke WhatsApp, maks 5 pesan per hari;
+  - balas STOP untuk berhenti; aktif lagi lewat verifikasi ulang;
+  - meta kabar "juga dikirim ke WhatsApp".
+  - Adapter tiruan mengirim ke Mailpit. Simulasikan balasan dengan `pnpm wa:balas <nomor> <teks>`.
+- Rotasi kunci nomor HP (`phone_key_id`, `PHONE_ENC_KEY_PREVIOUS`).
+- Migrasi `0008_phone_key` dan `0009_whatsapp`.
+
+### Diperbaiki
+
+- Batas 20 pantauan kini atomik (permintaan paralel tidak bisa melewatinya).
+- `model-export`: masukan baca-saja, keluaran di folder sendiri. Berkas harga tidak lagi tertinggal saat sebuah langkah gagal.
+- Nomor HP yang gagal didekripsi kini dilaporkan, tidak hilang diam-diam.
+
 ## [Fase 2B — ARIF-Net, peringatan, dan kabar] — 2026-11-19
 
 ### Ditambahkan

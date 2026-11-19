@@ -75,3 +75,16 @@ Sisa 5xx terjadi pada ~500 permintaan per detik yang langsung ke API 0,4 vCPU (m
 - **Tombol lihat/sembunyikan kata sandi** di semua isian sandi. Tombol baru muncul sesudah hidrasi: tanpa JavaScript tidak ada tombol mati. `aria-pressed` dan label yang berganti.
 - **Peringatan**: semua endpoint memakai sesi + CSRF yang sama; kepemilikan diperiksa di kueri (uji IDOR). Tautan berhenti berlangganan ringkasan mingguan memakai token sekali pakai (`weekly_unsubscribe`, 14 hari, SHA-256 di `auth_tokens`); halaman `/berhenti-ringkasan` tidak bertindak saat dibuka (pemindai tautan email), hanya saat tombol ditekan, dan memakai `Referrer-Policy: no-referrer`.
 - **Server Action**: hanya fungsi aksi yang diekspor dari modul `'use server'` (fungsi lain yang diekspor akan menjadi endpoint yang bisa dipanggil); helper ada di `lib/auth/action-helpers.ts`.
+
+## Tambahan Fase 2C (WhatsApp)
+
+- **Rotasi kunci nomor HP:**
+  - id kunci disimpan per baris (`phone_key_id`); `PHONE_ENC_KEY_PREVIOUS` membuka nomor lama, lalu nomor itu disegel ulang saat dibaca;
+  - dekripsi yang gagal dicatat sebagai galat tanpa nomor.
+  - Cara merotasi: pindahkan kunci lama ke `PHONE_ENC_KEY_PREVIOUS`, buat `PHONE_ENC_KEY` baru, mulai ulang API dan worker. Setelah semua pengguna aktif membuka akunnya, kunci lama bisa dibuang.
+- **Verifikasi WhatsApp:**
+  - kode 6 digit, HMAC saja, 10 menit, 5 percobaan;
+  - kirim kode 3 per jam per akun dan 5 per hari per nomor;
+  - kanal hanya menyimpan HMAC nomor; nomor berubah = kanal putus.
+- **Pesan masuk tiruan** memakai token layanan. Adapter sungguhan wajib memverifikasi tanda tangan webhook penyedia.
+- **Batas 20 pantauan** dijaga dalam transaksi dengan kunci _advisory_ per pengguna, jadi permintaan paralel tidak bisa melewatinya.

@@ -34,3 +34,10 @@ Ringkasan untuk pengguna ada di halaman `/privasi`. Rinciannya:
 - Kabar di aplikasi disimpan **180 hari**, lalu dihapus otomatis oleh worker (retensi harian). Pantauan dan pengaturan dihapus bersama akun.
 - Nomor HP (opsional) disimpan terenkripsi dan hanya ditampilkan tersamar (`/privasi`).
 - Email ringkasan mingguan hanya memuat harga dan perubahan komoditas yang dipantau, tanpa data pribadi lain, dan tautan berhenti berlangganan satu klik.
+
+## WhatsApp (Fase 2C)
+
+- Nomor dipakai untuk WhatsApp hanya setelah verifikasi kode. STOP menghentikan; aktif lagi hanya dengan verifikasi ulang di aplikasi.
+- Paling banyak 5 pesan kabar/ringkasan per hari.
+- Antrean dan log tidak memuat nomor maupun isi pesan.
+- Catatan pengiriman (tanpa isi, tanpa nomor) disimpan 30 hari.

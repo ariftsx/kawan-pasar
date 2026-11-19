@@ -130,6 +130,30 @@ Komoditas yang dipantau: `user_id` (cascade), `market_id`, `commodity_id`, `thre
 
 Kabar di aplikasi: `kind` (`unusual_move`, `forecast_rise`, `price_threshold`, `weekly`), `commodity_id` (kosong untuk ringkasan), `data_date` (tanggal data; Senin untuk ringkasan), `title` ≤ 160, `body` ≤ 1.200, `link` (path produk saja, CHECK menolak `//host`), `model_version`, `read_at`. Kunci idempoten UNIQUE NULLS NOT DISTINCT (pengguna, jenis, komoditas, tanggal data). Disimpan 180 hari.
 
+## `whatsapp_channels` (Fase 2C)
+
+Satu baris per pengguna (cascade).
+
+| Kolom                                     | Isi                                          |
+| ----------------------------------------- | -------------------------------------------- |
+| `status`                                  | `pending`, `verified`, atau `stopped`        |
+| `phone_hmac`                              | HMAC nomor yang diverifikasi, bukan nomornya |
+| `code_hash`                               | HMAC kode                                    |
+| `code_expires_at`                         | batas berlaku kode                           |
+| `code_attempts`                           | percobaan yang dipakai, 0–5                  |
+| `verified_at`, `stopped_at`, `updated_at` | waktu perubahan status                       |
+
+## `whatsapp_messages` (Fase 2C)
+
+Catatan pengiriman untuk batas kirim, disimpan 30 hari:
+
+- `user_id` (set null);
+- `phone_hmac`;
+- `kind`: `code`, `alerts`, `weekly`, atau `reply`;
+- `created_at`.
+
+Tanpa isi pesan dan tanpa nomor. Sejak Fase 2C, `users.phone_key_id` menyimpan id kunci nomor, `alert_preferences.whatsapp` menyimpan sakelar WhatsApp, dan `notifications.sent_whatsapp_at` mencatat kapan kabar terkirim ke WhatsApp.
+
 ## Hak akses role
 
 | Role             | Dipakai oleh                                  | Hak                                                                                                                                                                                                                                                                                             |
