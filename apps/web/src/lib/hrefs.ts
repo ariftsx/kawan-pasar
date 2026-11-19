@@ -27,3 +27,11 @@ export const accountHrefs = {
   notice: (key: keyof typeof NOTICES): Route => route(`/masuk?pesan=${key}`),
   sessions: (): Route => route(`${ACCOUNT_HOME}#sesi`),
 };
+
+/** The alerts page with a tab, a page cursor, or a "saved" notice (Fase 2B). */
+export const alertHrefs = {
+  list: (tab: 'all' | 'unread' | 'weekly', before?: number): Route =>
+    route(`/peringatan?tab=${tab}${before === undefined ? '' : `&sebelum=${String(before)}`}`),
+  saved: (section: 'pengaturan' | 'pantauan'): Route =>
+    route(`/peringatan?disimpan=${section}#${section}`),
+};

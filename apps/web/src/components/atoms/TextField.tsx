@@ -11,12 +11,15 @@ export function TextField({
   hint,
   error,
   className,
+  trailing,
   ...rest
 }: {
   id: string;
   label: string;
   hint?: string;
   error?: string | undefined;
+  /** A control drawn inside the right edge of the input (e.g. show-password). */
+  trailing?: ReactNode;
 } & Omit<InputHTMLAttributes<HTMLInputElement>, 'id'>): ReactNode {
   const hintId = hint === undefined ? undefined : `${id}-hint`;
   const errorId = error === undefined ? undefined : `${id}-error`;
@@ -26,16 +29,22 @@ export function TextField({
       <label htmlFor={id} className="text-[14px] font-bold text-ink">
         {label}
       </label>
-      <input
-        id={id}
-        className={cx(
-          'min-h-11 w-full rounded-md border bg-surface px-3.5 py-3 text-[15px]',
-          error === undefined ? 'border-line' : 'border-chili-700',
+      <div className="relative">
+        <input
+          id={id}
+          className={cx(
+            'min-h-11 w-full rounded-md border bg-surface px-3.5 py-3 text-[15px]',
+            error === undefined ? 'border-line' : 'border-chili-700',
+            trailing === undefined ? null : 'pr-12',
+          )}
+          {...(error === undefined ? {} : { 'aria-invalid': true })}
+          {...(describedBy === '' ? {} : { 'aria-describedby': describedBy })}
+          {...rest}
+        />
+        {trailing === undefined ? null : (
+          <div className="absolute inset-y-0 right-0 flex items-center">{trailing}</div>
         )}
-        {...(error === undefined ? {} : { 'aria-invalid': true })}
-        {...(describedBy === '' ? {} : { 'aria-describedby': describedBy })}
-        {...rest}
-      />
+      </div>
       {error === undefined ? null : (
         <p id={errorId} className="text-body-small-13 font-semibold text-chili-700">
           {error}

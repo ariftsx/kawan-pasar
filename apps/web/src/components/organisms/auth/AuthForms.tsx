@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import type { FormState } from '@/lib/auth/form-state';
 import { IDLE } from '@/lib/auth/form-state';
 import { Button } from '../../atoms/Button';
+import { PasswordField } from '../../atoms/PasswordField';
 import { TextField } from '../../atoms/TextField';
 import { FormMessage } from '../../molecules/FormMessage';
 
@@ -13,6 +14,8 @@ import { FormMessage } from '../../molecules/FormMessage';
 export type FormAction = (state: FormState, form: FormData) => Promise<FormState>;
 
 const PASSWORD_HINT = 'Minimal 12 karakter. Kalimat pendek yang mudah Anda ingat sudah cukup.';
+export const PHONE_HINT =
+  'Boleh dikosongkan. Disimpan terenkripsi, untuk peringatan WhatsApp nanti. Belum ada pesan yang dikirim ke nomor ini.';
 
 function Submit({ pending, children }: { pending: boolean; children: string }): ReactNode {
   return (
@@ -40,10 +43,9 @@ export function LoginForm({ action, next }: { action: FormAction; next: string }
         defaultValue={state.values?.email}
         error={state.fields?.['email']}
       />
-      <TextField
+      <PasswordField
         id="password"
         name="password"
-        type="password"
         label="Kata sandi"
         autoComplete="current-password"
         required
@@ -79,10 +81,9 @@ export function RegisterForm({ action }: { action: FormAction }): ReactNode {
         defaultValue={state.values?.email}
         error={state.fields?.['email']}
       />
-      <TextField
+      <PasswordField
         id="password"
         name="password"
-        type="password"
         label="Kata sandi"
         autoComplete="new-password"
         required
@@ -90,6 +91,27 @@ export function RegisterForm({ action }: { action: FormAction }): ReactNode {
         maxLength={128}
         hint={PASSWORD_HINT}
         error={state.fields?.['password']}
+      />
+      <PasswordField
+        id="passwordConfirm"
+        name="passwordConfirm"
+        label="Ulangi kata sandi"
+        autoComplete="new-password"
+        required
+        maxLength={128}
+        error={state.fields?.['passwordConfirm']}
+      />
+      <TextField
+        id="phone"
+        name="phone"
+        type="tel"
+        label="Nomor HP (opsional)"
+        autoComplete="tel"
+        inputMode="tel"
+        maxLength={32}
+        defaultValue={state.values?.phone}
+        hint={PHONE_HINT}
+        error={state.fields?.['phone']}
       />
       <div className="flex flex-col gap-1.5">
         <label className="flex min-h-11 items-start gap-3 text-body-medium-15">
@@ -156,10 +178,9 @@ export function ResetPasswordForm({
     <form action={run} className="flex flex-col gap-5" noValidate>
       <FormMessage state={state} />
       <input type="hidden" name="token" value={token} />
-      <TextField
+      <PasswordField
         id="password"
         name="password"
-        type="password"
         label="Kata sandi baru"
         autoComplete="new-password"
         required
@@ -167,6 +188,15 @@ export function ResetPasswordForm({
         maxLength={128}
         hint={PASSWORD_HINT}
         error={state.fields?.['password']}
+      />
+      <PasswordField
+        id="passwordConfirm"
+        name="passwordConfirm"
+        label="Ulangi kata sandi baru"
+        autoComplete="new-password"
+        required
+        maxLength={128}
+        error={state.fields?.['passwordConfirm']}
       />
       <Submit pending={pending}>Simpan kata sandi</Submit>
     </form>

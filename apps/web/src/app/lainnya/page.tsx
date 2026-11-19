@@ -35,7 +35,7 @@ const ITEMS: readonly {
     icon: 'peringatan',
     tone: 'kunyit',
     title: 'Peringatan',
-    body: 'Kabar harga & pengaturan WhatsApp (segera)',
+    body: 'Kabar harga, daftar pantauan, dan ringkasan mingguan',
   },
   {
     href: '/arif-net',

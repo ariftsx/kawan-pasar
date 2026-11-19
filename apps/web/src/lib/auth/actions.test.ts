@@ -143,7 +143,12 @@ describe('registerAction', () => {
     const { registerAction } = await import('./actions');
     const state = await registerAction(
       idle,
-      form({ email: 'a@b.id', password: 'qwertyuiopasdfghjkl', acceptPrivacy: 'on' }),
+      form({
+        email: 'a@b.id',
+        password: 'qwertyuiopasdfghjkl',
+        passwordConfirm: 'qwertyuiopasdfghjkl',
+        acceptPrivacy: 'on',
+      }),
     );
     expect(state.fields?.['password']).toMatch(/pernah bocor/);
   });
@@ -159,7 +164,12 @@ describe('account actions', () => {
     const to = await redirectOf(
       changePasswordAction(
         idle,
-        form({ csrf: CSRF, current: 'lama sekali', next: 'kalimat sandi baru panjang' }),
+        form({
+          csrf: CSRF,
+          current: 'lama sekali',
+          next: 'kalimat sandi baru panjang',
+          nextConfirm: 'kalimat sandi baru panjang',
+        }),
       ),
     );
     const sent = new Headers(fetchMock.mock.calls[0]?.[1]?.headers);
@@ -176,10 +186,109 @@ describe('account actions', () => {
     const to = await redirectOf(
       changePasswordAction(
         idle,
-        form({ csrf: CSRF, current: 'lama sekali', next: 'kalimat sandi baru panjang' }),
+        form({
+          csrf: CSRF,
+          current: 'lama sekali',
+          next: 'kalimat sandi baru panjang',
+          nextConfirm: 'kalimat sandi baru panjang',
+        }),
       ),
     );
     expect(fetchMock).not.toHaveBeenCalled();
     expect(to).toBe('/masuk?ke=%2Fakun');
+  });
+});
+
+describe('password confirmation and mobile number (Fase 2B)', () => {
+  const sentBody = (): Record<string, unknown> =>
+    JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string) as Record<string, unknown>;
+
+  it('register: a confirmation that differs is refused before the API is called', async () => {
+    const { registerAction } = await import('./actions');
+    const state = await registerAction(
+      idle,
+      form({
+        email: 'a@b.id',
+        password: 'kalimat sandi panjang',
+        passwordConfirm: 'kalimat sandi panjang!',
+        acceptPrivacy: 'on',
+      }),
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(state.fields).toEqual({ passwordConfirm: 'Kedua kata sandi tidak sama.' });
+  });
+
+  it('register: sends a normalised optional number, never the confirmation', async () => {
+    fetchMock.mockResolvedValue(json({ status: 'check_email' }, 202));
+    const { registerAction } = await import('./actions');
+    const base = {
+      email: 'a@b.id',
+      password: 'kalimat sandi panjang',
+      passwordConfirm: 'kalimat sandi panjang',
+      acceptPrivacy: 'on',
+    };
+    await registerAction(idle, form({ ...base, phone: '0812 3456 7890' }));
+    expect(sentBody()).toEqual({
+      email: 'a@b.id',
+      password: 'kalimat sandi panjang',
+      phone: '+6281234567890',
+      acceptPrivacy: true,
+    });
+    fetchMock.mockClear();
+    fetchMock.mockResolvedValue(json({ status: 'check_email' }, 202));
+    await registerAction(idle, form({ ...base, phone: '   ' }));
+    expect(sentBody()).not.toHaveProperty('phone');
+  });
+
+  it('register: an invalid number is a field error and is kept in the form', async () => {
+    const { registerAction } = await import('./actions');
+    const state = await registerAction(
+      idle,
+      form({
+        email: 'a@b.id',
+        password: 'kalimat sandi panjang',
+        passwordConfirm: 'kalimat sandi panjang',
+        phone: '021-555',
+        acceptPrivacy: 'on',
+      }),
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(state.fields?.['phone']).toMatch(/nomor HP/);
+    expect(state.values).toEqual({ email: 'a@b.id', phone: '021-555' });
+  });
+
+  it('reset and change: the confirmation must match', async () => {
+    const { resetPasswordAction, changePasswordAction } = await import('./actions');
+    const reset = await resetPasswordAction(
+      idle,
+      form({ token: 'a'.repeat(43), password: 'kalimat sandi baru', passwordConfirm: 'lain' }),
+    );
+    expect(reset.fields).toEqual({ passwordConfirm: 'Kedua kata sandi tidak sama.' });
+    jar.set('__Host-kp_session', { value: SESSION });
+    const change = await changePasswordAction(
+      idle,
+      form({ csrf: CSRF, current: 'lama sekali', next: 'kalimat sandi baru', nextConfirm: 'x' }),
+    );
+    expect(change.fields).toEqual({ nextConfirm: 'Kedua kata sandi tidak sama.' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('setPhoneAction and removePhoneAction send the session and CSRF token', async () => {
+    jar.set('__Host-kp_session', { value: SESSION });
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+    const { setPhoneAction, removePhoneAction } = await import('./actions');
+    const done = await setPhoneAction(idle, form({ csrf: CSRF, phone: '+62 857 9999 1234' }));
+    expect(done.status).toBe('done');
+    const [url, init] = fetchMock.mock.calls[0] ?? [];
+    expect(String(url as URL)).toBe('http://api:3001/v1/me/phone');
+    expect(init?.method).toBe('PUT');
+    expect(sentBody()).toEqual({ phone: '+6285799991234' });
+    expect(new Headers(init?.headers).get('x-csrf-token')).toBe(CSRF);
+    fetchMock.mockClear();
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+    expect((await removePhoneAction(idle, form({ csrf: CSRF }))).status).toBe('done');
+    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe('DELETE');
+    const bad = await setPhoneAction(idle, form({ csrf: CSRF, phone: 'abc' }));
+    expect(bad.fields?.['phone']).toMatch(/nomor HP/);
   });
 });

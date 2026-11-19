@@ -37,9 +37,15 @@ function validParam(section: DataSection, value: string): boolean {
  *    Static pages and assets never reach this function (see `matcher`).
  */
 /** Account pages (ADR 0011): rendered per request, never cached, scripts need the nonce. */
-const ACCOUNT_PREFIXES = ['/akun', ...AUTH_PAGES] as const;
+const ACCOUNT_PREFIXES = ['/akun', '/peringatan', '/berhenti-ringkasan', ...AUTH_PAGES] as const;
+/** Pages for signed-in users only: without a session cookie they go to sign-in first. */
+const SIGNED_IN_ONLY = [ACCOUNT_HOME, '/peringatan'] as const;
 /** Pages opened from e-mailed links that carry a token: the URL must not leak via Referer. */
-const TOKEN_PAGES = new Set<string>(['/atur-ulang-sandi', '/verifikasi-email']);
+const TOKEN_PAGES = new Set<string>([
+  '/atur-ulang-sandi',
+  '/verifikasi-email',
+  '/berhenti-ringkasan',
+]);
 
 const isAccountPath = (pathname: string): boolean =>
   ACCOUNT_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -51,8 +57,8 @@ function accountPage(request: NextRequest): NextResponse {
     if (TOKEN_PAGES.has(pathname)) res.headers.set('referrer-policy', 'no-referrer');
     return res;
   };
-  const isAccountHome = pathname === ACCOUNT_HOME || pathname.startsWith(`${ACCOUNT_HOME}/`);
-  if (isAccountHome && request.cookies.get(SESSION_COOKIE) === undefined) {
+  const signedInOnly = SIGNED_IN_ONLY.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  if (signedInOnly && request.cookies.get(SESSION_COOKIE) === undefined) {
     const to = new URL('/masuk', request.url);
     to.searchParams.set('ke', pathname);
     return privateHeaders(NextResponse.redirect(to, 307));
@@ -98,6 +104,8 @@ export const config = {
   matcher: [
     // Account pages (ADR 0011): nonce CSP, private, sign-in redirect.
     '/akun/:path*',
+    '/peringatan/:path*',
+    '/berhenti-ringkasan',
     '/masuk',
     '/daftar',
     '/lupa-sandi',

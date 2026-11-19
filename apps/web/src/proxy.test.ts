@@ -114,6 +114,13 @@ describe('proxy: account pages (ADR 0011)', () => {
     expect(res.headers.get('cache-control')).toBe('private, no-store');
   });
 
+  it('the alerts page also needs a session; the unsubscribe link page does not', () => {
+    const alerts = account('/peringatan');
+    expect(alerts.status).toBe(307);
+    expect(alerts.headers.get('location')).toBe('http://web:3000/masuk?ke=%2Fperingatan');
+    expect(account('/berhenti-ringkasan').headers.get('x-middleware-next')).toBe('1');
+  });
+
   it('renders account pages with a per-request nonce CSP, never cached', () => {
     for (const path of [
       '/akun',
@@ -122,6 +129,8 @@ describe('proxy: account pages (ADR 0011)', () => {
       '/lupa-sandi',
       '/atur-ulang-sandi',
       '/verifikasi-email',
+      '/peringatan',
+      '/berhenti-ringkasan',
     ]) {
       const res = account(path, 's'.repeat(43));
       expect(res.headers.get('x-middleware-next'), path).toBe('1');
@@ -145,6 +154,7 @@ describe('proxy: account pages (ADR 0011)', () => {
   it('keeps tokens in links out of the Referer header', () => {
     expect(account('/atur-ulang-sandi').headers.get('referrer-policy')).toBe('no-referrer');
     expect(account('/verifikasi-email').headers.get('referrer-policy')).toBe('no-referrer');
+    expect(account('/berhenti-ringkasan').headers.get('referrer-policy')).toBe('no-referrer');
   });
 
   it('covers every account page in the matcher', () => {
@@ -157,6 +167,8 @@ describe('proxy: account pages (ADR 0011)', () => {
       '/lupa-sandi',
       '/atur-ulang-sandi',
       '/verifikasi-email',
+      '/peringatan',
+      '/berhenti-ringkasan',
     ]) {
       expect(
         matchers.some((m) => m.test(path)),

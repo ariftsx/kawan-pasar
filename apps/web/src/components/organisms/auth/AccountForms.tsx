@@ -4,9 +4,11 @@ import { useActionState } from 'react';
 import type { ReactNode } from 'react';
 import { IDLE } from '@/lib/auth/form-state';
 import { Button } from '../../atoms/Button';
+import { PasswordField } from '../../atoms/PasswordField';
 import { TextField } from '../../atoms/TextField';
 import { FormMessage } from '../../molecules/FormMessage';
 import type { FormAction } from './AuthForms';
+import { PHONE_HINT } from './AuthForms';
 
 // Forms of /akun. Each carries the session's CSRF token (synchronizer token, design Fase 2 §3).
 
@@ -26,20 +28,18 @@ export function ChangePasswordForm({
     <form action={run} className="flex flex-col gap-5" noValidate>
       <FormMessage state={state} />
       <Csrf value={csrf} />
-      <TextField
+      <PasswordField
         id="current"
         name="current"
-        type="password"
         label="Kata sandi saat ini"
         autoComplete="current-password"
         required
         maxLength={512}
         error={state.fields?.['current']}
       />
-      <TextField
+      <PasswordField
         id="next"
         name="next"
-        type="password"
         label="Kata sandi baru"
         autoComplete="new-password"
         required
@@ -48,12 +48,75 @@ export function ChangePasswordForm({
         hint="Minimal 12 karakter. Sesi di perangkat lain akan dikeluarkan."
         error={state.fields?.['next']}
       />
+      <PasswordField
+        id="nextConfirm"
+        name="nextConfirm"
+        label="Ulangi kata sandi baru"
+        autoComplete="new-password"
+        required
+        maxLength={128}
+        error={state.fields?.['nextConfirm']}
+      />
       <div>
         <Button type="submit" variant="brand" disabled={pending}>
           Ganti kata sandi
         </Button>
       </div>
     </form>
+  );
+}
+
+/** The optional mobile number: shown masked, replaced by typing a new one, or removed. */
+export function PhoneForms({
+  setAction,
+  removeAction,
+  csrf,
+  masked,
+}: {
+  setAction: FormAction;
+  removeAction: FormAction;
+  csrf: string;
+  masked: string | null;
+}): ReactNode {
+  const [state, run, pending] = useActionState(setAction, IDLE);
+  const [removed, remove, removing] = useActionState(removeAction, IDLE);
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-body-medium-15">{masked ?? 'Belum ada nomor HP.'}</p>
+      <form action={run} className="flex flex-col gap-4" noValidate>
+        <FormMessage state={state} />
+        <Csrf value={csrf} />
+        <TextField
+          id="phone"
+          name="phone"
+          type="tel"
+          label={masked === null ? 'Nomor HP' : 'Nomor HP baru'}
+          autoComplete="tel"
+          inputMode="tel"
+          required
+          maxLength={32}
+          defaultValue={state.values?.phone}
+          hint={PHONE_HINT}
+          error={state.fields?.['phone']}
+        />
+        <div>
+          <Button type="submit" variant="brand" disabled={pending}>
+            Simpan nomor HP
+          </Button>
+        </div>
+      </form>
+      {masked === null ? null : (
+        <form action={remove} className="flex flex-col gap-3">
+          <FormMessage state={removed} />
+          <Csrf value={csrf} />
+          <div>
+            <Button type="submit" variant="secondary" size="S" disabled={removing}>
+              Hapus nomor HP
+            </Button>
+          </div>
+        </form>
+      )}
+    </div>
   );
 }
 
@@ -120,10 +183,9 @@ export function DeleteAccountForm({
     <form action={run} className="flex flex-col gap-5" noValidate>
       <FormMessage state={state} />
       <Csrf value={csrf} />
-      <TextField
+      <PasswordField
         id="delete-password"
         name="password"
-        type="password"
         label="Kata sandi"
         autoComplete="current-password"
         required

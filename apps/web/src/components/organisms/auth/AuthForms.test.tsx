@@ -75,3 +75,18 @@ describe('RegisterForm', () => {
     );
   });
 });
+
+describe('RegisterForm (Fase 2B)', () => {
+  it('asks to repeat the password and offers an optional phone number', () => {
+    render(<RegisterForm action={noop} />);
+    const confirm = screen.getByLabelText('Ulangi kata sandi');
+    expect(confirm.getAttribute('name')).toBe('passwordConfirm');
+    expect(confirm.getAttribute('type')).toBe('password');
+    const phone = screen.getByLabelText('Nomor HP (opsional)');
+    expect(phone.getAttribute('type')).toBe('tel');
+    expect(phone.getAttribute('autocomplete')).toBe('tel');
+    expect(phone.hasAttribute('required')).toBe(false);
+    // One show-password button per password field.
+    expect(screen.getAllByRole('button', { name: 'Tampilkan kata sandi' })).toHaveLength(2);
+  });
+});

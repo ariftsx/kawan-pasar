@@ -31,6 +31,10 @@ export function failureMessage(failure: AuthFailure): string {
       return 'Periksa kembali isian yang ditandai.';
     case 'unauthenticated':
       return 'Sesi Anda berakhir. Silakan masuk lagi.';
+    case 'conflict':
+      return failure.fields?.[0] === 'limit'
+        ? 'Batas 20 komoditas pantauan sudah tercapai. Hapus salah satu dulu.'
+        : 'Komoditas ini sudah ada di daftar pantauan Anda.';
     case 'not_found':
     case 'unauthorized':
     case 'internal':

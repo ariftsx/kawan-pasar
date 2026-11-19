@@ -5,20 +5,20 @@ import {
   DeleteAccountInputSchema,
   ForgotInputSchema,
   LoginInputSchema,
+  PhoneInputSchema,
   RegisterInputSchema,
   ResetInputSchema,
   SessionIdSchema,
-  TokenSchema,
   VerifyInputSchema,
 } from '@kawan-pasar/contracts';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import type { AuthFailure } from './api';
+import { endSession, failed, sessionToken, text, withSession } from './action-helpers';
 import { authApi } from './api';
-import { SESSION_COOKIE, expiredSessionCookie, sessionCookie } from './cookie';
+import { expiredSessionCookie, sessionCookie } from './cookie';
 import type { FormState } from './form-state';
 import { fieldErrors } from './form-state';
-import { PASSWORD_PROBLEM, failureMessage } from './messages';
+import { PASSWORD_PROBLEM } from './messages';
 import { accountHrefs } from '../hrefs';
 
 // Account Server Actions (BFF). Each validates its form with the shared contract first
@@ -26,47 +26,33 @@ import { accountHrefs } from '../hrefs';
 // Next.js checks the Origin of every Server Action; the session cookie is SameSite=Lax; and
 // account changes also carry the session's CSRF token from the rendered form.
 
-const text = (form: FormData, name: string): string => {
-  const v = form.get(name);
-  return typeof v === 'string' ? v : '';
-};
-
 const EMAIL_MSG = 'Masukkan alamat email yang valid.';
+const PHONE_MSG = 'Masukkan nomor HP Indonesia yang valid, misalnya 0812 3456 7890.';
 const FIELD_MESSAGES: Record<string, string> = {
   email: EMAIL_MSG,
   password: PASSWORD_PROBLEM['too_short'] ?? '',
   next: PASSWORD_PROBLEM['too_short'] ?? '',
   current: 'Masukkan kata sandi Anda saat ini.',
   acceptPrivacy: 'Setujui kebijakan privasi untuk membuat akun.',
+  phone: PHONE_MSG,
 };
 
-function failed(failure: AuthFailure, values?: FormState['values']): FormState {
-  const state: FormState = { status: 'error', message: failureMessage(failure) };
-  if (failure.code === 'weak_password') {
-    const field = failure.fields?.[0] ?? 'password';
-    state.fields = { [field]: failureMessage(failure) };
-  }
-  return values === undefined ? state : { ...state, values };
+const MISMATCH = 'Kedua kata sandi tidak sama.';
+
+/** The confirmation field must repeat the new password exactly (checked here, never sent). */
+function mismatch(form: FormData, field: string, confirm: string): FormState | null {
+  if (text(form, field) === text(form, confirm)) return null;
+  return {
+    status: 'error',
+    message: 'Periksa kembali isian yang ditandai.',
+    fields: { [confirm]: MISMATCH },
+  };
 }
 
-async function sessionToken(): Promise<string | null> {
-  const value = (await cookies()).get(SESSION_COOKIE)?.value;
-  return value !== undefined && TokenSchema.safeParse(value).success ? value : null;
-}
-
-/** Session-bound actions: no cookie, or a session the API no longer knows, → sign in again. */
-async function withSession(
-  run: (session: string) => Promise<FormState | null>,
-): Promise<FormState> {
-  const session = await sessionToken();
-  if (session === null) redirect(accountHrefs.signIn());
-  const result = await run(session);
-  return result ?? { status: 'done' };
-}
-
-async function endSession(): Promise<never> {
-  (await cookies()).set(expiredSessionCookie());
-  redirect(accountHrefs.signIn());
+/** An empty phone field means "no number" (the field is optional). */
+function optionalPhone(form: FormData): { phone?: string } {
+  const raw = text(form, 'phone').trim();
+  return raw === '' ? {} : { phone: raw };
 }
 
 export async function loginAction(_prev: FormState, form: FormData): Promise<FormState> {
@@ -90,9 +76,11 @@ export async function loginAction(_prev: FormState, form: FormData): Promise<For
 
 export async function registerAction(_prev: FormState, form: FormData): Promise<FormState> {
   const email = text(form, 'email');
+  const values = { email: email.slice(0, 254), phone: text(form, 'phone').slice(0, 32) };
   const input = RegisterInputSchema.safeParse({
     email,
     password: text(form, 'password'),
+    ...optionalPhone(form),
     acceptPrivacy: form.get('acceptPrivacy') === 'on',
   });
   if (!input.success) {
@@ -100,11 +88,13 @@ export async function registerAction(_prev: FormState, form: FormData): Promise<
       status: 'error',
       message: 'Periksa kembali isian yang ditandai.',
       fields: fieldErrors(input.error, FIELD_MESSAGES),
-      values: { email: email.slice(0, 254) },
+      values,
     };
   }
+  const different = mismatch(form, 'password', 'passwordConfirm');
+  if (different !== null) return { ...different, values };
   const result = await authApi.register(input.data);
-  if (!result.ok) return failed(result, { email: input.data.email });
+  if (!result.ok) return failed(result, values);
   return {
     status: 'done',
     message:
@@ -141,6 +131,8 @@ export async function resetPasswordAction(_prev: FormState, form: FormData): Pro
     if ('token' in fields) return failed({ ok: false, code: 'invalid_token' });
     return { status: 'error', message: 'Periksa kembali isian yang ditandai.', fields };
   }
+  const different = mismatch(form, 'password', 'passwordConfirm');
+  if (different !== null) return different;
   const result = await authApi.resetPassword(input.data);
   if (!result.ok) return failed(result);
   redirect(accountHrefs.notice('sandi-diubah'));
@@ -181,6 +173,8 @@ export async function changePasswordAction(_prev: FormState, form: FormData): Pr
         fields: fieldErrors(input.error, FIELD_MESSAGES),
       };
     }
+    const different = mismatch(form, 'next', 'nextConfirm');
+    if (different !== null) return different;
     const result = await authApi.changePassword(session, text(form, 'csrf'), input.data);
     if (!result.ok) {
       if (result.code === 'unauthenticated') return endSession();
@@ -197,6 +191,31 @@ export async function changePasswordAction(_prev: FormState, form: FormData): Pr
       status: 'done',
       message: 'Kata sandi sudah diganti. Sesi di perangkat lain sudah dikeluarkan.',
     };
+  });
+}
+
+export async function setPhoneAction(_prev: FormState, form: FormData): Promise<FormState> {
+  return withSession(async (session) => {
+    const input = PhoneInputSchema.safeParse({ phone: text(form, 'phone') });
+    if (!input.success) {
+      return {
+        status: 'error',
+        message: PHONE_MSG,
+        fields: { phone: PHONE_MSG },
+        values: { phone: text(form, 'phone').slice(0, 32) },
+      };
+    }
+    const result = await authApi.setPhone(session, text(form, 'csrf'), input.data);
+    if (!result.ok) return result.code === 'unauthenticated' ? endSession() : failed(result);
+    return { status: 'done', message: 'Nomor HP sudah disimpan.' };
+  });
+}
+
+export async function removePhoneAction(_prev: FormState, form: FormData): Promise<FormState> {
+  return withSession(async (session) => {
+    const result = await authApi.removePhone(session, text(form, 'csrf'));
+    if (!result.ok) return result.code === 'unauthenticated' ? endSession() : failed(result);
+    return { status: 'done', message: 'Nomor HP sudah dihapus.' };
   });
 }
 

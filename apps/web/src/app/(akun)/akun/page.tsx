@@ -7,6 +7,7 @@ import { Button } from '@/components/atoms/Button';
 import {
   ChangePasswordForm,
   DeleteAccountForm,
+  PhoneForms,
   ResendVerificationForm,
   RevokeSessionForm,
 } from '@/components/organisms/auth/AccountForms';
@@ -15,10 +16,12 @@ import {
   changePasswordAction,
   deleteAccountAction,
   logoutAction,
+  removePhoneAction,
   resendVerificationAction,
   revokeSessionAction,
+  setPhoneAction,
 } from '@/lib/auth/actions';
-import { authApi } from '@/lib/auth/api';
+import { alertsApi, authApi } from '@/lib/auth/api';
 import { SESSION_COOKIE } from '@/lib/auth/cookie';
 import { formatDateWib } from '@/lib/format';
 import { accountHrefs } from '@/lib/hrefs';
@@ -51,7 +54,11 @@ function Section({
 export default async function AccountPage(): Promise<ReactNode> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value ?? '';
   if (!TokenSchema.safeParse(token).success) redirect(accountHrefs.signIn());
-  const [me, sessions] = await Promise.all([authApi.me(token), authApi.sessions(token)]);
+  const [me, sessions, unread] = await Promise.all([
+    authApi.me(token),
+    authApi.sessions(token),
+    alertsApi.unreadCount(token),
+  ]);
   if (!me.ok && me.code === 'unauthenticated') redirect(accountHrefs.notice('sesi-berakhir'));
   if (!me.ok || !sessions.ok) {
     return (
@@ -62,7 +69,7 @@ export default async function AccountPage(): Promise<ReactNode> {
       </PageContainer>
     );
   }
-  const { email, emailVerified, createdAt, csrf } = me.data;
+  const { email, emailVerified, createdAt, csrf, phone } = me.data;
   return (
     <PageContainer className="flex flex-col gap-6 py-8 sm:py-12">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -94,6 +101,28 @@ export default async function AccountPage(): Promise<ReactNode> {
           <p className="text-body-small-13 text-muted-text">
             Terdaftar sejak {formatDateWib(createdAt.slice(0, 10), 'long')}
           </p>
+        </Section>
+
+        <Section id="peringatan" title="Peringatan">
+          <p className="text-body-medium-15">
+            {unread.ok && unread.data.unread > 0
+              ? `${String(unread.data.unread)} kabar belum dibaca.`
+              : 'Tidak ada kabar baru.'}
+          </p>
+          <div>
+            <Button href="/peringatan" variant="secondary" size="S">
+              Buka Peringatan
+            </Button>
+          </div>
+        </Section>
+
+        <Section id="hp" title="Nomor HP">
+          <PhoneForms
+            setAction={setPhoneAction}
+            removeAction={removePhoneAction}
+            csrf={csrf}
+            masked={phone}
+          />
         </Section>
 
         <Section id="sandi" title="Ganti kata sandi">

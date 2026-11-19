@@ -8,7 +8,7 @@ export interface FormState {
   /** Field name → message. Never contains the submitted value. */
   fields?: Record<string, string>;
   /** Values safe to put back into the form (never passwords or tokens). */
-  values?: { email?: string };
+  values?: { email?: string; phone?: string };
 }
 
 export const IDLE: FormState = { status: 'idle' };

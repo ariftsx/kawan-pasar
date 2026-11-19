@@ -8,7 +8,14 @@ import { Button } from '@/components/atoms/Button';
 import { Chip } from '@/components/atoms/Chip';
 import { SectionHeader } from '@/components/molecules/SectionHeader';
 import { PageContainer } from '@/components/templates/SiteShell';
-import { ACCURACY, PARTS, PIPELINE, PROSPECTIVE_END } from '@/content/arif-net';
+import {
+  ACCURACY,
+  ACCURACY_BY_HORIZON,
+  ACCURACY_HORIZONS,
+  PARTS,
+  PIPELINE,
+  PROSPECTIVE_OPENS,
+} from '@/content/arif-net';
 import { formatDateWib } from '@/lib/format';
 import { pageMetadata } from '@/lib/seo';
 
@@ -31,10 +38,11 @@ export default function ArifNet(): ReactNode {
         <div className="flex min-w-0 flex-1 flex-col items-start gap-4">
           <p className="flex flex-wrap gap-2">
             <Chip tone="dark" size="S">
-              ARIF-Net · kandidat
+              ARIF-Net A0 · v1.1.0
             </Chip>
             <Chip tone="kunyit-solid" size="S">
-              Uji prospektif s.d. {formatDateWib(PROSPECTIVE_END, 'short').replace(/^\w+, /, '')}
+              Uji prospektif dibuka sesudah{' '}
+              {formatDateWib(PROSPECTIVE_OPENS, 'short').replace(/^\w+, /, '')}
             </Chip>
           </p>
           <h1 className="text-heading-h2-32 lg:text-heading-h1-40 text-balance">
@@ -168,10 +176,59 @@ export default function ArifNet(): ReactNode {
             </table>
           </div>
           <p className="mt-4 text-[12px] text-muted-text">
-            Sumber: Laporan Capstone Kawan Pasar v04, Tabel 4.5 (repositori ARIF-Net, commit
-            dd93046). Selisih dengan BiLSTM tipis (0,011); uji prospektif buta masih berjalan sampai{' '}
-            {formatDateWib(PROSPECTIVE_END, 'long')} dan menjadi penentu klaim keunggulan.
+            Sumber: repositori ARIF-Net v1.1.0 (run ulang 10–17 November 2026), model A0 yang
+            dibekukan dan dipakai Kawan Pasar. Selisih dengan BiLSTM tipis (0,013); uji prospektif
+            buta dibuka sesudah {formatDateWib(PROSPECTIVE_OPENS, 'long')} dan menjadi penentu klaim
+            keunggulan.
           </p>
+        </div>
+        <div className="rounded-xl border border-line bg-surface p-5 sm:p-6">
+          <h3 className="text-heading-card-16">Per komoditas dan horizon</h3>
+          <p className="mt-1 text-body-small-13 text-ink-2">
+            Di bawah 1,000 berarti lebih akurat daripada menebak harga tetap. Sel yang ditebalkan
+            tidak lebih baik, dan prediksinya ditandai &ldquo;Sebagian&rdquo; di halaman Prediksi.
+          </p>
+          <div
+            tabIndex={0}
+            role="region"
+            aria-label="Tabel akurasi per horizon (bisa digeser)"
+            className="relative mt-4 overflow-x-auto"
+          >
+            <table className="w-full min-w-[36rem] text-left text-sm">
+              <caption className="sr-only">
+                Akurasi ARIF-Net per komoditas dan horizon (relMAE validasi)
+              </caption>
+              <thead>
+                <tr className="text-[12px] text-muted-text">
+                  <th scope="col" className="py-1.5 pr-3 font-medium">
+                    Komoditas
+                  </th>
+                  {ACCURACY_HORIZONS.map((h) => (
+                    <th key={h} scope="col" className="py-1.5 pl-2 text-right font-medium">
+                      {h} hari
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {ACCURACY_BY_HORIZON.map((row) => (
+                  <tr key={row.commodity} className="border-t border-line">
+                    <th scope="row" className="py-2 pr-3 font-medium">
+                      {row.commodity}
+                    </th>
+                    {row.relMae.map((v, i) => (
+                      <td
+                        key={ACCURACY_HORIZONS[i]}
+                        className={`tabular py-2 pl-2 text-right font-mono ${v >= 1 ? 'font-bold text-chili-700' : ''}`}
+                      >
+                        {fmt(v)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 

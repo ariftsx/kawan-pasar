@@ -20,7 +20,7 @@ export function NavBar({ marketName }: { marketName: string }): ReactNode {
         <div className="flex flex-wrap items-center gap-3">
           <Link
             href="/peringatan"
-            aria-label="Peringatan harga (segera hadir)"
+            aria-label="Peringatan harga"
             className="inline-flex size-11 items-center justify-center rounded-full border border-line bg-surface hover:bg-surface-2"
           >
             <FeatureIcon name="peringatan" size={22} />

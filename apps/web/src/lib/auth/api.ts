@@ -1,18 +1,29 @@
 import 'server-only';
 import {
+  AlertsResponseSchema,
   ApiErrorSchema,
   LoginResponseSchema,
+  NotificationsResponseSchema,
+  UnreadCountResponseSchema,
   MeResponseSchema,
   SessionsResponseSchema,
 } from '@kawan-pasar/contracts';
 import type {
+  AlertPreferences,
+  AlertsResponse,
   ApiErrorCode,
+  MarkReadInput,
+  NotificationTab,
+  NotificationsResponse,
+  WatchInput,
+  WatchUpdate,
   ChangePasswordInput,
   DeleteAccountInput,
   ForgotInput,
   LoginInput,
   LoginResponse,
   MeResponse,
+  PhoneInput,
   RegisterInput,
   ResetInput,
   SessionsResponse,
@@ -47,7 +58,7 @@ interface CallOptions {
  * not to the web server.
  */
 async function call<S extends z.ZodType | null>(
-  method: 'GET' | 'POST' | 'DELETE',
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   path: string,
   schema: S,
   options: CallOptions = {},
@@ -133,8 +144,43 @@ export const authApi = {
     call('GET', '/v1/me/sessions', SessionsResponseSchema, { session }),
   changePassword: (session: string, csrf: string, input: ChangePasswordInput): Done =>
     call('POST', '/v1/me/password', null, { session, csrf, body: input }),
+  setPhone: (session: string, csrf: string, input: PhoneInput): Done =>
+    call('PUT', '/v1/me/phone', null, { session, csrf, body: input }),
+  removePhone: (session: string, csrf: string): Done =>
+    call('DELETE', '/v1/me/phone', null, { session, csrf }),
   revokeSession: (session: string, csrf: string, id: string): Done =>
     call('DELETE', `/v1/me/sessions/${encodeURIComponent(id)}`, null, { session, csrf }),
   deleteAccount: (session: string, csrf: string, input: DeleteAccountInput): Done =>
     call('DELETE', '/v1/me', null, { session, csrf, body: input }),
+};
+
+/** Alert settings, watches and in-app news (Fase 2B). Same transport as the account calls. */
+export const alertsApi = {
+  overview: (session: string): Promise<AuthResult<AlertsResponse>> =>
+    call('GET', '/v1/alerts', AlertsResponseSchema, { session }),
+  savePreferences: (session: string, csrf: string, input: AlertPreferences): Done =>
+    call('PUT', '/v1/alerts/preferences', null, { session, csrf, body: input }),
+  addWatch: (session: string, csrf: string, input: WatchInput): Done =>
+    call('POST', '/v1/alerts/watches', null, { session, csrf, body: input }),
+  updateWatch: (session: string, csrf: string, id: number, input: WatchUpdate): Done =>
+    call('PATCH', `/v1/alerts/watches/${String(id)}`, null, { session, csrf, body: input }),
+  removeWatch: (session: string, csrf: string, id: number): Done =>
+    call('DELETE', `/v1/alerts/watches/${String(id)}`, null, { session, csrf }),
+  notifications: (
+    session: string,
+    tab: NotificationTab,
+    before?: number,
+  ): Promise<AuthResult<NotificationsResponse>> =>
+    call(
+      'GET',
+      `/v1/notifications?tab=${tab}${before === undefined ? '' : `&before=${String(before)}`}`,
+      NotificationsResponseSchema,
+      { session },
+    ),
+  unreadCount: (session: string): Promise<AuthResult<{ unread: number }>> =>
+    call('GET', '/v1/notifications/unread-count', UnreadCountResponseSchema, { session }),
+  markRead: (session: string, csrf: string, input: MarkReadInput): Done =>
+    call('POST', '/v1/notifications/read', null, { session, csrf, body: input }),
+  unsubscribeWeekly: (token: string): Done =>
+    call('POST', '/v1/alerts/weekly/unsubscribe', null, { body: { token } }),
 };
