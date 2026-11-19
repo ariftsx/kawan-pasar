@@ -16,6 +16,7 @@
     "db:test:reset": "node --env-file=../../.env --import tsx test/helpers/reset-cli.ts",
     "bundle:promote": "node --env-file=../../.env --import tsx src/bundles/cli.ts promote",
     "bundle:demo": "node --env-file=../../.env --import tsx src/bundles/cli.ts demo",
+    "bundle:prices": "node --env-file=../../.env --import tsx src/bundles/cli.ts prices",
     "db:seed:articles": "node --env-file=../../.env --import tsx src/database/seed/articles.seed.ts"
   },
   "dependencies": {

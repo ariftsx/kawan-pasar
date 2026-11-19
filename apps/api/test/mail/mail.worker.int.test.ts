@@ -9,6 +9,7 @@ import { startMailWorker } from '../../src/modules/mail/mail.worker.js';
 import { resolveForgot } from '../../src/modules/mail/forgot.js';
 import { createDb } from '../../src/database/client.js';
 import { AuthTokenService } from '../../src/modules/auth/auth-token.service.js';
+import { PhoneCipher } from '../../src/modules/auth/phone-cipher.js';
 import { UsersRepository } from '../../src/modules/auth/users.repository.js';
 import { poolFor, resetTestDatabase } from '../helpers/test-db.js';
 import type pg from 'pg';
@@ -111,7 +112,11 @@ describe('mail worker', () => {
       log: () => undefined,
       resolve: (job) =>
         resolveForgot(job, {
-          users: new UsersRepository(createDb(pool), 'a'.repeat(43)),
+          users: new UsersRepository(
+            createDb(pool),
+            'a'.repeat(43),
+            new PhoneCipher('p'.repeat(43)),
+          ),
           tokens: new AuthTokenService(createDb(pool), { now: () => new Date() }),
           now: () => new Date(),
         }),

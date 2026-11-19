@@ -14,6 +14,8 @@ export type MailTemplate =
   | 'reset_password'
   | 'password_changed'
   | 'account_deleted'
+  /** Fase 2B: the weekly summary (facts only), with a one-click unsubscribe link. */
+  | 'weekly_summary'
   /** Resolved by the worker into reset_password (or nothing): see forgot.ts. */
   | 'forgot_password'
   /** Nothing is sent; queued so "unknown address" costs the same as a real e-mail. */
@@ -29,6 +31,8 @@ export interface MailJob {
   token?: string;
   /** Client address for the audit event of a resolved request (hashed there, never logged). */
   ip?: string;
+  /** Weekly summary: one line per watched commodity (prices and changes, no personal data). */
+  lines?: string[];
 }
 
 export const MAIL_OUTBOX = Symbol('MAIL_OUTBOX');

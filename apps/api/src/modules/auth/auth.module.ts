@@ -22,11 +22,14 @@ import { SESSION } from './policy.js';
 import { CsrfGuard, SessionGuard } from './session.guard.js';
 import { SessionStore } from './session.store.js';
 import { AUTH_SERVICE, SESSION_REDIS, SESSION_STORE } from './tokens.js';
+import { PhoneCipher } from './phone-cipher.js';
 import { UsersRepository } from './users.repository.js';
 
 @Module({
   imports: [MailQueueModule],
   controllers: [AuthController, AccountController],
+  // The alerts module guards its routes with the same session and CSRF checks.
+  exports: [SESSION_STORE, SessionGuard, CsrfGuard],
   providers: [
     {
       provide: SESSION_REDIS,
@@ -62,7 +65,7 @@ import { UsersRepository } from './users.repository.js';
         clock: Clock,
       ) =>
         new AuthService({
-          users: new UsersRepository(db, env.AUTH_SECRET),
+          users: new UsersRepository(db, env.AUTH_SECRET, new PhoneCipher(env.PHONE_ENC_KEY)),
           passwords: new PasswordService(
             BreachedPasswords.bundled(),
             new HashGate({

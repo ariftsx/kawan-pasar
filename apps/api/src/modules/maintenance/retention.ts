@@ -1,9 +1,11 @@
 import { lt, or } from 'drizzle-orm';
 import type { Db } from '../../database/client.js';
-import { authEvents, authTokens } from '../../database/schema/index.js';
+import { authEvents, authTokens, notifications } from '../../database/schema/index.js';
 
 /** Audit events are kept this long (privacy page, design Fase 2 §3). */
 export const AUDIT_RETENTION_DAYS = 90;
+/** In-app news is kept this long (privacy page, Fase 2B). */
+export const NOTIFICATION_RETENTION_DAYS = 180;
 /** Used or expired e-mail tokens are useless; they go after this grace period. */
 const TOKEN_GRACE_DAYS = 1;
 const DAY_MS = 86_400_000;
@@ -15,7 +17,7 @@ const DAY_MS = 86_400_000;
 export async function pruneAccountData(
   db: Db,
   now: Date,
-): Promise<{ events: number; tokens: number }> {
+): Promise<{ events: number; tokens: number; notifications: number }> {
   const eventCutoff = new Date(now.getTime() - AUDIT_RETENTION_DAYS * DAY_MS);
   const tokenCutoff = new Date(now.getTime() - TOKEN_GRACE_DAYS * DAY_MS);
   const events = await db
@@ -26,5 +28,11 @@ export async function pruneAccountData(
     .delete(authTokens)
     .where(or(lt(authTokens.expiresAt, tokenCutoff), lt(authTokens.usedAt, tokenCutoff)))
     .returning({ id: authTokens.id });
-  return { events: events.length, tokens: tokens.length };
+  const news = await db
+    .delete(notifications)
+    .where(
+      lt(notifications.createdAt, new Date(now.getTime() - NOTIFICATION_RETENTION_DAYS * DAY_MS)),
+    )
+    .returning({ id: notifications.id });
+  return { events: events.length, tokens: tokens.length, notifications: news.length };
 }

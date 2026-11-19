@@ -99,6 +99,23 @@ export function renderMail(job: MailJob, siteUrl: string): RenderedMail | null {
         'Kata sandi akun Kawan Pasar dengan email ini baru saja diganti, dan semua sesi lain telah dikeluarkan.',
         `Bila bukan Anda yang menggantinya, segera atur ulang kata sandi di ${site}/lupa-sandi.`,
       ]);
+    case 'weekly_summary': {
+      const lines = job.lines ?? [];
+      if (lines.length === 0) throw new Error('weekly_summary needs lines');
+      return compose(
+        'Ringkasan mingguan harga pantauan Anda',
+        [
+          'Ringkasan harga komoditas yang Anda pantau di Kawan Pasar minggu ini:',
+          lines.join('\n'),
+          `Prediksi adalah estimasi, bukan jaminan harga. Lihat semua kabar di ${site}/peringatan.`,
+          'Tidak ingin menerima ringkasan ini lagi? Buka tautan berhenti berlangganan di atas.',
+        ],
+        {
+          label: 'Berhenti menerima ringkasan mingguan',
+          url: `${site}/berhenti-ringkasan?t=${encodeURIComponent(requireToken(job))}`,
+        },
+      );
+    }
     case 'account_deleted':
       return compose('Akun Kawan Pasar Anda telah dihapus', [
         'Akun Kawan Pasar dengan email ini telah dihapus beserta datanya, sesuai permintaan Anda.',

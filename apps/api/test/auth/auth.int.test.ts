@@ -9,6 +9,7 @@ import type { MailJob } from '../../src/modules/mail/mail.queue.js';
 import { resolveForgot } from '../../src/modules/mail/forgot.js';
 import { createDb } from '../../src/database/client.js';
 import { AuthTokenService } from '../../src/modules/auth/auth-token.service.js';
+import { PhoneCipher } from '../../src/modules/auth/phone-cipher.js';
 import { UsersRepository } from '../../src/modules/auth/users.repository.js';
 import { poolFor, resetTestDatabase } from '../helpers/test-db.js';
 import { serviceToken, startApp, testEnv } from '../helpers/test-app.js';
@@ -33,7 +34,7 @@ interface Reply {
 }
 
 async function call(
-  method: 'GET' | 'POST' | 'DELETE',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   url: string,
   options: { body?: unknown; session?: string; csrf?: string; ip?: string } = {},
 ): Promise<Reply> {
@@ -212,6 +213,10 @@ describe('login', () => {
   });
 
   it('limits sign-in attempts per client address to 10 per minute', async () => {
+    // Fixed one-minute windows on the real clock: 11 attempts that straddle a minute boundary
+    // split across two windows (seen once in the Fase 2B audit). Start clear of the boundary.
+    const intoMinute = Date.now() % 60_000;
+    if (intoMinute > 55_000) await new Promise((r) => setTimeout(r, 60_500 - intoMinute));
     const statuses: number[] = [];
     for (let i = 0; i < 11; i += 1) {
       const res = await call('POST', '/v1/auth/login', {
@@ -326,7 +331,11 @@ describe('password reset', () => {
     // What the worker does with the queued job (issue the token, prepare the e-mail).
     const job = (await mails()).find((m) => m.template === 'forgot_password');
     const resolved = await resolveForgot(job ?? { template: 'noop' }, {
-      users: new UsersRepository(createDb(pool), testEnv().AUTH_SECRET),
+      users: new UsersRepository(
+        createDb(pool),
+        testEnv().AUTH_SECRET,
+        new PhoneCipher(testEnv().PHONE_ENC_KEY),
+      ),
       tokens: new AuthTokenService(createDb(pool), { now: () => new Date() }),
       now: () => new Date(),
     });
@@ -432,6 +441,93 @@ describe('account (session + CSRF)', () => {
     expect(events.rows.every((e) => e.user_id === null)).toBe(true);
     expect(events.rows.map((e) => e.type)).toContain('account_delete');
     expect((await mails()).map((m) => m.template)).toContain('account_deleted');
+  });
+});
+
+describe('mobile number (optional, encrypted)', () => {
+  const PHONE = '+6281234567890';
+
+  async function rawPhone(): Promise<Record<string, unknown> | undefined> {
+    const r = await pool.query<Record<string, unknown>>(
+      'SELECT phone_nonce, phone_ciphertext, phone_hmac FROM users WHERE email = $1',
+      [EMAIL],
+    );
+    return r.rows[0];
+  }
+
+  it('can be given at sign-up; stored encrypted, shown masked', async () => {
+    const res = await call('POST', '/v1/auth/register', {
+      body: { email: EMAIL, password: PASSWORD, phone: '0812-3456-7890', acceptPrivacy: true },
+    });
+    expect(res.status).toBe(202);
+    const row = await rawPhone();
+    expect(row?.['phone_ciphertext']).toBeInstanceOf(Buffer);
+    expect(Buffer.from(row?.['phone_ciphertext'] as Buffer).toString('latin1')).not.toContain(
+      '81234567890',
+    );
+    const s = await login();
+    const me = (await call('GET', '/v1/me', { session: s.token })).json();
+    expect(me['phone']).toBe('+62 812 •••• 7890');
+  });
+
+  it('is optional, and an invalid number is refused', async () => {
+    await register();
+    expect((await rawPhone())?.['phone_ciphertext']).toBeNull();
+    const s = await login();
+    expect((await call('GET', '/v1/me', { session: s.token })).json()['phone']).toBeNull();
+    const bad = await call('POST', '/v1/auth/register', {
+      body: {
+        email: 'lain@contoh.id',
+        password: PASSWORD,
+        phone: '021-555-1234',
+        acceptPrivacy: true,
+      },
+    });
+    expect(bad.status).toBe(400);
+  });
+
+  it('a sign-up for an existing address does not change its number', async () => {
+    await register();
+    await call('POST', '/v1/auth/register', {
+      body: { email: EMAIL, password: PASSWORD, phone: PHONE, acceptPrivacy: true },
+    });
+    expect((await rawPhone())?.['phone_ciphertext']).toBeNull();
+  });
+
+  it('the owner can set, replace and remove it (session + CSRF)', async () => {
+    await register();
+    const s = await login();
+    const opts = { session: s.token, csrf: s.csrf };
+    expect((await call('PUT', '/v1/me/phone', { body: { phone: PHONE } })).status).toBe(401);
+    expect(
+      (await call('PUT', '/v1/me/phone', { session: s.token, body: { phone: PHONE } })).status,
+    ).toBe(403);
+    expect((await call('PUT', '/v1/me/phone', { ...opts, body: { phone: PHONE } })).status).toBe(
+      204,
+    );
+    expect((await call('GET', '/v1/me', opts)).json()['phone']).toBe('+62 812 •••• 7890');
+    expect(
+      (await call('PUT', '/v1/me/phone', { ...opts, body: { phone: '085799991234' } })).status,
+    ).toBe(204);
+    expect((await call('GET', '/v1/me', opts)).json()['phone']).toBe('+62 857 •••• 1234');
+    expect((await call('PUT', '/v1/me/phone', { ...opts, body: { phone: 'abc' } })).status).toBe(
+      400,
+    );
+    expect((await call('DELETE', '/v1/me/phone', opts)).status).toBe(204);
+    expect((await call('GET', '/v1/me', opts)).json()['phone']).toBeNull();
+    expect((await rawPhone())?.['phone_hmac']).toBeNull();
+    const events = await pool.query(
+      "SELECT count(*)::int AS n FROM auth_events WHERE type = 'phone_change'",
+    );
+    expect(events.rows[0]).toEqual({ n: 2 + 1 });
+  });
+
+  it('never appears in the logs', async () => {
+    await call('POST', '/v1/auth/register', {
+      body: { email: EMAIL, password: PASSWORD, phone: PHONE, acceptPrivacy: true },
+    });
+    const all = logLines.join('');
+    for (const form of ['81234567890', '0812-3456-7890']) expect(all).not.toContain(form);
   });
 });
 

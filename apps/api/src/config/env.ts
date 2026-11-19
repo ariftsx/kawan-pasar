@@ -54,6 +54,8 @@ export const EnvSchema = z.object({
   VALKEY_SESSION_URL: redisUrl,
   /** Keys the HMACs of e-mail addresses (lockout) and client IPs (audit). Never logged. */
   AUTH_SECRET: z.string().min(32),
+  /** Derives the keys that encrypt and look up mobile numbers (PhoneCipher, Fase 2B). Never logged. */
+  PHONE_ENC_KEY: z.string().min(32),
   /** Argon2 hashes that may run at once (≈ API cores) and may wait (HashGate, Fase 2A). */
   AUTH_HASH_CONCURRENCY: z.coerce.number().int().min(1).max(32).default(2),
   AUTH_HASH_QUEUE: z.coerce.number().int().min(0).max(1000).default(16),

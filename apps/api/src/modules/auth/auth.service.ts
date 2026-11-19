@@ -8,7 +8,7 @@ import type {
   ResetInput,
   SessionsResponse,
 } from '@kawan-pasar/contracts';
-import { TokenSchema } from '@kawan-pasar/contracts';
+import { TokenSchema, maskPhone } from '@kawan-pasar/contracts';
 import type { Clock } from '../../common/clock.js';
 import {
   invalidCredentials,
@@ -67,7 +67,8 @@ export class AuthService {
     // Hashing runs on both paths, so a known address costs the same time as a new one.
     const hash = await this.d.passwords.hash(input.password);
     const existing = await this.d.users.findByEmail(input.email);
-    const id = existing === null ? await this.d.users.create(input.email, hash) : null;
+    // A sign-up for a known address changes nothing about that account, its number included.
+    const id = existing === null ? await this.d.users.create(input.email, hash, input.phone) : null;
     if (id === null) {
       const owner = existing ?? (await this.d.users.findByEmail(input.email));
       await this.d.outbox.send({ template: 'already_registered', to: owner?.email ?? input.email });
@@ -168,6 +169,7 @@ export class AuthService {
       email: user.email,
       emailVerified: user.emailVerifiedAt !== null,
       createdAt: user.createdAt.toISOString(),
+      phone: user.phone === null ? null : maskPhone(user.phone),
       csrf: auth.session.csrf,
     };
   }
@@ -186,6 +188,13 @@ export class AuthService {
     await this.d.sessions.revokeAll(user.id, auth.token);
     await this.d.outbox.send({ template: 'password_changed', to: user.email });
     await this.d.users.recordEvent(user.id, 'password_change', caller.ip, now);
+  }
+
+  /** Sets, replaces or (null) removes the optional mobile number. Not verified here (Fase 2C). */
+  async setPhone(auth: AuthContext, phone: string | null, caller: Caller): Promise<void> {
+    const user = await this.requireUser(auth);
+    await this.d.users.setPhone(user.id, phone);
+    await this.d.users.recordEvent(user.id, 'phone_change', caller.ip, this.d.clock.now());
   }
 
   async listSessions(auth: AuthContext): Promise<SessionsResponse> {

@@ -2,6 +2,7 @@ import { Logger, Module } from '@nestjs/common';
 import { ENV } from '../../config/config.module.js';
 import type { Env } from '../../config/env.js';
 import { ThrottledWarning } from '../../common/throttled-log.js';
+import { AlertsQueueModule } from '../alerts/alerts.module.js';
 import { InternalController } from './internal.controller.js';
 import { WebRevalidator } from './web-revalidator.js';
 
@@ -11,6 +12,7 @@ const warnings = new ThrottledWarning(10_000, (m) => {
 });
 
 @Module({
+  imports: [AlertsQueueModule],
   controllers: [InternalController],
   providers: [
     {

@@ -61,3 +61,6 @@ export const invalidToken = (): ApiHttpError =>
 
 export const csrfRejected = (): ApiHttpError =>
   new ApiHttpError(HttpStatus.FORBIDDEN, 'csrf', 'invalid request origin');
+
+export const conflict = (field: string): ApiHttpError =>
+  new ApiHttpError(HttpStatus.CONFLICT, 'conflict', 'conflict', { fields: [field] });

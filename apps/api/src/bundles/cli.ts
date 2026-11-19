@@ -1,7 +1,10 @@
 // Bundle CLI (runs with the API's app_rw credentials from .env):
 //   pnpm --filter @kawan-pasar/api bundle:promote <bundle-dir>
 //   pnpm --filter @kawan-pasar/api bundle:demo      (generate the labelled demo bundle, then promote)
-// Exit codes: 0 active, 2 rejected (reasons printed), 1 error / bad invocation.
+//   pnpm --filter @kawan-pasar/api bundle:prices <file>   (full price history of the covered
+//                                       commodities: the input of the ARIF-Net job, ADR 0012)
+// Exit codes: 0 active / written, 2 rejected (reasons printed), 1 error / bad invocation.
+import { writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import type { CommodityCode } from '@kawan-pasar/catalog';
@@ -18,6 +21,7 @@ import { promoteBundle } from './bundle-promoter.js';
 import type { PromotionResult } from './bundle-promoter.js';
 import { writeBundleDir } from './bundle-writer.js';
 import { generateDemoBundle } from './demo-generator.js';
+import { toPriceExportCsv } from './price-export.js';
 
 const ARTIFACTS_DIR = fileURLToPath(
   new URL('../../../../services/model-arifnet/artifacts/', import.meta.url),
@@ -37,12 +41,16 @@ const SeriesRow = z.object({
   price_idr: z.number().int(),
 });
 
-async function loadSeries(db: Db): Promise<Map<CommodityCode, PricePoint[]>> {
+/** `days`: history kept before the last observation; null keeps all of it. */
+async function loadSeries(
+  db: Db,
+  days: number | null = SERIES_DAYS,
+): Promise<Map<CommodityCode, PricePoint[]>> {
   const result = await db.execute(sql`
     WITH m AS (SELECT id FROM markets WHERE code = 'PIKJ'),
     -- Computed once (a correlated max() here would rescan the table for every row).
     since AS (
-      SELECT max(p.observed_on) - ${SERIES_DAYS}::int AS day
+      SELECT max(p.observed_on) - ${days ?? 100_000}::int AS day
       FROM price_observations p JOIN m ON p.market_id = m.id
     )
     SELECT c.code, to_char(p.observed_on, 'YYYY-MM-DD') AS observed_on, p.price_idr
@@ -64,12 +72,12 @@ async function loadSeries(db: Db): Promise<Map<CommodityCode, PricePoint[]>> {
 
 async function main(): Promise<number> {
   const [command, arg] = process.argv.slice(2);
-  if (command !== 'promote' && command !== 'demo') {
-    process.stderr.write('usage: cli.ts promote <bundle-dir> | cli.ts demo\n');
+  if (command !== 'promote' && command !== 'demo' && command !== 'prices') {
+    process.stderr.write('usage: cli.ts promote <bundle-dir> | demo | prices <file>\n');
     return 1;
   }
-  if (command === 'promote' && arg === undefined) {
-    process.stderr.write('usage: cli.ts promote <bundle-dir>\n');
+  if ((command === 'promote' || command === 'prices') && arg === undefined) {
+    process.stderr.write(`usage: cli.ts ${command} <path>\n`);
     return 1;
   }
 
@@ -107,6 +115,14 @@ async function main(): Promise<number> {
       }
     };
 
+    if (command === 'prices') {
+      const csv = toPriceExportCsv(await loadSeries(db, null));
+      // 'wx': never overwrite an existing file.
+      await writeFile(arg ?? '', csv, { flag: 'wx' });
+      process.stdout.write(`price file written (${String(csv.split('\n').length - 2)} rows)\n`);
+      return 0;
+    }
+
     let dir: string;
     if (command === 'demo') {
       const bundle = generateDemoBundle(await loadSeries(db), {
@@ -129,8 +145,12 @@ async function main(): Promise<number> {
   }
 }
 
+// exitCode, not process.exit(): exiting while ioredis/pg handles are still closing aborts Node on
+// Windows (libuv assertion), turning a successful promotion into a crash exit status.
 main().then(
-  (code) => process.exit(code),
+  (code) => {
+    process.exitCode = code;
+  },
   (e: unknown) => {
     // Connection strings carry passwords: redact every env value before printing.
     const secrets = [process.env['DATABASE_URL'], process.env['VALKEY_CACHE_URL']].filter(
@@ -142,6 +162,6 @@ main().then(
     const text = e instanceof Error ? `${e.name}: ${firstLine}${cause}` : 'error';
     const safe = secrets.reduce((t, s) => t.split(s).join('[redacted]'), text);
     process.stderr.write(`bundle cli failed: ${safe}\n`);
-    process.exit(1);
+    process.exitCode = 1;
   },
 );

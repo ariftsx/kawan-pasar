@@ -20,4 +20,6 @@ export const LOCKOUT_WINDOW_SECONDS = 3600;
 export const TOKEN_TTL_SECONDS = {
   verify_email: 24 * 3600,
   reset_password: 30 * 60,
+  // The link in a weekly summary works until the next summary replaces it (and a bit longer).
+  weekly_unsubscribe: 14 * 24 * 3600,
 } as const;

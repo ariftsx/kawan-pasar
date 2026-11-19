@@ -1,12 +1,14 @@
 import {
   ChangePasswordInputSchema,
   DeleteAccountInputSchema,
+  PhoneInputSchema,
   SessionIdSchema,
 } from '@kawan-pasar/contracts';
 import type {
   ChangePasswordInput,
   DeleteAccountInput,
   MeResponse,
+  PhoneInput,
   SessionsResponse,
 } from '@kawan-pasar/contracts';
 import {
@@ -19,6 +21,7 @@ import {
   Inject,
   Param,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { notFound } from '../../common/api-errors.js';
@@ -50,6 +53,24 @@ export class AccountController {
     @CallerInfo() caller: Caller,
   ): Promise<void> {
     await this.auth.changePassword(auth, body, caller);
+  }
+
+  @Put('phone')
+  @HttpCode(204)
+  @Header('cache-control', NO_STORE)
+  async setPhone(
+    @Auth() auth: AuthContext,
+    @Body(new ZodValidationPipe(PhoneInputSchema)) body: PhoneInput,
+    @CallerInfo() caller: Caller,
+  ): Promise<void> {
+    await this.auth.setPhone(auth, body.phone, caller);
+  }
+
+  @Delete('phone')
+  @HttpCode(204)
+  @Header('cache-control', NO_STORE)
+  async removePhone(@Auth() auth: AuthContext, @CallerInfo() caller: Caller): Promise<void> {
+    await this.auth.setPhone(auth, null, caller);
   }
 
   @Get('sessions')

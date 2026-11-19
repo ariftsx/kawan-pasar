@@ -3,10 +3,13 @@
 import { EnvValidationError, loadEnv } from './config/env.js';
 import { createDb } from './database/client.js';
 import { createPool } from './database/database.module.js';
+import { startAlertsWorker } from './modules/alerts/alerts.worker.js';
 import { pruneAccountData } from './modules/maintenance/retention.js';
 import { AuthTokenService } from './modules/auth/auth-token.service.js';
+import { PhoneCipher } from './modules/auth/phone-cipher.js';
 import { UsersRepository } from './modules/auth/users.repository.js';
 import { resolveForgot } from './modules/mail/forgot.js';
+import { BullMailOutbox } from './modules/mail/mail.queue.js';
 import { startMailWorker } from './modules/mail/mail.worker.js';
 import { HEARTBEAT_FILE, HEARTBEAT_INTERVAL_MS, writeHeartbeat } from './worker/heartbeat.js';
 
@@ -18,7 +21,7 @@ function log(level: 'info' | 'error', msg: string): void {
   writeLine(JSON.stringify({ level, time: new Date().toISOString(), service: 'worker', msg }));
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const env = loadEnv(process.env);
   const pool = createPool(env);
   const db = createDb(pool);
@@ -31,10 +34,19 @@ function main(): void {
     log: writeLine,
     resolve: (job) =>
       resolveForgot(job, {
-        users: new UsersRepository(db, env.AUTH_SECRET),
+        users: new UsersRepository(db, env.AUTH_SECRET, new PhoneCipher(env.PHONE_ENC_KEY)),
         tokens: new AuthTokenService(db, clock),
         now: clock.now,
       }),
+  });
+  const outbox = new BullMailOutbox(env.VALKEY_QUEUE_URL);
+  const alerts = await startAlertsWorker({
+    queueUrl: env.VALKEY_QUEUE_URL,
+    db,
+    tokens: new AuthTokenService(db, clock),
+    outbox,
+    now: clock.now,
+    log: writeLine,
   });
 
   // Retention (privacy page): at start, then daily. Idempotent, so several workers are fine.
@@ -49,6 +61,7 @@ function main(): void {
             msg: 'retention',
             events: r.events,
             tokens: r.tokens,
+            notifications: r.notifications,
           }),
         );
       },
@@ -70,22 +83,22 @@ function main(): void {
     clearInterval(beat);
     clearInterval(daily);
     // Let running jobs finish (BullMQ close waits for them), then exit.
-    Promise.all([mail.close(), pool.end()]).then(
-      () => {
-        log('info', 'worker stopped');
-        process.exit(0);
-      },
-      () => process.exit(1),
-    );
+    Promise.all([mail.close(), alerts.close(), outbox.close()])
+      .then(() => pool.end())
+      .then(
+        () => {
+          log('info', 'worker stopped');
+          process.exit(0);
+        },
+        () => process.exit(1),
+      );
   };
   process.once('SIGTERM', stop);
   process.once('SIGINT', stop);
 }
 
-try {
-  main();
-} catch (e: unknown) {
+main().catch((e: unknown) => {
   const message = e instanceof EnvValidationError ? e.message : 'worker failed to start';
   process.stderr.write(`${message}\n`);
   process.exit(1);
-}
+});
