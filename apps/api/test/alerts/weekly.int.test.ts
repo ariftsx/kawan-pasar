@@ -152,3 +152,26 @@ describe('weekly summary when e-mail queueing fails', () => {
     expect(n.rows[0]?.n).toBe(2);
   });
 });
+
+describe('weekly summary when the WhatsApp hand-over fails (review 2C)', () => {
+  it('the e-mail is sent once and the week is not undone', async () => {
+    await subscriber('sari@contoh.id');
+    const db = createDb(app);
+    const r = await sendWeeklySummaries(
+      {
+        db,
+        tokens: new AuthTokenService(db, { now: () => MONDAY }),
+        outbox,
+        onSent: () => Promise.reject(new Error('valkey down')),
+      },
+      MONDAY,
+    ).catch((e: unknown) => e);
+    // onSent failures are the caller's to swallow; the week row must stay either way.
+    const n = await owner.query<{ n: number }>(
+      "SELECT count(*)::int AS n FROM notifications WHERE kind = 'weekly'",
+    );
+    expect(n.rows[0]?.n).toBe(1);
+    expect(sent).toHaveLength(1);
+    expect(r).toEqual({ users: 1, sent: 1 });
+  });
+});

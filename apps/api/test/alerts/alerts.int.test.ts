@@ -5,6 +5,7 @@ import type pg from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createDb } from '../../src/database/client.js';
 import { ALERTS_QUEUE } from '../../src/modules/alerts/alerts.queue.js';
+import { AlertsRepository } from '../../src/modules/alerts/alerts.repository.js';
 import { AuthTokenService } from '../../src/modules/auth/auth-token.service.js';
 import { MAIL_QUEUE } from '../../src/modules/mail/mail.queue.js';
 import type { MailJob } from '../../src/modules/mail/mail.queue.js';
@@ -101,6 +102,7 @@ describe('alert settings (session + CSRF)', () => {
         unusualMove: true,
         forecastRise: true,
         priceThreshold: true,
+        whatsapp: true,
       },
       watches: [],
       emailVerified: true,
@@ -125,6 +127,7 @@ describe('alert settings (session + CSRF)', () => {
       unusualMove: false,
       forecastRise: true,
       priceThreshold: true,
+      whatsapp: true,
     };
     expect((await call('PUT', '/v1/alerts/preferences', { ...a, body: prefs })).status).toBe(204);
     const watch = {
@@ -277,5 +280,28 @@ describe('data changes queue an evaluation', () => {
     // Two imports in a row: one evaluation (deduplicated while waiting).
     expect(jobs.map((j) => j.name)).toEqual(['evaluate']);
     expect(jobs.every((j) => JSON.stringify(j.data) === '{}')).toBe(true);
+  });
+});
+
+describe('watch limit under concurrency (Fase 2C)', () => {
+  it('parallel adds cannot pass the limit together', async () => {
+    const a = await account('sari@contoh.id');
+    // 18 watches; the two free PIKJ commodities are added at once with a limit of 19.
+    await owner.query(
+      `INSERT INTO alert_watches (user_id, market_id, commodity_id)
+       SELECT $1, m.id, c.id FROM markets m CROSS JOIN commodities c
+       WHERE NOT (m.code = 'PIKJ' AND c.code IN ('bawang-merah', 'cabai-merah-keriting'))`,
+      [a.id],
+    );
+    const repo = new AlertsRepository(createDb(poolFor('app')));
+    const results = await Promise.all(
+      ['bawang-merah', 'cabai-merah-keriting'].map((c) => repo.addWatch(a.id, 'PIKJ', c, null, 19)),
+    );
+    expect([...results].sort()).toEqual(['added', 'limit']);
+    const n = await owner.query<{ n: number }>(
+      'SELECT count(*)::int AS n FROM alert_watches WHERE user_id = $1',
+      [a.id],
+    );
+    expect(n.rows[0]?.n).toBe(19);
   });
 });

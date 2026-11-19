@@ -8,8 +8,8 @@ import type { Db } from '../../database/client.js';
 import { DRIZZLE } from '../../database/database.module.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { AuthTokenService } from '../auth/auth-token.service.js';
-import { PhoneCipher } from '../auth/phone-cipher.js';
-import { UsersRepository } from '../auth/users.repository.js';
+import { phoneCipherFromEnv } from '../auth/phone-cipher.js';
+import { UsersRepository, undecryptablePhone } from '../auth/users.repository.js';
 import {
   ALERTS_SERVICE,
   AlertsController,
@@ -50,7 +50,7 @@ export class AlertsQueueModule implements OnApplicationShutdown {
       useFactory: (env: Env, db: Db, clock: Clock): AlertsService =>
         new AlertsService(
           new AlertsRepository(db),
-          new UsersRepository(db, env.AUTH_SECRET, new PhoneCipher(env.PHONE_ENC_KEY)),
+          new UsersRepository(db, env.AUTH_SECRET, phoneCipherFromEnv(env), undecryptablePhone),
           new AuthTokenService(db, clock),
         ),
     },

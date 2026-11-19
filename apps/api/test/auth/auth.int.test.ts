@@ -541,3 +541,97 @@ describe('logs', () => {
     for (const secret of [EMAIL, PASSWORD, s.token, s.csrf]) expect(all).not.toContain(secret);
   });
 });
+
+describe('phone key rotation (Fase 2C)', () => {
+  const PHONE = '+6281234567890';
+  const repo = (current: string, previous?: string): UsersRepository =>
+    new UsersRepository(createDb(pool), testEnv().AUTH_SECRET, new PhoneCipher(current, previous));
+  const keyId = async (): Promise<number | null> =>
+    (
+      await pool.query<{ k: number | null }>(
+        'SELECT phone_key_id AS k FROM users WHERE email = $1',
+        [EMAIL],
+      )
+    ).rows[0]?.k ?? null;
+
+  it('opens numbers of the previous key and re-seals them with the current one', async () => {
+    const OLD = 'o'.repeat(43);
+    const NEW = 'n'.repeat(43);
+    const id = (await repo(OLD).create(EMAIL, '$argon2id$v=19$m=1,t=1,p=1$x$y', PHONE)) ?? '';
+    expect(await keyId()).toBe(new PhoneCipher(OLD).currentKeyId);
+    const rotated = repo(NEW, OLD);
+    expect((await rotated.findById(id))?.phone).toBe(PHONE);
+    expect(await keyId()).toBe(new PhoneCipher(NEW).currentKeyId);
+    // Afterwards the old key is no longer needed.
+    expect((await repo(NEW).findById(id))?.phone).toBe(PHONE);
+  });
+
+  it('a Fase 2B row (no key id) opens with the current key and gets one', async () => {
+    const KEY = testEnv().PHONE_ENC_KEY;
+    const id = (await repo(KEY).create(EMAIL, '$argon2id$v=19$m=1,t=1,p=1$x$y', PHONE)) ?? '';
+    await pool.query('UPDATE users SET phone_key_id = NULL WHERE id = $1', [id]);
+    expect((await repo(KEY).findById(id))?.phone).toBe(PHONE);
+    expect(await keyId()).toBe(new PhoneCipher(KEY).currentKeyId);
+  });
+
+  it('a number under an unknown key shows as none and is reported (count only)', async () => {
+    let reported = 0;
+    const id =
+      (await repo('o'.repeat(43)).create(EMAIL, '$argon2id$v=19$m=1,t=1,p=1$x$y', PHONE)) ?? '';
+    const lost = new UsersRepository(
+      createDb(pool),
+      testEnv().AUTH_SECRET,
+      new PhoneCipher('n'.repeat(43)),
+      () => {
+        reported += 1;
+      },
+    );
+    expect((await lost.findById(id))?.phone).toBeNull();
+    expect(reported).toBe(1);
+  });
+});
+
+describe('phone key rotation, concurrency (review 2C)', () => {
+  const PHONE = '+6281234567890';
+  const OLD = 'o'.repeat(43);
+  const NEW = 'n'.repeat(43);
+  const HASH = '$argon2id$v=19$m=1,t=1,p=1$x$y';
+  const repo = (current: string, previous?: string): UsersRepository =>
+    new UsersRepository(createDb(pool), testEnv().AUTH_SECRET, new PhoneCipher(current, previous));
+
+  it('a re-seal never overwrites a number changed meanwhile', async () => {
+    const id = (await repo(OLD).create(EMAIL, HASH, PHONE)) ?? '';
+    const read = await pool.query<{ nonce: Buffer; hmac: Buffer }>(
+      'SELECT phone_nonce AS nonce, phone_hmac AS hmac FROM users WHERE id = $1',
+      [id],
+    );
+    // The user changes the number after the row was read and before the re-seal is written.
+    await repo(NEW, OLD).setPhone(id, '+6285799991234');
+    const stale = read.rows[0];
+    expect(
+      await repo(NEW, OLD).reseal(id, PHONE, stale?.nonce ?? Buffer.alloc(12), stale?.hmac ?? null),
+    ).toBe(false);
+    expect((await repo(NEW).findById(id))?.phone).toBe('+6285799991234');
+  });
+
+  it('re-sealing also moves the WhatsApp channel to the new key, so it survives dropping the old one', async () => {
+    const id = (await repo(OLD).create(EMAIL, HASH, PHONE)) ?? '';
+    const oldHmac = new PhoneCipher(OLD).lookupHash(PHONE);
+    await pool.query(
+      "INSERT INTO whatsapp_channels (user_id, status, phone_hmac) VALUES ($1, 'verified', $2)",
+      [id, oldHmac],
+    );
+    await repo(NEW, OLD).findById(id); // re-seal under rotation
+    const row = await pool.query<{ h: Buffer }>(
+      'SELECT phone_hmac AS h FROM whatsapp_channels WHERE user_id = $1',
+      [id],
+    );
+    expect(row.rows[0]?.h.equals(new PhoneCipher(NEW).lookupHash(PHONE))).toBe(true);
+  });
+
+  it('a Fase 2B row (no key id) also opens with the previous key during a rotation', async () => {
+    const id = (await repo(OLD).create(EMAIL, HASH, PHONE)) ?? '';
+    await pool.query('UPDATE users SET phone_key_id = NULL WHERE id = $1', [id]);
+    expect((await repo(NEW, OLD).findById(id))?.phone).toBe(PHONE);
+  });
+});

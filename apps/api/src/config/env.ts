@@ -56,6 +56,11 @@ export const EnvSchema = z.object({
   AUTH_SECRET: z.string().min(32),
   /** Derives the keys that encrypt and look up mobile numbers (PhoneCipher, Fase 2B). Never logged. */
   PHONE_ENC_KEY: z.string().min(32),
+  /** Only during a key rotation: the previous PHONE_ENC_KEY, so older numbers still open. */
+  PHONE_ENC_KEY_PREVIOUS: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().min(32).optional(),
+  ),
   /** Argon2 hashes that may run at once (≈ API cores) and may wait (HashGate, Fase 2A). */
   AUTH_HASH_CONCURRENCY: z.coerce.number().int().min(1).max(32).default(2),
   AUTH_HASH_QUEUE: z.coerce.number().int().min(0).max(1000).default(16),

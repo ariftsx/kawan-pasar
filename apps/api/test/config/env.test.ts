@@ -75,3 +75,15 @@ describe('loadEnv', () => {
     expect(loadEnv(valid).RATE_LIMIT_INTERNAL_PER_MINUTE).toBe(1200);
   });
 });
+
+describe('PHONE_ENC_KEY_PREVIOUS (key rotation, Fase 2C)', () => {
+  it('is optional, and an empty value (compose default) counts as unset', () => {
+    expect(
+      loadEnv({ ...valid, PHONE_ENC_KEY_PREVIOUS: '' }).PHONE_ENC_KEY_PREVIOUS,
+    ).toBeUndefined();
+    expect(
+      loadEnv({ ...valid, PHONE_ENC_KEY_PREVIOUS: 'q'.repeat(43) }).PHONE_ENC_KEY_PREVIOUS,
+    ).toBe('q'.repeat(43));
+    expect(() => loadEnv({ ...valid, PHONE_ENC_KEY_PREVIOUS: 'short' })).toThrow();
+  });
+});

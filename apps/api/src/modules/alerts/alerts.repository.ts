@@ -22,6 +22,7 @@ export const DEFAULT_PREFERENCES: AlertPreferences = {
   unusualMove: true,
   forecastRise: true,
   priceThreshold: true,
+  whatsapp: true,
 };
 
 export const PAGE_SIZE = 20;
@@ -44,6 +45,7 @@ export class AlertsRepository {
         unusualMove: alertPreferences.unusualMove,
         forecastRise: alertPreferences.forecastRise,
         priceThreshold: alertPreferences.priceThreshold,
+        whatsapp: alertPreferences.whatsapp,
       })
       .from(alertPreferences)
       .where(eq(alertPreferences.userId, userId))
@@ -88,21 +90,17 @@ export class AlertsRepository {
     }));
   }
 
-  async countWatches(userId: string): Promise<number> {
-    const rows = await this.db
-      .select({ n: count() })
-      .from(alertWatches)
-      .where(eq(alertWatches.userId, userId));
-    return rows[0]?.n ?? 0;
-  }
-
-  /** The new watch's id; null when the commodity is already watched (or unknown). */
+  /**
+   * Adds a watch unless the user already has `max`. Count and insert run in one transaction
+   * holding a per-user advisory lock, so parallel requests cannot pass the limit together.
+   */
   async addWatch(
     userId: string,
     marketCode: string,
     commodityCode: string,
     threshold: WatchThreshold,
-  ): Promise<number | null> {
+    max: number,
+  ): Promise<'added' | 'duplicate' | 'limit'> {
     const ids = await this.db
       .select({ marketId: markets.id, commodityId: commodities.id })
       .from(markets)
@@ -110,20 +108,27 @@ export class AlertsRepository {
       .where(eq(markets.code, marketCode))
       .limit(1);
     const target = ids[0];
-    if (target === undefined) return null;
+    if (target === undefined) return 'duplicate';
     try {
-      const rows = await this.db
-        .insert(alertWatches)
-        .values({
+      return await this.db.transaction(async (tx) => {
+        await tx.execute(
+          sql`SELECT pg_advisory_xact_lock(hashtextextended(${`watch:${userId}`}, 0))`,
+        );
+        const counted = await tx
+          .select({ n: count() })
+          .from(alertWatches)
+          .where(eq(alertWatches.userId, userId));
+        if ((counted[0]?.n ?? 0) >= max) return 'limit' as const;
+        await tx.insert(alertWatches).values({
           userId,
           ...target,
           thresholdIdr: threshold?.thresholdIdr ?? null,
           direction: threshold?.direction ?? null,
-        })
-        .returning({ id: alertWatches.id });
-      return rows[0]?.id ?? null;
+        });
+        return 'added' as const;
+      });
     } catch (e) {
-      if (pgCode(e) === UNIQUE_VIOLATION) return null;
+      if (pgCode(e) === UNIQUE_VIOLATION) return 'duplicate';
       throw e;
     }
   }
@@ -175,6 +180,7 @@ export class AlertsRepository {
         dataDate: n.dataDate,
         modelVersion: n.modelVersion,
         read: n.readAt !== null,
+        sentWhatsapp: n.sentWhatsappAt !== null,
         createdAt: n.createdAt.toISOString(),
       })),
       next: rows.length > PAGE_SIZE ? (page.at(-1)?.id ?? null) : null,

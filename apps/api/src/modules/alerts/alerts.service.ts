@@ -37,9 +37,15 @@ export class AlertsService {
   }
 
   async addWatch(userId: string, input: WatchInput): Promise<void> {
-    if ((await this.repo.countWatches(userId)) >= MAX_WATCHES) throw conflict('limit');
-    const id = await this.repo.addWatch(userId, MARKET, input.commodity, input.threshold ?? null);
-    if (id === null) throw conflict('commodity');
+    const result = await this.repo.addWatch(
+      userId,
+      MARKET,
+      input.commodity,
+      input.threshold ?? null,
+      MAX_WATCHES,
+    );
+    if (result === 'limit') throw conflict('limit');
+    if (result === 'duplicate') throw conflict('commodity');
   }
 
   async updateWatch(userId: string, id: number, input: WatchUpdate): Promise<void> {

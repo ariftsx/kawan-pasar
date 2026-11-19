@@ -4,9 +4,12 @@ import { EnvValidationError, loadEnv } from './config/env.js';
 import { createDb } from './database/client.js';
 import { createPool } from './database/database.module.js';
 import { startAlertsWorker } from './modules/alerts/alerts.worker.js';
+import { BullWhatsAppOutbox } from './modules/whatsapp/whatsapp.queue.js';
+import { WhatsAppRepository } from './modules/whatsapp/whatsapp.repository.js';
+import { mailpitWhatsAppSender, startWhatsAppWorker } from './modules/whatsapp/whatsapp.worker.js';
 import { pruneAccountData } from './modules/maintenance/retention.js';
 import { AuthTokenService } from './modules/auth/auth-token.service.js';
-import { PhoneCipher } from './modules/auth/phone-cipher.js';
+import { phoneCipherFromEnv } from './modules/auth/phone-cipher.js';
 import { UsersRepository } from './modules/auth/users.repository.js';
 import { resolveForgot } from './modules/mail/forgot.js';
 import { BullMailOutbox } from './modules/mail/mail.queue.js';
@@ -34,17 +37,41 @@ async function main(): Promise<void> {
     log: writeLine,
     resolve: (job) =>
       resolveForgot(job, {
-        users: new UsersRepository(db, env.AUTH_SECRET, new PhoneCipher(env.PHONE_ENC_KEY)),
+        users: new UsersRepository(db, env.AUTH_SECRET, phoneCipherFromEnv(env), () => {
+          log('error', 'stored phone number could not be decrypted (PHONE_ENC_KEY rotated?)');
+        }),
         tokens: new AuthTokenService(db, clock),
         now: clock.now,
       }),
   });
   const outbox = new BullMailOutbox(env.VALKEY_QUEUE_URL);
+  const phones = phoneCipherFromEnv(env);
+  const users = new UsersRepository(db, env.AUTH_SECRET, phones, () => {
+    log('error', 'stored phone number could not be decrypted (PHONE_ENC_KEY rotated?)');
+  });
+  // WhatsApp (Fase 2C): local mock adapter, delivered to Mailpit like e-mail.
+  const waOutbox = new BullWhatsAppOutbox(env.VALKEY_QUEUE_URL);
+  const waRepo = new WhatsAppRepository(db);
+  const whatsapp = startWhatsAppWorker({
+    queueUrl: env.VALKEY_QUEUE_URL,
+    db,
+    users,
+    phones,
+    sender: mailpitWhatsAppSender(env.SMTP_URL, env.MAIL_FROM),
+    siteUrl: env.PUBLIC_SITE_URL,
+    now: clock.now,
+    log: writeLine,
+  });
   const alerts = await startAlertsWorker({
     queueUrl: env.VALKEY_QUEUE_URL,
     db,
     tokens: new AuthTokenService(db, clock),
     outbox,
+    whatsapp: {
+      deliverable: (ids) => waRepo.deliverable(ids),
+      pendingNews: (since) => waRepo.pendingNews(since),
+      send: (job) => waOutbox.send(job),
+    },
     now: clock.now,
     log: writeLine,
   });
@@ -62,6 +89,7 @@ async function main(): Promise<void> {
             events: r.events,
             tokens: r.tokens,
             notifications: r.notifications,
+            whatsapp: r.whatsapp,
           }),
         );
       },
@@ -83,7 +111,7 @@ async function main(): Promise<void> {
     clearInterval(beat);
     clearInterval(daily);
     // Let running jobs finish (BullMQ close waits for them), then exit.
-    Promise.all([mail.close(), alerts.close(), outbox.close()])
+    Promise.all([mail.close(), alerts.close(), whatsapp.close(), outbox.close(), waOutbox.close()])
       .then(() => pool.end())
       .then(
         () => {

@@ -57,6 +57,8 @@ export interface WeeklyDeps {
   db: Db;
   tokens: AuthTokenService;
   outbox: MailOutbox;
+  /** Told about each summary written and e-mailed (for other channels such as WhatsApp). */
+  onSent?: (userId: string, notificationId: number) => Promise<void>;
 }
 
 export async function sendWeeklySummaries(
@@ -112,6 +114,14 @@ export async function sendWeeklySummaries(
       // and carry on with the others.
       await deps.db.delete(notifications).where(eq(notifications.id, id));
       failed += 1;
+      continue;
+    }
+    // Other channels come after the e-mail and never undo it: a failure here must not turn into
+    // a second e-mail on retry (review 2C, Important 5).
+    try {
+      await deps.onSent?.(userId, id);
+    } catch {
+      // Best effort by contract; the caller logs its own failures.
     }
   }
   // Fail the job (BullMQ retries it with backoff) only after everyone else was served.

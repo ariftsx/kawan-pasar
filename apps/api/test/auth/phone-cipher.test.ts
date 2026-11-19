@@ -44,3 +44,32 @@ describe('PhoneCipher (AES-256-GCM, keys derived from PHONE_ENC_KEY)', () => {
     expect(() => new PhoneCipher('short')).toThrow();
   });
 });
+
+describe('PhoneCipher key rotation (Fase 2C)', () => {
+  const OLD = 'o'.repeat(43);
+  const NEW = 'n'.repeat(43);
+
+  it('records which key sealed a number and still opens numbers of the previous key', () => {
+    const before = new PhoneCipher(OLD);
+    const sealed = before.encrypt(PHONE, USER);
+    expect(sealed.keyId).toBe(before.currentKeyId);
+    const rotated = new PhoneCipher(NEW, OLD);
+    expect(rotated.currentKeyId).not.toBe(before.currentKeyId);
+    expect(rotated.decrypt(sealed, USER)).toBe(PHONE);
+    expect(rotated.isCurrent(sealed.keyId)).toBe(false);
+    expect(rotated.isCurrent(rotated.encrypt(PHONE, USER).keyId)).toBe(true);
+  });
+
+  it('refuses a key id it does not hold', () => {
+    const sealed = new PhoneCipher(OLD).encrypt(PHONE, USER);
+    expect(() => new PhoneCipher(NEW).decrypt(sealed, USER)).toThrow(/unknown phone key/);
+  });
+
+  it('looks a number up under the current and the previous key', () => {
+    const rotated = new PhoneCipher(NEW, OLD);
+    const hashes = rotated.lookupHashes(PHONE);
+    expect(hashes).toHaveLength(2);
+    expect(hashes[0]?.equals(rotated.lookupHash(PHONE))).toBe(true);
+    expect(hashes[1]?.equals(new PhoneCipher(OLD).lookupHash(PHONE))).toBe(true);
+  });
+});
