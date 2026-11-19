@@ -1,12 +1,53 @@
-# Placeholder only — this service is NOT developed yet (see README.md).
 [project]
 name = "kp-model"
-version = "0.0.0"
-description = "Kawan Pasar model service: serves versioned ARIF-Net forecast bundles (not developed yet)"
+version = "1.0.0"
+description = "Kawan Pasar: ARIF-Net A0 inference (numpy only) that writes versioned forecast bundles"
 requires-python = ">=3.14,<3.15"
 dependencies = [
-    "fastapi>=0.162",
+    "numpy>=2.3",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=8.4",
+    "pytest-cov>=7.0",
+    "mypy>=1.18",
+    "ruff>=0.14",
+]
+
+[project.scripts]
+kp-model = "kp_model.__main__:main"
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kp_model"]
+
 [tool.uv]
+# Supply-chain gate, same intent as pnpm's minimumReleaseAge: ignore releases newer than this.
 exclude-newer = "2026-11-04T00:00:00Z"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+
+[tool.coverage.run]
+branch = true
+source = ["kp_model"]
+
+[tool.mypy]
+strict = true
+python_version = "3.14"
+mypy_path = "src"
+exclude = ["tools/"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py314"
+extend-exclude = ["tools/"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "S", "RUF"]
+ignore = ["S101"]
