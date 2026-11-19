@@ -18,7 +18,7 @@ test.beforeEach(() => {
 /** Submits the sign-in form and waits for the Server Action's answer (one attempt per call). */
 async function submitLogin(page: Page, email: string, password: string): Promise<void> {
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Kata sandi').fill(password);
+  await page.getByLabel('Kata sandi', { exact: true }).fill(password);
   await Promise.all([
     page.waitForResponse((r) => r.request().method() === 'POST' && r.url().includes('/masuk')),
     page.getByRole('button', { name: 'Masuk' }).click(),
@@ -74,7 +74,8 @@ test('opening the verification link does not verify; only pressing the button do
   const email = newEmail('pindai');
   await page.goto('/daftar');
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Kata sandi').fill(PASSWORD);
+  await page.getByLabel('Kata sandi', { exact: true }).fill(PASSWORD);
+  await page.getByLabel('Ulangi kata sandi').fill(PASSWORD);
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Buat akun' }).click();
   await expect(page.getByRole('status')).toBeVisible();
@@ -95,12 +96,14 @@ test('a reset link works once', async ({ page }) => {
   const link = linkTo((await latestMail(email, 'Atur ulang')).text, '/atur-ulang-sandi');
 
   await page.goto(link);
-  await page.getByLabel('Kata sandi baru').fill('kalimat sandi pertama baru');
+  await page.getByLabel('Kata sandi baru', { exact: true }).fill('kalimat sandi pertama baru');
+  await page.getByLabel('Ulangi kata sandi baru').fill('kalimat sandi pertama baru');
   await page.getByRole('button', { name: 'Simpan kata sandi' }).click();
   await expect(page).toHaveURL(/pesan=sandi-diubah/);
 
   await page.goto(link);
-  await page.getByLabel('Kata sandi baru').fill('kalimat sandi kedua baru');
+  await page.getByLabel('Kata sandi baru', { exact: true }).fill('kalimat sandi kedua baru');
+  await page.getByLabel('Ulangi kata sandi baru').fill('kalimat sandi kedua baru');
   await page.getByRole('button', { name: 'Simpan kata sandi' }).click();
   await expect(page.locator('main').getByRole('alert')).toContainText('tidak berlaku lagi');
 });
@@ -109,7 +112,8 @@ test('registering an existing address answers the same and tells the owner', asy
   const email = await createVerifiedUser('ganda');
   await page.goto('/daftar');
   await page.getByLabel('Email').fill(email.toUpperCase());
-  await page.getByLabel('Kata sandi').fill('kalimat sandi lain sekali');
+  await page.getByLabel('Kata sandi', { exact: true }).fill('kalimat sandi lain sekali');
+  await page.getByLabel('Ulangi kata sandi').fill('kalimat sandi lain sekali');
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Buat akun' }).click();
   await expect(page.getByRole('status')).toContainText('Cek kotak masuk email Anda');

@@ -20,7 +20,7 @@ test.beforeEach(() => {
 async function signIn(page: Page, email: string, password = PASSWORD): Promise<void> {
   await page.goto('/masuk');
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Kata sandi').fill(password);
+  await page.getByLabel('Kata sandi', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Masuk' }).click();
   await expect(page).toHaveURL(/\/akun$/);
 }
@@ -41,7 +41,8 @@ for (const width of [360, 1280] as const) {
       const email = newEmail(`daftar${String(width)}`);
       await page.goto('/daftar');
       await page.getByLabel('Email').fill(email);
-      await page.getByLabel('Kata sandi').fill(PASSWORD);
+      await page.getByLabel('Kata sandi', { exact: true }).fill(PASSWORD);
+      await page.getByLabel('Ulangi kata sandi').fill(PASSWORD);
       await page.getByRole('checkbox').check();
       await page.getByRole('button', { name: 'Buat akun' }).click();
       await expect(page.getByRole('status')).toContainText('Cek kotak masuk email Anda');
@@ -70,13 +71,14 @@ test('forgot password: the e-mailed link sets a new password, the old one stops 
 
   const mail = await latestMail(email, 'Atur ulang kata sandi');
   await page.goto(linkTo(mail.text, '/atur-ulang-sandi'));
-  await page.getByLabel('Kata sandi baru').fill(NEW_PASSWORD);
+  await page.getByLabel('Kata sandi baru', { exact: true }).fill(NEW_PASSWORD);
+  await page.getByLabel('Ulangi kata sandi baru').fill(NEW_PASSWORD);
   await page.getByRole('button', { name: 'Simpan kata sandi' }).click();
   await expect(page).toHaveURL(/\/masuk\?pesan=sandi-diubah$/);
   await expect(page.getByRole('status')).toContainText('berhasil diatur ulang');
 
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Kata sandi').fill(PASSWORD);
+  await page.getByLabel('Kata sandi', { exact: true }).fill(PASSWORD);
   await page.getByRole('button', { name: 'Masuk' }).click();
   await expect(page.locator('main').getByRole('alert')).toHaveText('Email atau kata sandi salah.');
   await signIn(page, email, NEW_PASSWORD);
@@ -87,8 +89,9 @@ test('changing the password signs out the other devices', async ({ browser }) =>
   const here = await signedInContext(browser, email);
   const there = await signedInContext(browser, email);
 
-  await here.getByLabel('Kata sandi saat ini').fill(PASSWORD);
-  await here.getByLabel('Kata sandi baru').fill(NEW_PASSWORD);
+  await here.getByLabel('Kata sandi saat ini', { exact: true }).fill(PASSWORD);
+  await here.getByLabel('Kata sandi baru', { exact: true }).fill(NEW_PASSWORD);
+  await here.getByLabel('Ulangi kata sandi baru').fill(NEW_PASSWORD);
   await here.getByRole('button', { name: 'Ganti kata sandi' }).click();
   await expect(here.getByRole('status')).toContainText('Kata sandi sudah diganti');
 
@@ -130,19 +133,82 @@ test('delete the account with its password; it cannot sign in afterwards', async
   const email = await createVerifiedUser('hapus');
   await signIn(page, email);
   const region = page.getByRole('region', { name: 'Hapus akun' });
-  await region.getByLabel('Kata sandi').fill('bukan kata sandinya');
+  await region.getByLabel('Kata sandi', { exact: true }).fill('bukan kata sandinya');
   await region.getByRole('button', { name: 'Hapus akun saya' }).click();
   await expect(region.getByRole('alert')).toContainText('Akun tidak dihapus');
 
-  await region.getByLabel('Kata sandi').fill(PASSWORD);
+  await region.getByLabel('Kata sandi', { exact: true }).fill(PASSWORD);
   await region.getByRole('button', { name: 'Hapus akun saya' }).click();
   await expect(page).toHaveURL(/\/masuk\?pesan=akun-dihapus$/);
   await latestMail(email, 'telah dihapus');
 
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Kata sandi').fill(PASSWORD);
+  await page.getByLabel('Kata sandi', { exact: true }).fill(PASSWORD);
   await page.getByRole('button', { name: 'Masuk' }).click();
   await expect(page.locator('main').getByRole('alert')).toHaveText('Email atau kata sandi salah.');
+});
+
+test('show-password buttons reveal what was typed, on every password field', async ({ page }) => {
+  await page.goto('/daftar');
+  const field = page.getByLabel('Kata sandi', { exact: true });
+  await field.fill(PASSWORD);
+  const toggles = page.getByRole('button', { name: 'Tampilkan kata sandi' });
+  await expect(toggles).toHaveCount(2);
+  await toggles.first().click();
+  await expect(field).toHaveAttribute('type', 'text');
+  await expect(field).toHaveValue(PASSWORD);
+  await page.getByRole('button', { name: 'Sembunyikan kata sandi' }).click();
+  await expect(field).toHaveAttribute('type', 'password');
+  for (const path of ['/masuk', '/atur-ulang-sandi?t=' + 'a'.repeat(43)]) {
+    await page.goto(path);
+    await expect(page.getByRole('button', { name: 'Tampilkan kata sandi' }).first()).toBeVisible();
+  }
+});
+
+test('register refuses a repeated password that differs, and keeps the e-mail', async ({
+  page,
+}) => {
+  const email = newEmail('beda');
+  await page.goto('/daftar');
+  await page.getByLabel('Email').fill(email);
+  await page.getByLabel('Kata sandi', { exact: true }).fill(PASSWORD);
+  await page.getByLabel('Ulangi kata sandi').fill(PASSWORD + ' x');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Buat akun' }).click();
+  await expect(page.getByText('Kedua kata sandi tidak sama.')).toBeVisible();
+  await expect(page.getByLabel('Email')).toHaveValue(email);
+  await expect(page.getByLabel('Kata sandi', { exact: true })).toHaveValue('');
+});
+
+test('a phone number given at sign-up shows masked on the account page, and can be changed and removed', async ({
+  page,
+}) => {
+  const email = newEmail('hp');
+  await page.goto('/daftar');
+  await page.getByLabel('Email').fill(email);
+  await page.getByLabel('Kata sandi', { exact: true }).fill(PASSWORD);
+  await page.getByLabel('Ulangi kata sandi').fill(PASSWORD);
+  await page.getByLabel('Nomor HP (opsional)').fill('0812-3456-7890');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Buat akun' }).click();
+  await expect(page.getByRole('status')).toContainText('Cek kotak masuk email Anda');
+
+  await signIn(page, email);
+  const section = page.getByRole('region', { name: 'Nomor HP' });
+  await expect(section.getByText('+62 812 •••• 7890')).toBeVisible();
+  await expect(page.getByText('81234567890')).toHaveCount(0);
+  await section.getByLabel('Nomor HP baru').fill('abc');
+  await section.getByRole('button', { name: 'Simpan nomor HP' }).click();
+  await expect(section.getByRole('alert')).toContainText('nomor HP Indonesia');
+  await section.getByLabel('Nomor HP baru').fill('+62 857 9999 1234');
+  await section.getByRole('button', { name: 'Simpan nomor HP' }).click();
+  await expect(section.getByRole('status')).toContainText('Nomor HP sudah disimpan');
+  await page.reload();
+  await expect(section.getByText('+62 857 •••• 1234')).toBeVisible();
+  await section.getByRole('button', { name: 'Hapus nomor HP' }).click();
+  await expect(section.getByRole('status')).toContainText('Nomor HP sudah dihapus');
+  await page.reload();
+  await expect(section.getByText('Belum ada nomor HP.')).toBeVisible();
 });
 
 test.describe('without JavaScript', () => {
@@ -152,11 +218,15 @@ test.describe('without JavaScript', () => {
     const email = newEmail('nojs');
     await page.goto('/daftar');
     await page.getByLabel('Email').fill(email);
-    await page.getByLabel('Kata sandi').fill(PASSWORD);
+    await page.getByLabel('Kata sandi', { exact: true }).fill(PASSWORD);
+    await page.getByLabel('Ulangi kata sandi').fill(PASSWORD);
     await page.getByRole('checkbox').check();
     await page.getByRole('button', { name: 'Buat akun' }).click();
     await expect(page.getByRole('status')).toContainText('Cek kotak masuk email Anda');
 
+    // No dead controls: the show-password button needs JavaScript, so it is not rendered.
+    await page.goto('/masuk');
+    await expect(page.getByRole('button', { name: 'Tampilkan kata sandi' })).toHaveCount(0);
     await signIn(page, email);
     await expect(page.getByText('Belum terverifikasi')).toBeVisible();
     await page.getByRole('button', { name: 'Keluar' }).click();

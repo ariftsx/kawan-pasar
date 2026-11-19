@@ -21,16 +21,28 @@ test('commodities without data show "—" and a pending forecast', async ({ page
   await expect(row).toContainText('Prediksi menyusul');
 });
 
-test('every page with forecast numbers shows the model version, the demo label and the disclaimer', async ({
+// The local stack serves the ARIF-Net bundle (`pnpm model:export`, Fase 2B): its version is
+// shown, the demo label is not. (With only the demo bundle, the label rule is covered by unit tests.)
+test('every page with forecast numbers shows the ARIF-Net version, no demo label, and the disclaimer', async ({
   page,
 }) => {
   for (const path of FORECAST_PAGES) {
     await page.goto(path);
     const text = await page.locator('main').innerText();
-    expect(text, path).toContain('demo-empirical-quantile-v1');
-    expect(text, path).toContain('Data demo');
+    expect(text, path).toMatch(/arifnet-a0-v1\.1\.0\+[0-9a-f]{8}/);
+    expect(text, path).not.toContain('Data demo');
+    expect(text, path).not.toContain('demo-empirical-quantile-v1');
     expect(text, path).toMatch(/bukan jaminan harga/i);
   }
+});
+
+test('a horizon where ARIF-Net did not beat "price unchanged" is marked "Sebagian"', async ({
+  page,
+}) => {
+  await page.goto('/prediksi/beras-medium-1');
+  const table = page.getByRole('table').filter({ hasText: 'Status uji' });
+  await expect(table.getByRole('row').filter({ hasText: '7 hari' })).toContainText('Sebagian');
+  await expect(table.getByRole('row').filter({ hasText: '30 hari' })).toContainText('Tersedia');
 });
 
 test('no causal or buy/sell language in generated copy', async ({ page }) => {
