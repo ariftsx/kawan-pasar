@@ -98,9 +98,14 @@ async function api(path: string, body: unknown): Promise<Response> {
 }
 
 /** Registers and verifies a user through the API (setup only; journeys use the UI). */
-export async function createVerifiedUser(tag: string): Promise<string> {
+export async function createVerifiedUser(tag: string, phone?: string): Promise<string> {
   const email = newEmail(tag);
-  const res = await api('/v1/auth/register', { email, password: PASSWORD, acceptPrivacy: true });
+  const res = await api('/v1/auth/register', {
+    email,
+    password: PASSWORD,
+    acceptPrivacy: true,
+    ...(phone === undefined ? {} : { phone }),
+  });
   if (res.status !== 202) throw new Error(`register failed: ${String(res.status)}`);
   const mail = await latestMail(email, 'Verifikasi');
   const token = linkTo(mail.text, '/verifikasi-email').split('t=')[1];
