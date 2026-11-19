@@ -32,6 +32,8 @@ export const alertPreferences = pgTable('alert_preferences', {
   unusualMove: boolean().notNull().default(true),
   forecastRise: boolean().notNull().default(true),
   priceThreshold: boolean().notNull().default(true),
+  /** WhatsApp (Fase 2C): used only once the channel is verified. */
+  whatsapp: boolean().notNull().default(true),
   updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -85,6 +87,8 @@ export const notifications = pgTable(
     /** Relative path in the product (e.g. /prediksi/cabai-merah-keriting); never a full URL. */
     link: text(),
     modelVersion: text(),
+    /** When it also went out by WhatsApp (Fase 2C); null = app only. */
+    sentWhatsappAt: timestamp({ withTimezone: true }),
     readAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },

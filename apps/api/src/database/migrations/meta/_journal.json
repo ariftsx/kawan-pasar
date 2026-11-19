@@ -57,6 +57,20 @@
       "when": 1795033102418,
       "tag": "0007_alerts",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795063160550,
+      "tag": "0008_phone_key",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795063706480,
+      "tag": "0009_whatsapp",
+      "breakpoints": true
     }
   ]
 }

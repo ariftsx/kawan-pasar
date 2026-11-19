@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { check, index, pgTable, smallint, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { bytea, citext } from './custom-types.js';
 import { userRole } from './enums.js';
 
@@ -23,6 +23,8 @@ export const users = pgTable(
     phoneNonce: bytea(),
     phoneCiphertext: bytea(),
     phoneHmac: bytea(),
+    /** Which PHONE_ENC_KEY sealed the number (PhoneCipher.currentKeyId); null = Fase 2B row. */
+    phoneKeyId: smallint(),
   },
   (t) => [
     check('users_email_length', sql`length(${t.email}) <= 254`),

@@ -38,6 +38,8 @@ export const authEventType = pgEnum('auth_event_type', [
   'session_revoke',
   'account_delete',
   'phone_change',
+  'wa_verify',
+  'wa_stop',
 ]);
 // Fase 2B — alerts and in-app news.
 export const alertDirection = pgEnum('alert_direction', ['above', 'below']);
@@ -46,4 +48,12 @@ export const notificationKind = pgEnum('notification_kind', [
   'forecast_rise',
   'price_threshold',
   'weekly',
+]);
+// Fase 2C — WhatsApp (local mock adapter).
+export const whatsappStatus = pgEnum('whatsapp_status', ['pending', 'verified', 'stopped']);
+export const whatsappMessageKind = pgEnum('whatsapp_message_kind', [
+  'code',
+  'alerts',
+  'weekly',
+  'reply',
 ]);
