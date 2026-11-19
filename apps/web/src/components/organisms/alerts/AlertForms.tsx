@@ -1,9 +1,11 @@
 'use client';
 
 import type { AlertPreferences, Watch } from '@kawan-pasar/contracts/alerts';
+import Link from 'next/link';
 import { useActionState } from 'react';
 import type { ReactNode } from 'react';
 import { IDLE } from '@/lib/auth/form-state';
+import { accountHrefs } from '@/lib/hrefs';
 import { Button } from '../../atoms/Button';
 import { Chip } from '../../atoms/Chip';
 import { TextField } from '../../atoms/TextField';
@@ -75,10 +77,12 @@ export function PreferencesForm({
   action,
   csrf,
   preferences,
+  whatsappConnected,
 }: {
   action: FormAction;
   csrf: string;
   preferences: AlertPreferences;
+  whatsappConnected: boolean;
 }): ReactNode {
   const [state, run, pending] = useActionState(action, IDLE);
   return (
@@ -89,18 +93,28 @@ export function PreferencesForm({
       {SWITCHES.map((s) => (
         <Switch key={s.name} {...s} checked={preferences[s.name]} />
       ))}
-      {/* Not a disabled-looking control (faded text fails contrast): a plain status instead. */}
-      <div className="flex min-h-11 items-start justify-between gap-4">
-        <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-[14px] font-bold">WhatsApp</span>
-          <span className="text-body-small-13 text-ink-2">
-            Pesan singkat ke nomor HP Anda. Balas STOP untuk berhenti.
+      {whatsappConnected ? (
+        <Switch
+          name="whatsapp"
+          title="WhatsApp"
+          body="Kabar dan ringkasan mingguan ke nomor Anda (memerlukan notifikasi aplikasi menyala). Balas STOP untuk berhenti."
+          checked={preferences.whatsapp}
+        />
+      ) : (
+        <div className="flex min-h-11 items-start justify-between gap-4">
+          {/* Not connected: the switch is not offered, and the saved value is kept as it is. */}
+          {preferences.whatsapp ? <input type="hidden" name="whatsapp" value="on" /> : null}
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-[14px] font-bold">WhatsApp</span>
+            <span className="text-body-small-13 text-ink-2">
+              Hubungkan nomor Anda di bagian WhatsApp untuk menerima kabar lewat WhatsApp.
+            </span>
           </span>
-        </span>
-        <Chip tone="neutral" size="S">
-          Segera hadir
-        </Chip>
-      </div>
+          <Chip tone="neutral" size="S">
+            Belum terhubung
+          </Chip>
+        </div>
+      )}
       <p className="text-overline-11 text-muted-text uppercase">Kapan memberi tahu</p>
       {RULES.map((s) => (
         <Switch key={s.name} {...s} checked={preferences[s.name]} />
@@ -282,5 +296,111 @@ export function UnsubscribeForm({
         Berhenti menerima ringkasan
       </Button>
     </form>
+  );
+}
+
+/** The WhatsApp channel (Fase 2C): connect with a code, see the status, disconnect. */
+export function WhatsAppPanel({
+  status,
+  phone,
+  canSendCode,
+  csrf,
+  sendCode,
+  verify,
+  disconnect,
+  switchOn,
+}: {
+  /** The WhatsApp switch in the settings (connected but switched off sends nothing). */
+  switchOn: boolean;
+  status: 'none' | 'pending' | 'verified' | 'stopped';
+  phone: string | null;
+  canSendCode: boolean;
+  csrf: string;
+  sendCode: FormAction;
+  verify: FormAction;
+  disconnect: FormAction;
+}): ReactNode {
+  const [sent, runSend, sending] = useActionState(sendCode, IDLE);
+  const [checked, runVerify, verifying] = useActionState(verify, IDLE);
+  const [cut, runCut, cutting] = useActionState(disconnect, IDLE);
+  if (phone === null) {
+    return (
+      <p className="text-body-small-13 text-ink-2">
+        Tambahkan nomor HP di{' '}
+        <Link href={accountHrefs.phone()} className="font-semibold text-green-900 underline">
+          Akun saya
+        </Link>{' '}
+        untuk menerima kabar lewat WhatsApp.
+      </p>
+    );
+  }
+  const STATUS: Record<typeof status, string> = {
+    none: 'Belum terhubung.',
+    pending: 'Menunggu kode verifikasi.',
+    verified: switchOn
+      ? 'Terhubung. Kabar dan ringkasan mingguan juga dikirim ke WhatsApp.'
+      : 'Terhubung, tetapi pengiriman WhatsApp sedang dimatikan di Pengaturan peringatan.',
+    stopped: 'Dihentikan lewat balasan STOP. Verifikasi ulang untuk mengaktifkan kembali.',
+  };
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-body-medium-15">
+        <span className="font-bold">{phone}</span> · {STATUS[status]}
+      </p>
+      {status === 'verified' ? (
+        <form action={runCut} className="flex flex-col gap-3">
+          <FormMessage state={cut} />
+          <Csrf value={csrf} />
+          <div>
+            <Button type="submit" variant="secondary" size="S" disabled={cutting}>
+              Putuskan WhatsApp
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <>
+          <form action={runSend} className="flex flex-col gap-3">
+            <FormMessage state={sent} />
+            <Csrf value={csrf} />
+            <div>
+              <Button
+                type="submit"
+                variant={status === 'pending' ? 'secondary' : 'brand'}
+                size="S"
+                disabled={sending || !canSendCode}
+              >
+                {status === 'pending' ? 'Kirim ulang kode' : 'Kirim kode verifikasi'}
+              </Button>
+            </div>
+            {canSendCode ? null : (
+              <p className="text-body-small-13 text-ink-2">
+                Batas pengiriman kode tercapai, atau email Anda belum terverifikasi.
+              </p>
+            )}
+          </form>
+          {status === 'pending' ? (
+            <form action={runVerify} className="flex flex-col gap-3" noValidate>
+              <FormMessage state={checked} />
+              <Csrf value={csrf} />
+              <TextField
+                id="wa-code"
+                name="code"
+                label="Kode dari WhatsApp"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={16}
+                hint="6 angka, berlaku 10 menit."
+                error={checked.fields?.['code']}
+              />
+              <div>
+                <Button type="submit" variant="brand" size="S" disabled={verifying}>
+                  Verifikasi
+                </Button>
+              </div>
+            </form>
+          ) : null}
+        </>
+      )}
+    </div>
   );
 }

@@ -13,6 +13,7 @@ import {
   MarkAllReadForm,
   PreferencesForm,
   WatchItem,
+  WhatsAppPanel,
 } from '@/components/organisms/alerts/AlertForms';
 import { PageContainer } from '@/components/templates/SiteShell';
 import {
@@ -20,9 +21,12 @@ import {
   markAllReadAction,
   removeWatchAction,
   savePreferencesAction,
+  disconnectWhatsAppAction,
+  sendWhatsAppCodeAction,
   updateWatchAction,
+  verifyWhatsAppAction,
 } from '@/lib/alerts/actions';
-import { alertsApi, authApi } from '@/lib/auth/api';
+import { alertsApi, authApi, whatsappApi } from '@/lib/auth/api';
 import { SESSION_COOKIE } from '@/lib/auth/cookie';
 import { cx } from '@/lib/cx';
 import { formatDateWib } from '@/lib/format';
@@ -68,6 +72,7 @@ function NewsItem({ n }: { n: NotificationItem }): ReactNode {
       <p className="text-[12px] text-muted-text">
         {formatDateWib(n.createdAt, 'short')} · {time.format(new Date(n.createdAt))}
         {n.kind === 'weekly' ? ' · ringkasan mingguan' : ' · di aplikasi'}
+        {n.sentWhatsapp ? ' · juga dikirim ke WhatsApp' : ''}
       </p>
       {n.link === null ? null : (
         <Link
@@ -93,13 +98,14 @@ export default async function AlertsPage({
   const before = Number(params['sebelum']);
   const cursor = Number.isSafeInteger(before) && before > 0 ? before : undefined;
 
-  const [me, overview, news] = await Promise.all([
+  const [me, overview, news, wa] = await Promise.all([
     authApi.me(token),
     alertsApi.overview(token),
     alertsApi.notifications(token, tab, cursor),
+    whatsappApi.status(token),
   ]);
   if (!me.ok && me.code === 'unauthenticated') redirect(accountHrefs.notice('sesi-berakhir'));
-  if (!me.ok || !overview.ok || !news.ok) {
+  if (!me.ok || !overview.ok || !news.ok || !wa.ok) {
     return (
       <PageContainer className="py-10">
         <p role="alert" className="text-body-medium-15">
@@ -115,6 +121,7 @@ export default async function AlertsPage({
     value: c.code,
     label: c.name,
   }));
+  const waState = typeof params['wa'] === 'string' ? params['wa'] : undefined;
   const saved = typeof params['disimpan'] === 'string' ? SAVED[params['disimpan']] : undefined;
 
   return (
@@ -227,6 +234,43 @@ export default async function AlertsPage({
           </section>
 
           <section
+            id="whatsapp"
+            aria-labelledby="whatsapp-title"
+            className="flex scroll-mt-28 flex-col gap-3 rounded-xl border border-line bg-surface p-5 sm:p-6"
+          >
+            <h2 id="whatsapp-title" className="text-heading-title-20">
+              WhatsApp
+            </h2>
+            {waState === 'terhubung' && wa.data.status === 'verified' ? (
+              <StatePanel
+                pose="senang"
+                chip="Berhasil"
+                chipTone="green"
+                title="Peringatan WhatsApp aktif!"
+                body="Kapa akan mengabari Anda saat harga komoditas yang dipantau bergerak di luar kebiasaan."
+              />
+            ) : null}
+            {waState === 'kode-terkirim' ? (
+              <p role="status" className="text-body-small-13 font-semibold">
+                Kode verifikasi sudah dikirim ke WhatsApp Anda.
+              </p>
+            ) : null}
+            {waState === 'terputus' ? (
+              <p role="status" className="text-body-small-13 font-semibold">
+                WhatsApp sudah diputuskan.
+              </p>
+            ) : null}
+            <WhatsAppPanel
+              {...wa.data}
+              csrf={csrf}
+              sendCode={sendWhatsAppCodeAction}
+              verify={verifyWhatsAppAction}
+              disconnect={disconnectWhatsAppAction}
+              switchOn={preferences.whatsapp}
+            />
+          </section>
+
+          <section
             id="pengaturan"
             aria-labelledby="pengaturan-title"
             className="flex scroll-mt-28 flex-col gap-3 rounded-xl border border-line bg-surface p-5 sm:p-6"
@@ -234,7 +278,12 @@ export default async function AlertsPage({
             <h2 id="pengaturan-title" className="text-heading-title-20">
               Pengaturan peringatan
             </h2>
-            <PreferencesForm action={savePreferencesAction} csrf={csrf} preferences={preferences} />
+            <PreferencesForm
+              action={savePreferencesAction}
+              csrf={csrf}
+              preferences={preferences}
+              whatsappConnected={wa.data.status === 'verified'}
+            />
           </section>
         </div>
       </div>

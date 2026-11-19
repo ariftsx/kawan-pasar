@@ -22,7 +22,8 @@ const SECTIONS: readonly { title: string; items: readonly string[] }[] = [
     title: 'Bila Anda membuat akun',
     items: [
       'Kami menyimpan email Anda dan kata sandi dalam bentuk hash Argon2id (kata sandi asli tidak pernah disimpan).',
-      'Nomor HP bersifat opsional. Bila Anda mengisinya, nomor disimpan terenkripsi (AES-256-GCM) dan hanya ditampilkan tersamar. Nomor ini disiapkan untuk peringatan WhatsApp nanti; saat ini belum ada pesan yang dikirim. Anda bisa mengubah atau menghapusnya kapan saja di halaman Akun.',
+      'Nomor HP bersifat opsional. Bila Anda mengisinya, nomor disimpan terenkripsi (AES-256-GCM) dan hanya ditampilkan tersamar. Anda bisa mengubah atau menghapusnya kapan saja di halaman Akun.',
+      'WhatsApp hanya dipakai setelah Anda memverifikasi nomor dengan kode 6 digit. Isinya kabar peringatan dan ringkasan mingguan, paling banyak 5 pesan sehari. Balas STOP untuk berhenti; mengaktifkan kembali memerlukan verifikasi ulang di aplikasi. Mengubah nomor memutus WhatsApp. Catatan pengiriman (tanpa isi pesan dan tanpa nomor) disimpan 30 hari untuk membatasi jumlah pesan.',
       'Sesi masuk disimpan sebagai sidik token, bersama jenis peramban dan sistem operasi (misalnya "Chrome · Windows") agar Anda bisa melihat dan mengakhiri sesi.',
       'Catatan keamanan (masuk, gagal masuk, ganti kata sandi) disimpan 90 hari tanpa email; alamat IP hanya sebagai hash yang berganti setiap hari.',
       'Email hanya dipakai untuk verifikasi, atur ulang kata sandi, pemberitahuan keamanan akun, dan peringatan harga yang Anda aktifkan. Email yang gagal terkirim dihapus dari antrean paling lambat 1 hari.',

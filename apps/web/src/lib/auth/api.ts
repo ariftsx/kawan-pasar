@@ -5,6 +5,7 @@ import {
   LoginResponseSchema,
   NotificationsResponseSchema,
   UnreadCountResponseSchema,
+  WhatsAppResponseSchema,
   MeResponseSchema,
   SessionsResponseSchema,
 } from '@kawan-pasar/contracts';
@@ -17,6 +18,7 @@ import type {
   NotificationsResponse,
   WatchInput,
   WatchUpdate,
+  WhatsAppResponse,
   ChangePasswordInput,
   DeleteAccountInput,
   ForgotInput,
@@ -183,4 +185,16 @@ export const alertsApi = {
     call('POST', '/v1/notifications/read', null, { session, csrf, body: input }),
   unsubscribeWeekly: (token: string): Done =>
     call('POST', '/v1/alerts/weekly/unsubscribe', null, { body: { token } }),
+};
+
+/** The WhatsApp channel (Fase 2C, local mock adapter). */
+export const whatsappApi = {
+  status: (session: string): Promise<AuthResult<WhatsAppResponse>> =>
+    call('GET', '/v1/whatsapp', WhatsAppResponseSchema, { session }),
+  sendCode: (session: string, csrf: string): Done =>
+    call('POST', '/v1/whatsapp/code', null, { session, csrf }),
+  verify: (session: string, csrf: string, code: string): Done =>
+    call('POST', '/v1/whatsapp/verify', null, { session, csrf, body: { code } }),
+  disconnect: (session: string, csrf: string): Done =>
+    call('DELETE', '/v1/whatsapp', null, { session, csrf }),
 };

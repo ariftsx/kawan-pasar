@@ -6,11 +6,12 @@ import {
   WatchIdSchema,
   WatchInputSchema,
   WatchUpdateSchema,
+  WhatsAppVerifyInputSchema,
 } from '@kawan-pasar/contracts';
 import { redirect } from 'next/navigation';
 import { endSession, failed, text, withSession } from '../auth/action-helpers';
 import type { AuthResult } from '../auth/api';
-import { alertsApi } from '../auth/api';
+import { alertsApi, whatsappApi } from '../auth/api';
 import type { FormState } from '../auth/form-state';
 import { alertHrefs } from '../hrefs';
 import { parseRupiah } from './rupiah';
@@ -45,6 +46,8 @@ export async function savePreferencesAction(_prev: FormState, form: FormData): P
       unusualMove: on('unusualMove'),
       forecastRise: on('forecastRise'),
       priceThreshold: on('priceThreshold'),
+      // The switch is shown only for a connected channel; otherwise the form keeps its value.
+      whatsapp: on('whatsapp'),
     });
     const problem = await handle(
       await alertsApi.savePreferences(session, text(form, 'csrf'), input),
@@ -133,4 +136,51 @@ export async function unsubscribeWeeklyAction(
     message:
       'Ringkasan mingguan sudah dimatikan. Anda bisa menyalakannya lagi di halaman Peringatan.',
   };
+}
+
+const CODE_MSG = 'Masukkan 6 angka kode dari WhatsApp.';
+
+export async function sendWhatsAppCodeAction(_prev: FormState, form: FormData): Promise<FormState> {
+  return withSession(async (session) => {
+    const result = await whatsappApi.sendCode(session, text(form, 'csrf'));
+    if (!result.ok) {
+      if (result.code === 'unauthenticated') return endSession();
+      if (result.code === 'rate_limited') {
+        return { status: 'error', message: 'Terlalu banyak kode diminta. Coba lagi nanti.' };
+      }
+      return failed(result);
+    }
+    redirect(alertHrefs.whatsapp('kode-terkirim'));
+  }, BACK);
+}
+
+export async function verifyWhatsAppAction(_prev: FormState, form: FormData): Promise<FormState> {
+  return withSession(async (session) => {
+    const input = WhatsAppVerifyInputSchema.safeParse({ code: text(form, 'code') });
+    if (!input.success) return { status: 'error', message: CODE_MSG, fields: { code: CODE_MSG } };
+    const result = await whatsappApi.verify(session, text(form, 'csrf'), input.data.code);
+    if (!result.ok) {
+      if (result.code === 'unauthenticated') return endSession();
+      if (result.code === 'invalid_token') {
+        const expired = result.fields?.[0] === 'expired';
+        const message = expired
+          ? 'Kode sudah tidak berlaku. Minta kode baru.'
+          : 'Kode salah. Periksa lagi pesan WhatsApp Anda.';
+        return { status: 'error', message, fields: { code: message } };
+      }
+      return failed(result);
+    }
+    redirect(alertHrefs.whatsapp('terhubung'));
+  }, BACK);
+}
+
+export async function disconnectWhatsAppAction(
+  _prev: FormState,
+  form: FormData,
+): Promise<FormState> {
+  return withSession(async (session) => {
+    const result = await whatsappApi.disconnect(session, text(form, 'csrf'));
+    if (!result.ok) return result.code === 'unauthenticated' ? endSession() : failed(result);
+    redirect(alertHrefs.whatsapp('terputus'));
+  }, BACK);
 }
