@@ -8,3 +8,4 @@ export * from './bundle.js';
 export * from './cache-tags.js';
 export * from './staleness.js';
 export * from './auth.js';
+export * from './alerts.js';

@@ -6,6 +6,9 @@ import {
   EmailSchema,
   LoginInputSchema,
   MeResponseSchema,
+  PhoneInputSchema,
+  PhoneSchema,
+  maskPhone,
   PasswordSchema,
   RegisterInputSchema,
   ResetInputSchema,
@@ -91,6 +94,7 @@ describe('responses', () => {
         emailVerified: false,
         createdAt: '2026-11-17T00:00:00.000Z',
         csrf: TOKEN,
+        phone: null,
       }).success,
     ).toBe(true);
     expect(
@@ -118,5 +122,62 @@ describe('responses', () => {
       'csrf',
       'unauthenticated',
     ]);
+  });
+});
+
+describe('PhoneSchema (optional mobile number, Fase 2B)', () => {
+  it('normalises Indonesian mobile numbers to E.164', () => {
+    expect(PhoneSchema.parse('0812-3456-7890')).toBe('+6281234567890');
+    expect(PhoneSchema.parse('+62 812 3456 789')).toBe('+628123456789');
+    expect(PhoneSchema.parse('6281234567890')).toBe('+6281234567890');
+    expect(PhoneSchema.parse(' (0812) 3456 78 ')).toBe('+62812345678');
+  });
+
+  it('rejects non-mobile, foreign, too short, too long and non-digit input', () => {
+    for (const bad of [
+      '021-555-1234',
+      '+1 202 555 0100',
+      '0812345',
+      '08123456789012345',
+      '0812abc4567',
+      '',
+      '++6281234567890',
+    ]) {
+      expect(PhoneSchema.safeParse(bad).success, bad).toBe(false);
+    }
+  });
+});
+
+describe('phone in account contracts', () => {
+  it('register accepts a phone or none', () => {
+    const base = {
+      email: 'a@b.id',
+      password: 'kalimat sandi panjang',
+      acceptPrivacy: true as const,
+    };
+    expect(RegisterInputSchema.parse(base)).toEqual(base);
+    expect(RegisterInputSchema.parse({ ...base, phone: '081234567890' }).phone).toBe(
+      '+6281234567890',
+    );
+    expect(RegisterInputSchema.safeParse({ ...base, phone: '12' }).success).toBe(false);
+  });
+
+  it('PhoneInputSchema sets a number; me shows it masked or null', () => {
+    expect(PhoneInputSchema.parse({ phone: '081234567890' })).toEqual({ phone: '+6281234567890' });
+    const me = {
+      id: '0192f1d2-0000-7000-8000-000000000000',
+      email: 'a@b.id',
+      emailVerified: true,
+      createdAt: '2026-11-19T00:00:00.000Z',
+      csrf: TOKEN,
+    };
+    expect(MeResponseSchema.safeParse({ ...me, phone: null }).success).toBe(true);
+    expect(MeResponseSchema.safeParse({ ...me, phone: '+62 812 •••• 7890' }).success).toBe(true);
+    expect(MeResponseSchema.safeParse({ ...me, phone: '+6281234567890' }).success).toBe(false);
+  });
+
+  it('maskPhone keeps the country code, operator prefix and last four digits', () => {
+    expect(maskPhone('+6281234567890')).toBe('+62 812 •••• 7890');
+    expect(maskPhone('+628123456789')).toBe('+62 812 •••• 6789');
   });
 });

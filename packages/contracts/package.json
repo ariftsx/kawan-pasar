@@ -15,6 +15,10 @@
     "./auth": {
       "types": "./dist/auth.d.ts",
       "default": "./dist/auth.js"
+    },
+    "./alerts": {
+      "types": "./dist/alerts.d.ts",
+      "default": "./dist/alerts.js"
     }
   },
   "files": [

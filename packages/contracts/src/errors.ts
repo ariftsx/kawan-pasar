@@ -13,6 +13,8 @@ export const ApiErrorCodeSchema = z.enum([
   'weak_password',
   'invalid_token',
   'csrf',
+  // Alerts (Fase 2B): already watched, or the watch limit is reached.
+  'conflict',
 ]);
 export type ApiErrorCode = z.infer<typeof ApiErrorCodeSchema>;
 

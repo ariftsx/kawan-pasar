@@ -25,9 +25,33 @@ const PresentedPassword = z.string().min(1).max(512);
 /** 32 random bytes, base64url without padding. */
 export const TokenSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
 
+/**
+ * Optional Indonesian mobile number (Fase 2B), normalised to E.164 (+628…). Accepts the usual
+ * ways of writing it (08…, +62…, 62…, with spaces, dashes or brackets). Mobile numbers start
+ * with 8 after the country code and have 9 to 12 national digits. Not verified here: proving
+ * the number belongs to the user is the WhatsApp step (Fase 2C).
+ */
+export const PhoneSchema = z
+  .string()
+  .trim()
+  .max(32)
+  .transform((s) => s.replace(/[\s().-]/g, ''))
+  .pipe(
+    z
+      .string()
+      .regex(/^(?:\+62|62|0)8\d{8,11}$/, { message: 'invalid_phone' })
+      .transform((s) => `+62${s.replace(/^(?:\+62|62|0)/, '')}`),
+  );
+
+/** How the API shows a stored number back: country code, operator prefix, last four digits. */
+export const MaskedPhoneSchema = z.string().regex(/^\+62 8\d{2} •••• \d{4}$/);
+
+export const maskPhone = (e164: string): string => `+62 ${e164.slice(3, 6)} •••• ${e164.slice(-4)}`;
+
 export const RegisterInputSchema = z.strictObject({
   email: EmailSchema,
   password: PasswordSchema,
+  phone: PhoneSchema.optional(),
   acceptPrivacy: z.literal(true),
 });
 export type RegisterInput = z.infer<typeof RegisterInputSchema>;
@@ -50,6 +74,9 @@ export const ChangePasswordInputSchema = z.strictObject({
 });
 export type ChangePasswordInput = z.infer<typeof ChangePasswordInputSchema>;
 
+export const PhoneInputSchema = z.strictObject({ phone: PhoneSchema });
+export type PhoneInput = z.infer<typeof PhoneInputSchema>;
+
 export const DeleteAccountInputSchema = z.strictObject({ password: PresentedPassword });
 export type DeleteAccountInput = z.infer<typeof DeleteAccountInputSchema>;
 
@@ -68,6 +95,8 @@ export const MeResponseSchema = z.strictObject({
   email: z.string().max(254),
   emailVerified: z.boolean(),
   createdAt: IsoDateTime,
+  /** The optional mobile number, masked; the full number never leaves the API. */
+  phone: MaskedPhoneSchema.nullable(),
   /**
    * The session's CSRF secret. Only the BFF sees it (server side) and renders it into the
    * account forms; a cross-site page cannot read it (synchronizer token pattern).
