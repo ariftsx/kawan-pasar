@@ -13,7 +13,7 @@ const env = Object.fromEntries(
 );
 
 /** Runs one SQL statement in the dev database as the schema owner (setup only). */
-function sql(statement: string, email: string): void {
+export function sql(statement: string, email: string): void {
   const id = execFileSync('docker', ['compose', '-p', 'kawan-pasar', 'ps', '-q', 'postgres'], {
     encoding: 'utf8',
   }).trim();

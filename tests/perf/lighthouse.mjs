@@ -27,6 +27,7 @@ const DEFAULT_PAGES = [
   '/prediksi',
   '/edukasi/apa-itu-inflasi-pangan',
   '/arif-net',
+  '/analis',
 ];
 const pages = process.argv.slice(2).length > 0 ? process.argv.slice(2) : DEFAULT_PAGES;
 
