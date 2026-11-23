@@ -154,13 +154,40 @@ Catatan pengiriman untuk batas kirim, disimpan 30 hari:
 
 Tanpa isi pesan dan tanpa nomor. Sejak Fase 2C, `users.phone_key_id` menyimpan id kunci nomor, `alert_preferences.whatsapp` menyimpan sakelar WhatsApp, dan `notifications.sent_whatsapp_at` mencatat kapan kabar terkirim ke WhatsApp.
 
+## `users.role` (Fase 3A)
+
+Enum `user_role`: `user` (bawaan), `analyst` (boleh mengunduh CSV Mode Analis), dan `admin` (Fase 3B). Diubah hanya dari server (`role:grant`, kelak halaman admin).
+
+## `analyst_requests` (Fase 3A)
+
+Pengajuan peran Analis:
+
+- `user_id` (cascade);
+- `reason` (10–500 karakter) dan `organization` (opsional, ≤ 120);
+- `status`: `pending`, `approved`, atau `rejected`;
+- `decided_by` (set null), `decided_at`, `note` (≤ 500, alasan penolakan);
+- `created_at`.
+
+Satu pengajuan `pending` per akun (indeks unik parsial `analyst_requests_one_pending`). Terhapus bersama akunnya.
+
+## `audit_log` (Fase 3A)
+
+Jejak tindakan peran dan unduhan:
+
+- `actor_id` (set null; kosong bila dilakukan operator lewat CLI);
+- `action`: `role_request`, `role_grant`, `role_revoke`, `role_reject`, `export_prices`, `export_forecasts`;
+- `target`: id saja (`user:<uuid>`, `analyst_request:<id>`, `rows:<n>`), tanpa email, nomor HP, atau isi artikel;
+- `created_at`.
+
+Hanya bisa ditambah oleh aplikasi (`app_rw`: SELECT, INSERT). Entri lebih dari 365 hari dihapus oleh fungsi `prune_audit_log()` (SECURITY DEFINER) dalam tugas retensi harian, sehingga aplikasi yang disusupi tidak bisa menghapus jejak terbaru.
+
 ## Hak akses role
 
-| Role             | Dipakai oleh                                  | Hak                                                                                                                                                                                                                                                                                             |
-| ---------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `kp_owner`       | Migrasi & seed (langsung ke PostgreSQL :5432) | Pemilik skema                                                                                                                                                                                                                                                                                   |
-| `app_rw`         | Core API (lewat PgBouncer)                    | SELECT semua tabel & view; INSERT/UPDATE `forecast_artifacts`, `forecasts`, `articles`; CRUD `users`, `auth_tokens`, `alert_preferences`, `alert_watches`, `notifications`; SELECT/INSERT/DELETE `auth_events`. **Tidak** boleh memicu refresh view (migrasi 0002). `statement_timeout` 5 detik |
-| `ingest_w`       | Layanan ingest (lewat PgBouncer)              | SELECT `markets`, `commodities`; INSERT `price_observations`; SELECT/INSERT/UPDATE `ingest_runs`; EXECUTE refresh. `statement_timeout` 60 detik                                                                                                                                                 |
-| `pgbouncer_auth` | PgBouncer                                     | Hanya EXECUTE `pgbouncer.get_auth()` (terbatas untuk `app_rw`, `ingest_w`)                                                                                                                                                                                                                      |
+| Role             | Dipakai oleh                                  | Hak                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ---------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kp_owner`       | Migrasi & seed (langsung ke PostgreSQL :5432) | Pemilik skema                                                                                                                                                                                                                                                                                                                                                                                       |
+| `app_rw`         | Core API (lewat PgBouncer)                    | SELECT semua tabel & view; INSERT/UPDATE `forecast_artifacts`, `forecasts`, `articles`; CRUD `users`, `auth_tokens`, `alert_preferences`, `alert_watches`, `notifications`; SELECT/INSERT/DELETE `auth_events`; SELECT/INSERT/UPDATE `analyst_requests`; SELECT/INSERT `audit_log` dan EXECUTE `prune_audit_log()`. **Tidak** boleh memicu refresh view (migrasi 0002). `statement_timeout` 5 detik |
+| `ingest_w`       | Layanan ingest (lewat PgBouncer)              | SELECT `markets`, `commodities`; INSERT `price_observations`; SELECT/INSERT/UPDATE `ingest_runs`; EXECUTE refresh. `statement_timeout` 60 detik                                                                                                                                                                                                                                                     |
+| `pgbouncer_auth` | PgBouncer                                     | Hanya EXECUTE `pgbouncer.get_auth()` (terbatas untuk `app_rw`, `ingest_w`)                                                                                                                                                                                                                                                                                                                          |
 
 Hak ini diuji otomatis di `apps/api/test/database/grants.int.test.ts`.

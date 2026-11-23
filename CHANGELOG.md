@@ -2,6 +2,20 @@
 
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/). Versi produk mengikuti fase pengembangan.
 
+## [Fase 3A — Mode Analis] — 2026-11-23
+
+### Ditambahkan
+
+- **Mode Analis** di `/analis`, terbuka untuk semua:
+  - grafik perbandingan antarkomoditas (indeks, harga, perubahan relatif) dengan rentang 90H, 1T, 3T, dan Semua;
+  - unduh grafik PNG dengan judul, legenda, dan sumber;
+  - kartu cakupan data dan tabel perkiraan ARIF-Net (7, 30, 90, 365 hari).
+- **Unduhan CSV** `harga.csv` dan `prediksi.csv` untuk peran Analis: filter komoditas dan tanggal, 30 unduhan per jam, tercatat di `audit_log`.
+- **Pengajuan peran Analis** di `/akun` (bagian "Mode Analis"). Untuk sementara diputuskan lewat `pnpm --filter @kawan-pasar/api role:grant <email> analyst|user`; halaman admin menyusul di Fase 3B.
+- Kode galat `forbidden` (403).
+- Migrasi `0010_analyst`: peran pengguna, `analyst_requests`, `audit_log`, dan `prune_audit_log()`.
+- Tautan Mode Analis di Lainnya, footer, ARIF-Net, dan Prediksi.
+
 ## [Fase 2C — WhatsApp (adapter tiruan)] — 2026-11-19
 
 ### Ditambahkan

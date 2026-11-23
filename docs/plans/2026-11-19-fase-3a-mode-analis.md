@@ -1,0 +1,24 @@
+# Rencana Fase 3A — Mode Analis
+
+- Tanggal: 19 November 2026
+- Status: **disetujui pemilik 19 Nov 2026**
+- Desain: [`docs/design/2026-11-19-fase-3-analis-dan-admin-design.md`](../design/2026-11-19-fase-3-analis-dan-admin-design.md) § 2
+
+## Tugas
+
+| #   | Tugas                                                                                                                                                                                                                                               | Uji                                                                                                              |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 1   | **Peran dan data.** Migrasi `0010`: `user_role` + `analyst`, `admin`; `analyst_requests`; `audit_log` (retensi 1 tahun di worker). CLI `pnpm role:grant <email> <analyst\|user>` (admin hanya lewat `admin:grant` di 3B).                           | Integrasi: hak role DB, CLI tidak menerima `admin`                                                               |
+| 2   | **Penjaga peran di API.** `RoleGuard('analyst')` membaca peran dari DB setiap permintaan (pencabutan langsung berlaku); admin juga lolos.                                                                                                           | Integrasi: user 403, analyst 200, peran dicabut → 403 berikutnya                                                 |
+| 3   | **Pengajuan peran.** `GET/POST /v1/analyst/request` (sesi + CSRF, email terverifikasi, satu pengajuan aktif, alasan ≤ 500, instansi ≤ 120).                                                                                                         | Integrasi: alur, duplikat, belum verifikasi, IDOR                                                                |
+| 4   | **Ekspor CSV.** `GET /v1/analyst/prices.csv?commodities=&from=&to=` dan `/v1/analyst/forecasts.csv`, berupa stream. Escape injeksi formula, `Content-Disposition` aman, batas 30/jam per akun (Valkey sesi), `audit_log` per unduhan.               | Integrasi: isi dan urutan, escape, batas, 403 untuk user biasa, log tanpa email                                  |
+| 5   | **Kontrak** `packages/contracts/src/analyst.ts` (filter, pengajuan, status).                                                                                                                                                                        | Unit                                                                                                             |
+| 6   | **Halaman `/analis`** (ISR, data seri disematkan): filter, grafik perbandingan (indeks/harga/perubahan), rentang, tabel prediksi, kartu cakupan, unduh PNG (klien), panel unduh CSV (masuk / ajukan / menunggu / unduh). Tanpa JS: tampilan bawaan. | Unit: perhitungan indeks, downsampling, CSV di web; e2e: 360/1280, axe, tanpa JS, PNG terunduh, CSV sesuai peran |
+| 7   | **Route Handler BFF** `/api/analis/harga.csv` dan `/api/analis/prediksi.csv`: meneruskan sesi, `private, no-store`, stream.                                                                                                                         | Unit + e2e                                                                                                       |
+| 8   | **Navigasi.** Lainnya "Mode Analis" aktif; tautan dari ARIF-Net dan Prediksi; `/akun` menampilkan status peran.                                                                                                                                     | e2e                                                                                                              |
+| 9   | **Kinerja:** `/analis` diukur Lighthouse (desktop dan mobile) dengan anggaran JS sendiri. Halaman publik lain tetap dalam anggaran.                                                                                                                 | Lighthouse                                                                                                       |
+| 10  | **Dokumen:** API, kamus data, keamanan (peran, audit_log), privasi (audit unduhan), CHANGELOG, audit `fase-3a.md`.                                                                                                                                  | —                                                                                                                |
+
+## Selesai bila
+
+`pnpm audit:all` lulus 20/20, simulasi pengguna (pengunjung, pengguna biasa, pengaju, analis) lulus, dan tinjauan independen tanpa Critical/Important terbuka.

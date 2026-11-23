@@ -88,3 +88,26 @@ Sisa 5xx terjadi pada ~500 permintaan per detik yang langsung ke API 0,4 vCPU (m
   - kanal hanya menyimpan HMAC nomor; nomor berubah = kanal putus.
 - **Pesan masuk tiruan** memakai token layanan. Adapter sungguhan wajib memverifikasi tanda tangan webhook penyedia.
 - **Batas 20 pantauan** dijaga dalam transaksi dengan kunci _advisory_ per pengguna, jadi permintaan paralel tidak bisa melewatinya.
+
+## Tambahan Fase 3A (peran dan Mode Analis)
+
+- **Peran:**
+  - `user` (bawaan), `analyst` (unduh CSV), `admin` (Fase 3B);
+  - diubah hanya dari server: `pnpm --filter @kawan-pasar/api role:grant <email> analyst|user`. Perintah ini tidak pernah memberi atau mengubah admin.
+- **Pengecekan peran:**
+  - `AnalystRoleGuard` membaca `users.role` dari basis data pada setiap permintaan ekspor (bukan dari sesi), jadi pencabutan langsung berlaku;
+  - kurang peran → `403 forbidden`.
+- **Pengajuan peran:**
+  - butuh sesi, CSRF, dan email terverifikasi; satu pengajuan `pending` per akun (indeks unik parsial);
+  - peran dan status verifikasi dicek ulang di dalam transaksi yang mengunci baris pengguna. CLI mengunci baris yang sama, sehingga pemberian peran yang bersamaan tidak bisa meninggalkan pengajuan `pending`.
+- **Ekspor CSV:**
+  - 30 unduhan per jam per akun (jendela tetap di Valkey sesi; kuota terpakai walau unduhan kemudian gagal);
+  - paling banyak 100.000 baris per berkas;
+  - sel yang diawali `=`, `+`, `-`, `@` (juga setelah spasi), tab, atau CR diberi awalan `'` untuk mencegah injeksi formula; angka negatif tetap angka.
+- **Route Handler BFF** `/analis/unduh/*`:
+  - menolak `Sec-Fetch-Site: cross-site` dan `same-site`, sehingga situs lain tidak bisa menghabiskan kuota unduhan;
+  - redirect hanya ke path tetap (`/masuk?ke=/analis`, `/akun#mode-analis`) dengan `Location` relatif.
+- **`audit_log`:**
+  - aplikasi hanya boleh SELECT dan INSERT;
+  - entri berumur lebih dari 365 hari dihapus oleh `prune_audit_log()`, fungsi `SECURITY DEFINER` dengan `search_path = pg_catalog, public` dan nama tabel lengkap dengan skema;
+  - aplikasi yang disusupi tidak bisa menghapus jejak terbaru.

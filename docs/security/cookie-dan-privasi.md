@@ -41,3 +41,10 @@ Ringkasan untuk pengguna ada di halaman `/privasi`. Rinciannya:
 - Paling banyak 5 pesan kabar/ringkasan per hari.
 - Antrean dan log tidak memuat nomor maupun isi pesan.
 - Catatan pengiriman (tanpa isi, tanpa nomor) disimpan 30 hari.
+
+## Mode Analis (Fase 3A)
+
+- Grafik perbandingan di `/analis` terbuka untuk semua pengunjung tanpa cookie tambahan. Gambar PNG dibuat di peramban.
+- Pengajuan peran Analis menyimpan alasan (10–500 karakter) dan instansi (opsional). Keduanya terhapus bersama akun.
+- Setiap unduhan CSV dicatat di `audit_log` dengan id akun, jenis berkas, dan jumlah baris, tanpa email atau filter yang dipakai. Catatan ini disimpan 1 tahun.
+- CSV hanya berisi data harga pasar dan prediksi, tidak ada data pengguna.
