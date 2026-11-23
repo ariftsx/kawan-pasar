@@ -1,4 +1,4 @@
-"""CLI: `python -m kp_ingest import-csv --file <path> [--market PIKJ]`.
+"""CLI: `python -m kp_ingest import-csv --file F` or `import-pihps --file F --ceiling DATE|none`.
 
 Exit codes: 0 succeeded, 2 partial (some rows rejected), 1 failed or bad invocation.
 """
@@ -9,18 +9,31 @@ import logging
 import os
 import sys
 from dataclasses import asdict
+from datetime import date
 from pathlib import Path
 
 import psycopg
 
 from kp_ingest.api_client import invalidate_price_cache
 from kp_ingest.pipeline import run_ingest
+from kp_ingest.sources.base import PriceSource
 from kp_ingest.sources.csv_seed import CsvSeedSource
+from kp_ingest.sources.pihps import PihpsSource
 
 EXIT = {"succeeded": 0, "partial": 2, "failed": 1}
 
 #: Seconds to wait for a connection. Without it an unreachable database hangs the job forever.
 CONNECT_TIMEOUT_S = 10
+
+
+def _ceiling(value: str) -> date | None:
+    """`YYYY-MM-DD` (latest date allowed while the prospective test is locked) or `none`."""
+    if value == "none":
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("use YYYY-MM-DD or none") from error
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -29,6 +42,13 @@ def _parser() -> argparse.ArgumentParser:
     csv_cmd = sub.add_parser("import-csv", help="import the historical PIHPS CSV export")
     csv_cmd.add_argument("--file", required=True, type=Path)
     csv_cmd.add_argument("--market", default="PIKJ")
+    pihps_cmd = sub.add_parser(
+        "import-pihps", help="import PIHPS prices written by the retraining pipeline (Fase 4)"
+    )
+    pihps_cmd.add_argument("--file", required=True, type=Path)
+    pihps_cmd.add_argument("--market", default="PIKJ")
+    # Required on purpose: the caller states the prospective-test lock's ceiling, or "none".
+    pihps_cmd.add_argument("--ceiling", required=True, type=_ceiling)
     return parser
 
 
@@ -49,7 +69,12 @@ def main(argv: list[str] | None = None) -> int:
         with psycopg.connect(
             url, application_name="kawan-pasar-ingest", connect_timeout=CONNECT_TIMEOUT_S
         ) as conn:
-            result = run_ingest(CsvSeedSource(path), conn, market_code=args.market)
+            source: PriceSource = (
+                PihpsSource(path, ceiling=args.ceiling)
+                if args.command == "import-pihps"
+                else CsvSeedSource(path)
+            )
+            result = run_ingest(source, conn, market_code=args.market)
     except psycopg.Error as error:
         # psycopg connection errors can echo the URL (with its password): report the class only.
         print(f"ingest failed: {type(error).__name__}", file=sys.stderr)

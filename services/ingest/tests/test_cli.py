@@ -147,3 +147,40 @@ def test_an_unreachable_api_does_not_fail_the_import(
     monkeypatch.setenv("SERVICE_TOKEN", "t" * 40)
     assert main(["import-csv", "--file", str(FIXTURES / "small.csv")]) == 0
     assert "t" * 40 not in capsys.readouterr().err
+
+
+def test_import_pihps_labels_rows_and_honours_the_ceiling(
+    ingest_url: str,
+    owner_conn: psycopg.Connection,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setenv("INGEST_DATABASE_URL", ingest_url)
+    path = tmp_path / "prices_combined.csv"
+    path.write_text(
+        "comcat_id,commodity,date,price\n"
+        "com_14,Cabai Merah Keriting,2026-09-30,63000\n"
+        "com_14,Cabai Merah Keriting,2026-10-01,64000\n",
+        encoding="utf-8",
+    )
+    code = main(["import-pihps", "--file", str(path), "--ceiling", "2026-09-30"])
+    summary = json.loads(capsys.readouterr().out)
+    assert code == 2
+    assert (summary["inserted"], summary["rejected"]) == (1, 1)
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT source FROM ingest_runs ORDER BY id DESC LIMIT 1")
+        assert cur.fetchone() == ("pihps",)
+        cur.execute("SELECT source FROM price_observations WHERE observed_on = '2026-09-30'")
+        assert ("pihps",) in cur.fetchall()
+
+
+def test_import_pihps_requires_an_explicit_ceiling_choice(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, ingest_url: str
+) -> None:
+    # No silent default: the caller states the lock's ceiling, or "none" once it is open.
+    monkeypatch.setenv("INGEST_DATABASE_URL", ingest_url)
+    path = tmp_path / "p.csv"
+    path.write_text("comcat_id,commodity,date,price\n", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        main(["import-pihps", "--file", str(path)])
