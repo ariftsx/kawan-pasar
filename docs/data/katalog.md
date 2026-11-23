@@ -9,12 +9,12 @@ Sumber kebenaran ada di kode: `packages/catalog/src/`. Tabel `commodities` dan `
 | 1      | `cabai-merah-keriting` | Cabai merah keriting | `com_14`          | Cabai Merah Keriting       | `covered`                     |
 | 2      | `bawang-merah`         | Bawang merah         | `com_11`          | Bawang Merah Ukuran Sedang | `covered`                     |
 | 3      | `beras-medium-1`       | Beras medium I       | `com_3`           | Beras Kualitas Medium I    | `covered`                     |
-| 4      | `cabai-rawit-hijau`    | Cabai rawit hijau    | belum ada         | belum ada di dataset       | `pending` (prediksi menyusul) |
-| 5      | `cabai-rawit-merah`    | Cabai rawit merah    | belum ada         | belum ada di dataset       | `pending` (prediksi menyusul) |
+| 4      | `cabai-rawit-hijau`    | Cabai rawit hijau    | `com_15`          | Cabai Rawit Hijau          | `pending` (prediksi menyusul) |
+| 5      | `cabai-rawit-merah`    | Cabai rawit merah    | `com_16`          | Cabai Rawit Merah          | `pending` (prediksi menyusul) |
 
 Satuan seluruh komoditas: rupiah per kilogram (`kg`).
 
-Komoditas 4 dan 5 tetap tampil di antarmuka dengan harga "—" dan status "Data belum tersedia" (keputusan pemilik, 11 Nov 2026). `comcat_id` keduanya diisi setelah adapter PIHPS dibuat (Fase 4).
+`comcat_id` komoditas 4 dan 5 diambil dari referensi resmi PIHPS (`GetRefCommodityAndCategory`, kategori `cat_8` Cabai Rawit) pada 23 Nov 2026 dan dikonfirmasi pemilik. Harga keduanya masuk lewat pipeline Fase 4 (riwayat ≤ 30 Sep 2026 sekarang, data sesudahnya setelah uji prospektif ARIF-Net dibuka). Prediksinya tetap "menyusul" sampai bundel ARIF-Net 5 komoditas disetujui admin. Daftar ini dicerminkan ke `services/pipeline/config/commodities.json`, dan uji katalog memastikan keduanya sama.
 
 ## Pasar
 

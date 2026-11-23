@@ -2,6 +2,17 @@
 
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/). Versi produk mengikuti fase pengembangan.
 
+## [Fase 4A — Pipeline latih ulang ARIF-Net] — 2026-11-23
+
+### Ditambahkan
+
+- **Pipeline latih ulang ARIF-Net A0** (`services/pipeline`, ADR 0015): ambil harga PIHPS → preprocessing ARIF-Net → penilaian (metode fold ARIF-Net) → latih final 5 seed → konversi → bundel **kandidat** 5 komoditas. Perintah `pnpm pipeline status | run | import <run-id>`, kontainer `pipeline` (profil `pipeline`).
+- **Kunci uji prospektif:** sebelum uji prospektif ARIF-Net dibuka, pipeline hanya memakai data ≤ 30 Sep 2026.
+- **Adapter PIHPS** di `kp_ingest` (`import-pihps`, batas tanggal wajib).
+- `comcat_id` cabai rawit hijau (`com_15`) dan merah (`com_16`) dari referensi resmi PIHPS.
+- Salinan kode ARIF-Net terkunci sha256 (`vendor/arifnet`, MIT).
+- Gerbang audit `pipeline-tests` (termasuk run ujung ke ujung hermetis), `pipeline-mypy`, `pipeline-ruff`.
+
 ## [Fase 3B — Admin] — 2026-11-23
 
 ### Ditambahkan
