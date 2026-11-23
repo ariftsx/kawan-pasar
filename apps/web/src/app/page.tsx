@@ -128,9 +128,9 @@ export default function Orientasi(): ReactNode {
             Dari mana harganya?
           </h2>
           <p className="text-body-small-13 text-ink-2">
-            Harga harian dari PIHPS untuk Pasar Kramat Jati. Pasar/wilayah lain serta cabai rawit
-            hijau & merah menyusul. Prediksi adalah estimasi model, bukan jaminan harga dan bukan
-            rekomendasi jual/beli.
+            Harga harian dari PIHPS untuk Pasar Kramat Jati. Pasar/wilayah lain serta prediksi cabai
+            rawit hijau & merah menyusul. Prediksi adalah estimasi model, bukan jaminan harga dan
+            bukan rekomendasi jual/beli.
           </p>
         </section>
       </div>

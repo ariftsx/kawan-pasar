@@ -14,10 +14,14 @@ test('unknown values are never shown as zero rupiah anywhere', async ({ page }) 
   }
 });
 
-test('commodities without data show "—" and a pending forecast', async ({ page }) => {
+// Fase 4A: cabai rawit has PIHPS prices now (history up to the prospective-test ceiling), but no
+// model covers it until an admin approves a 5-commodity bundle: its forecast stays pending.
+test('commodities the model does not cover yet show their price and a pending forecast', async ({
+  page,
+}) => {
   await page.goto('/harga');
   const row = page.getByRole('row').filter({ hasText: 'Cabai rawit hijau' });
-  await expect(row).toContainText('—');
+  await expect(row).toContainText(/Rp/);
   await expect(row).toContainText('Prediksi menyusul');
 });
 

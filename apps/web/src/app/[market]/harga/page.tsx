@@ -70,7 +70,7 @@ export default async function Harga({
 
       <CoverageStrip
         title={`Data saat ini: ${summary.market.name} · ${String(covered)} komoditas bisa diprediksi`}
-        body="Pasar/wilayah lain serta cabai rawit hijau dan cabai rawit merah sedang dikembangkan."
+        body="Pasar/wilayah lain serta prediksi cabai rawit hijau dan cabai rawit merah sedang dikembangkan."
         action={
           <Button href="/arif-net/keterbatasan" variant="ghost" size="S" arrow>
             Rencana pengembangan
