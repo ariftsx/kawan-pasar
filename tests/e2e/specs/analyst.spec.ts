@@ -80,7 +80,13 @@ test('request the role, then download as an analyst', async ({ page }) => {
   await expect(panel).toContainText('sedang ditinjau');
 
   // Decided on the server (CLI until Fase 3B).
-  sql("UPDATE users SET role = 'analyst' WHERE email = :'email';", email);
+  // Same effect as `role:grant` (CLI): the role, and the pending request closed as approved.
+  sql(
+    `UPDATE users SET role = 'analyst' WHERE email = :'email';
+     UPDATE analyst_requests SET status = 'approved', decided_at = now()
+       WHERE status = 'pending' AND user_id = (SELECT id FROM users WHERE email = :'email');`,
+    email,
+  );
   await page.reload();
   await expect(panel).toContainText('Peran: Analis');
 

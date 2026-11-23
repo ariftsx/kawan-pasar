@@ -15,6 +15,8 @@ x-account-env: &account-env
   PHONE_ENC_KEY: ${PHONE_ENC_KEY:?set PHONE_ENC_KEY (node scripts/gen-env.mjs --add-missing)}
   # Only during a key rotation (docs/security/autentikasi.md): the previous PHONE_ENC_KEY.
   PHONE_ENC_KEY_PREVIOUS: ${PHONE_ENC_KEY_PREVIOUS:-}
+  # Fase 3B (K2): https origins for article images; empty = Wikimedia + Unsplash. Same in web.
+  ARTICLE_IMAGE_ORIGINS: ${ARTICLE_IMAGE_ORIGINS:-}
 
 # Both web replicas run the same image and settings; only the fixed address differs (ADR 0010).
 x-web: &web
@@ -24,6 +26,8 @@ x-web: &web
     dockerfile: apps/web/Dockerfile
     args:
       PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://127.0.0.1:8080}
+      # Baked into the static pages' CSP img-src (Fase 3B, K2).
+      ARTICLE_IMAGE_ORIGINS: ${ARTICLE_IMAGE_ORIGINS:-}
   image: kawan-pasar/web:local
   cap_drop: [ALL]
   read_only: true
@@ -42,6 +46,7 @@ x-web: &web
     API_INTERNAL_URL: http://api:3001
     API_TIMEOUT_MS: '3000'
     PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://127.0.0.1:8080}
+    ARTICLE_IMAGE_ORIGINS: ${ARTICLE_IMAGE_ORIGINS:-}
     SERVICE_TOKEN: ${SERVICE_TOKEN:?set SERVICE_TOKEN}
     WEB_REVALIDATE_TOKEN: ${WEB_REVALIDATE_TOKEN:?set WEB_REVALIDATE_TOKEN}
     # Database 1 of the cache Valkey (the API uses 0; tests use 14 and 15).

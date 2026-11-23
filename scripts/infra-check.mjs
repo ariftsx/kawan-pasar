@@ -416,16 +416,32 @@ check('shared cache: a page rendered by web-1 is a HIT on web-2', () => {
   return inWeb('web-2', SELF('/pasar')) === '200 HIT';
 });
 
-check('shared cache: a revalidation received by web-1 makes web-2 serve the page as stale', () => {
-  inWeb('web-2', SELF('/edukasi'));
-  if (inWeb('web-2', SELF('/edukasi')) !== '200 HIT') throw new Error('/edukasi not cached');
+/** Asks web-1 to revalidate `tags` (as the API does after an import or an admin change). */
+function revalidateOnWeb1(tags) {
   const status = inWeb(
     'web-2',
-    "fetch('http://web-1:3000/api/internal/revalidate',{method:'POST',headers:{'content-type':'application/json','x-revalidate-token':process.env.WEB_REVALIDATE_TOKEN},body:JSON.stringify({tags:['articles']})}).then(r=>console.log(r.status))",
+    `fetch('http://web-1:3000/api/internal/revalidate',{method:'POST',headers:{'content-type':'application/json','x-revalidate-token':process.env.WEB_REVALIDATE_TOKEN},body:JSON.stringify({tags:${JSON.stringify(tags)}})}).then(r=>console.log(r.status))`,
     { WEB_REVALIDATE_TOKEN: env.WEB_REVALIDATE_TOKEN },
   );
   if (status !== '204') throw new Error(`revalidate answered ${status}`);
-  return inWeb('web-2', SELF('/edukasi')) === '200 STALE';
+}
+
+// Data tags use stale-while-revalidate: web-2 serves the old page once while it refreshes.
+check('shared cache: a revalidation received by web-1 makes web-2 serve the page as stale', () => {
+  inWeb('web-2', SELF('/pasar'));
+  if (inWeb('web-2', SELF('/pasar')) !== '200 HIT') throw new Error('/pasar not cached');
+  revalidateOnWeb1(['markets']);
+  return inWeb('web-2', SELF('/pasar')) === '200 STALE';
+});
+
+// Article tags expire at once (Fase 3B): after an admin withdraws an article, web-2 must render
+// fresh instead of serving the old page.
+check('shared cache: an article revalidation on web-1 makes web-2 render fresh (no stale)', () => {
+  inWeb('web-2', SELF('/edukasi'));
+  if (inWeb('web-2', SELF('/edukasi')) !== '200 HIT') throw new Error('/edukasi not cached');
+  revalidateOnWeb1(['articles']);
+  const after = inWeb('web-2', SELF('/edukasi'));
+  return after.startsWith('200 ') && after !== '200 STALE' && after !== '200 HIT';
 });
 
 await checkAsync('ISR: data page is cached after the first request', async () => {
