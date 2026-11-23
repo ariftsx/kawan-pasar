@@ -64,3 +64,6 @@ export const csrfRejected = (): ApiHttpError =>
 
 export const conflict = (field: string): ApiHttpError =>
   new ApiHttpError(HttpStatus.CONFLICT, 'conflict', 'conflict', { fields: [field] });
+
+export const forbidden = (): ApiHttpError =>
+  new ApiHttpError(HttpStatus.FORBIDDEN, 'forbidden', 'forbidden');

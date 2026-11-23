@@ -29,7 +29,8 @@ import { UsersRepository, undecryptablePhone } from './users.repository.js';
   imports: [MailQueueModule],
   controllers: [AuthController, AccountController],
   // The alerts module guards its routes with the same session and CSRF checks.
-  exports: [SESSION_STORE, SessionGuard, CsrfGuard],
+  // SESSION_REDIS: the analyst module counts its downloads in the same never-evicted store.
+  exports: [SESSION_STORE, SESSION_REDIS, SessionGuard, CsrfGuard],
   providers: [
     {
       provide: SESSION_REDIS,

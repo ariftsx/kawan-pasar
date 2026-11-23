@@ -11,11 +11,14 @@ export interface UserRow {
   passwordHash: string;
   emailVerifiedAt: Date | null;
   createdAt: Date;
+  /** Fase 3: user, analyst or admin. Read from the database on every role check. */
+  role: UserRole;
   /** Decrypted E.164 number, or null when none is stored (or it no longer decrypts). */
   phone: string | null;
 }
 
 export type AuthEventType = (typeof authEvents.$inferInsert)['type'];
+export type UserRole = (typeof users.$inferSelect)['role'];
 
 const columns = {
   id: users.id,
@@ -23,6 +26,7 @@ const columns = {
   passwordHash: users.passwordHash,
   emailVerifiedAt: users.emailVerifiedAt,
   createdAt: users.createdAt,
+  role: users.role,
   phoneNonce: users.phoneNonce,
   phoneCiphertext: users.phoneCiphertext,
   phoneKeyId: users.phoneKeyId,
@@ -169,6 +173,11 @@ export class UsersRepository {
       }
       return true;
     });
+  }
+
+  /** Sets the role (Fase 3). Callers check who may do this; the CLI never grants admin here. */
+  async setRole(id: string, role: UserRole): Promise<void> {
+    await this.db.update(users).set({ role }).where(eq(users.id, id));
   }
 
   async markVerified(id: string, at: Date): Promise<void> {

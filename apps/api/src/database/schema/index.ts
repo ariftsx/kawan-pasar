@@ -11,3 +11,4 @@ export { authTokens } from './auth-tokens.js';
 export { authEvents } from './auth-events.js';
 export { alertPreferences, alertWatches, notifications } from './alerts.js';
 export { whatsappChannels, whatsappMessages } from './whatsapp.js';
+export { analystRequests, auditLog } from './analyst.js';

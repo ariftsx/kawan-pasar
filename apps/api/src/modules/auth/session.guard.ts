@@ -64,3 +64,8 @@ export const CallerInfo = createParamDecorator((_data: unknown, ctx: ExecutionCo
   const request = ctx.switchToHttp().getRequest<FastifyRequest>();
   return { ip: clientIp(request), userAgent: header(request, 'user-agent').slice(0, 400) };
 });
+
+/** The session of a request already passed through SessionGuard (for other guards), or null. */
+export function sessionOf(request: FastifyRequest): AuthContext | null {
+  return contexts.get(request) ?? null;
+}

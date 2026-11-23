@@ -53,3 +53,26 @@ describe('pruneAccountData', () => {
     expect(rowCount).toBe(1);
   });
 });
+
+describe('audit_log retention (Fase 3A)', () => {
+  it('removes year-old entries only, and the app role cannot delete audit entries itself', async () => {
+    const owner = poolFor('owner');
+    const app = poolFor('app');
+    try {
+      await owner.query('DELETE FROM audit_log');
+      await owner.query(
+        `INSERT INTO audit_log (action, target, created_at) VALUES
+         ('export_prices', 'old', now() - interval '400 days'),
+         ('export_prices', 'new', now() - interval '10 days')`,
+      );
+      const r = await pruneAccountData(createDb(app), new Date());
+      expect(r.audit).toBe(1);
+      const left = await owner.query<{ target: string }>('SELECT target FROM audit_log');
+      expect(left.rows).toEqual([{ target: 'new' }]);
+      await expect(app.query('DELETE FROM audit_log')).rejects.toMatchObject({ code: '42501' });
+    } finally {
+      await app.end();
+      await owner.end();
+    }
+  });
+});

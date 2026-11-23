@@ -17,8 +17,8 @@ export const articleCategory = pgEnum('article_category', [
 ]);
 export const ingestStatus = pgEnum('ingest_status', ['running', 'succeeded', 'partial', 'failed']);
 export const priceSource = pgEnum('price_source', ['seed_csv', 'pihps']);
-// Fase 2A — accounts. Analyst and admin roles arrive in Fase 3.
-export const userRole = pgEnum('user_role', ['user']);
+// Fase 2A — accounts; analyst and admin since Fase 3.
+export const userRole = pgEnum('user_role', ['user', 'analyst', 'admin']);
 export const authTokenPurpose = pgEnum('auth_token_purpose', [
   'verify_email',
   'reset_password',
@@ -56,4 +56,18 @@ export const whatsappMessageKind = pgEnum('whatsapp_message_kind', [
   'alerts',
   'weekly',
   'reply',
+]);
+// Fase 3 — Mode Analis and admin.
+export const analystRequestStatus = pgEnum('analyst_request_status', [
+  'pending',
+  'approved',
+  'rejected',
+]);
+export const auditAction = pgEnum('audit_action', [
+  'role_request',
+  'role_grant',
+  'role_revoke',
+  'role_reject',
+  'export_prices',
+  'export_forecasts',
 ]);
