@@ -1,0 +1,8 @@
+{
+  "_meta": "Ringkasan REGISTERED.json ARIF-Net (protokol v1.1.0): hanya tanggal dan sidik, tanpa info mesin. Sumber: results/prospektif/REGISTERED.json, folder lokal ARIF-Net, disalin 23 Nov 2026.",
+  "registered_utc": "2026-11-17T05:45:51+00:00",
+  "train_end": "2026-09-30",
+  "cutoff": "2026-11-30",
+  "frozen_sha256": "d85a6ecada61ec30bce8e6e6557cad1e6c1ae2201a1470ababc857d3ec4ed62e",
+  "registered_file_sha256": "d8066e0a05a11d63cdefc6ad5412801eed1bd25c2f9d933b1cb8174840dce236"
+}

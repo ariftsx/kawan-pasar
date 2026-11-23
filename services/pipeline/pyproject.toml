@@ -1,0 +1,82 @@
+[project]
+name = "kp-pipeline"
+version = "0.1.0"
+description = "Kawan Pasar: ARIF-Net A0 retraining pipeline (PIHPS collection, preprocessing, fit, bundle) — Fase 4"
+# ARIF-Net v1.1.0 was tested on Python 3.12/3.13: keep the training environment the same.
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    # Exact versions of ARIF-Net's requirements-lock.txt (v1.1.0), so weights are reproducible.
+    "numpy==2.5.4",
+    "pandas==3.1.1",
+    "scipy==1.18.1",
+    "requests==2.34.2",
+    "torch==2.15.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4",
+    "pytest-cov>=7.0",
+    "mypy>=1.18",
+    "ruff>=0.14",
+    "pandas-stubs>=2.2",
+    "types-requests>=2.32",
+]
+
+[project.scripts]
+kp-pipeline = "kp_pipeline.__main__:main"
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kp_pipeline"]
+
+[tool.uv]
+# Supply-chain gate, same intent as pnpm's minimumReleaseAge: ignore releases newer than this.
+exclude-newer = "2026-11-04T00:00:00Z"
+# pandas 3.1.1 (uploaded 2026-11-04 15:05 UTC, 19 days old at adoption on 2026-11-23) is the exact
+# version ARIF-Net v1.1.0 was trained with; the general cutoff would exclude it by a few hours.
+exclude-newer-package = { pandas = "2026-11-05T00:00:00Z" }
+
+# CPU-only PyTorch: the PyPI Linux wheel pulls CUDA libraries (several GB) the pipeline never uses.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = ["slow: trains a tiny model end to end (minutes)"]
+
+[tool.coverage.run]
+branch = true
+source = ["kp_pipeline"]
+# Runs as a subprocess of each run (as in production), so coverage cannot see it; the slow
+# end-to-end test (tests/test_end_to_end.py) executes all of it on every audit.
+omit = ["*/kp_pipeline/train.py"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+mypy_path = "src"
+# The copied ARIF-Net code is checked by its sha256 manifest, not by our linters.
+exclude = ["vendor/"]
+
+[[tool.mypy.overrides]]
+module = ["torch.*", "scipy.*"]
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-exclude = ["vendor/"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "S", "RUF"]
+ignore = ["S101"]

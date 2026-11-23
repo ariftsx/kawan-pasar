@@ -11,6 +11,7 @@ mkdirSync(logDir, { recursive: true });
 
 const ingest = path.join(root, 'services', 'ingest');
 const model = path.join(root, 'services', 'model-arifnet');
+const pipelineService = path.join(root, 'services', 'pipeline');
 
 /** @type {Array<{ name: string, cmd: string, cwd?: string } | { name: string, fn: () => string[] }>} */
 const steps = [
@@ -48,6 +49,19 @@ const steps = [
   },
   { name: 'model-mypy', cmd: 'uv run mypy --strict src tests', cwd: model },
   { name: 'model-ruff', cmd: 'uv run ruff check && uv run ruff format --check', cwd: model },
+  // Retraining pipeline (Fase 4A): copied ARIF-Net code matches its manifest, prospective-test
+  // lock, and a hermetic end-to-end run (synthetic PIHPS store, no network; several minutes).
+  {
+    name: 'pipeline-tests',
+    cmd: 'uv run pytest -q --cov=kp_pipeline --cov-fail-under=90',
+    cwd: pipelineService,
+  },
+  { name: 'pipeline-mypy', cmd: 'uv run mypy --strict src tests', cwd: pipelineService },
+  {
+    name: 'pipeline-ruff',
+    cmd: 'uv run ruff check && uv run ruff format --check',
+    cwd: pipelineService,
+  },
   { name: 'dependency-audit', cmd: 'pnpm audit --audit-level=moderate' },
   { name: 'no-any-scan', fn: scanForAny },
   { name: 'no-ai-attribution-scan', fn: scanForAttribution },

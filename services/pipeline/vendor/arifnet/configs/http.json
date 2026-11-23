@@ -1,0 +1,7 @@
+{
+  "_doc": "Pengaturan klien HTTP bersama. Nilai dapat ditimpa lewat environment (lihat .env.example).",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+  "accept_language": "id-ID,id;q=0.9",
+  "connectivity_probe_urls": ["https://www.google.com/generate_204", "https://1.1.1.1"],
+  "backoff": {"base_seconds": 10, "max_seconds": 300, "server_error_base_seconds": 30}
+}

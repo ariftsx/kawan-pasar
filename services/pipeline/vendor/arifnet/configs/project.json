@@ -1,0 +1,72 @@
+{
+  "_meta": {
+    "project": "ARIF-Net — Agricultural Risk and Inflation Forecasting Network",
+    "approach": "Data-driven: Collection → Preprocessing → Baseline Training → Gap Analysis → ARIF-Net Design",
+    "researcher": "Muhamad Nur Arif — Teknik Informatika, Universitas Mercu Buana",
+    "created": "2026-10-17"
+  },
+  "period": {
+    "start": "2019-01-01",
+    "end": "2026-09-30"
+  },
+  "commodities": [
+    {
+      "comcat_id": "com_14",
+      "name": "Cabai Merah Keriting",
+      "pihps_name": "Cabai Merah Keriting"
+    },
+    {
+      "comcat_id": "com_11",
+      "name": "Bawang Merah Ukuran Sedang",
+      "pihps_name": "Bawang Merah Ukuran Sedang"
+    },
+    {
+      "comcat_id": "com_3",
+      "name": "Beras Kualitas Medium I",
+      "pihps_name": "Beras Kualitas Medium I"
+    }
+  ],
+  "horizons": [1, 3, 7, 14, 30, 90, 180, 365],
+  "target": {
+    "market_name": "Kramatjati",
+    "market_level": 3,
+    "label_tolerance_days": 7,
+    "spike_reversal": {
+      "jump": 0.15,
+      "revert_band": 0.05
+    }
+  },
+  "validation": {
+    "folds": ["F1", "F2"],
+    "fold_boundaries": {
+      "F1": "2022-07-01",
+      "F2": "2023-07-01"
+    },
+    "final_role": "F3 = latih final (origin & label < test_start), lalu test sekali buka",
+    "test_start": "2024-07-01",
+    "test_end": "2026-09-30"
+  },
+  "prospective": {
+    "train_end": "2026-09-30",
+    "start": "2026-10-01",
+    "cutoff": "2026-11-30",
+    "protocol": "docs/PROTOKOL_UJI_PROSPEKTIF.md v1.1.0"
+  },
+  "availability": {
+    "climate_lag_days": 5,
+    "news_date_only_delay_days": 1
+  },
+  "training": {
+    "seeds": [0, 1, 2, 3, 4],
+    "batch_size": 256,
+    "lr": 0.001,
+    "weight_decay": 0.01,
+    "huber_delta": 1.0,
+    "steps": 320,
+    "threads": "auto",
+    "clip": 1.0,
+    "shock_weight": 2.0,
+    "p_drop": 0.15
+  },
+  "data_end": "2026-09-30"
+}

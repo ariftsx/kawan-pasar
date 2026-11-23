@@ -1,0 +1,19 @@
+{
+  "_doc": "Endpoint dan parameter PIHPS Bank Indonesia (publik, tanpa kredensial). Harga eceran pasar tradisional, laporan harian.",
+  "base_url": "https://www.bi.go.id/hargapangan",
+  "page_url": "https://www.bi.go.id/hargapangan/TabelHarga/PasarTradisionalKomoditas",
+  "data_url": "https://www.bi.go.id/hargapangan/WebSite/TabelHarga/GetGridDataKomoditas",
+  "reference_url": "https://www.bi.go.id/hargapangan/WebSite/TabelHarga/GetRefCommodityAndCategory",
+  "price_type_id": 1,
+  "province_id": 13,
+  "regency_id": 34,
+  "show_kota": "true",
+  "show_pasar": "true",
+  "tipe_laporan": 1,
+  "market_name": "Pasar Kramatjati",
+  "market_level": 3,
+  "delay_seconds": 1.0,
+  "delay_jitter_seconds": 0.5,
+  "timeout_seconds": 60,
+  "retries": 5
+}

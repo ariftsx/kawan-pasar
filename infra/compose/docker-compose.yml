@@ -308,6 +308,30 @@ services:
       resources:
         limits: { cpus: '1', memory: 512M }
 
+  # Fase 4A: ARIF-Net A0 retraining pipeline (PIHPS → preprocessing → fit → candidate bundle).
+  # Needs the internet (PIHPS) but no database or API: not on the backend network. Its output is a
+  # candidate only; importing prices and approving a model are separate steps.
+  pipeline:
+    profiles: [pipeline]
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    build:
+      context: ../../services
+      dockerfile: pipeline/Dockerfile
+    image: kawan-pasar/pipeline:local
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+      - /home/pipeline:size=64m,uid=10002,gid=10002
+    volumes:
+      # Evidence store and runs; the proof of the prospective-test opening is read-only.
+      - ../../data/pipeline:/data
+      - ../../services/pipeline/config/prospective:/app/config/prospective:ro
+    deploy:
+      resources:
+        limits: { cpus: '2', memory: 3G }
+
   ingest:
     profiles: [jobs]
     security_opt:
@@ -325,4 +349,6 @@ services:
       SERVICE_TOKEN: ${SERVICE_TOKEN:?set SERVICE_TOKEN}
     volumes:
       - ../../data/seed:/data/seed:ro
+      # Fase 4A: PIHPS price files written by the retraining pipeline (import-pihps).
+      - ../../data/pipeline/runs:/data/pipeline-runs:ro
     networks: [backend]

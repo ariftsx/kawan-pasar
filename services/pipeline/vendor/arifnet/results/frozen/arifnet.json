@@ -1,0 +1,51 @@
+{
+ "model": "arifnet",
+ "frozen_utc": "2026-11-17T00:41:24+00:00",
+ "selection": "rata-rata relMAE F1–F2, seed 0 (PROTOKOL P4-DG-05; epoch = hyperparameter v1.0.1)",
+ "score": 0.8502637483893442,
+ "per_fold": {
+  "F1": 0.8202864764726877,
+  "F2": 0.8802410203060006
+ },
+ "n_candidates": 40,
+ "overrides": {
+  "model.d": 32,
+  "model.dropout": 0.2,
+  "train.lr": 0.0001,
+  "train.L": 60,
+  "train.shock_weight": 2.0,
+  "model.drift_window": 365,
+  "model.drift_alpha": 0.0,
+  "train.epochs": 5
+ },
+ "config": {
+  "family": "arifnet",
+  "_source": "docs/ARIFNET_SPEC.md v1.0.0 §2 (A0: encoder GRU + hurdle G-1 + kuantil G-2 + drift G-3; harga + kalender)",
+  "model": {
+   "name": "arifnet",
+   "encoder": "gru",
+   "d": 32,
+   "dropout": 0.2,
+   "emb": 8,
+   "hurdle": true,
+   "quantile": true,
+   "drift": true,
+   "point_loss": null,
+   "modalities": [],
+   "drift_window": 365,
+   "drift_alpha": 0.0
+  },
+  "train": {
+   "L": 60,
+   "lr": 0.0001,
+   "weight_decay": 0.0,
+   "batch": 64,
+   "epochs": 5,
+   "clip": 1.0,
+   "threads": "auto",
+   "shock_weight": 2.0,
+   "event_weight": 1.0,
+   "lambda_lr": 0.01
+  }
+ }
+}

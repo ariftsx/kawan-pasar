@@ -9,3 +9,5 @@ apps/web/next-env.d.ts
 # Written by services/model-arifnet/tools/convert_from_arifnet.py (generated, kept byte-stable).
 services/model-arifnet/model/
 services/model-arifnet/tests/fixtures/
+# Copied ARIF-Net code: byte-identical to its source, checked by MANIFEST.sha256 (Fase 4A).
+services/pipeline/vendor/

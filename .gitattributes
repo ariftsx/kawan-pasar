@@ -5,3 +5,5 @@
 *.figcraft binary
 # CRLF/BOM fixtures must stay byte-exact
 services/ingest/tests/fixtures/*.csv -text
+# Copied ARIF-Net code must stay byte-exact: MANIFEST.sha256 is checked before every run (Fase 4A)
+services/pipeline/vendor/** -text
