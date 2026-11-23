@@ -5,7 +5,7 @@ export { ingestRuns } from './ingest-runs.js';
 export { priceObservations } from './price-observations.js';
 export { forecastArtifacts } from './forecast-artifacts.js';
 export { forecasts } from './forecasts.js';
-export { articles } from './articles.js';
+export { articleRevisions, articles } from './articles.js';
 export { users } from './users.js';
 export { authTokens } from './auth-tokens.js';
 export { authEvents } from './auth-events.js';

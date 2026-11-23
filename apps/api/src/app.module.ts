@@ -13,6 +13,7 @@ import type { Env } from './config/env.js';
 import { DatabaseModule } from './database/database.module.js';
 import { ArticlesModule } from './modules/articles/articles.module.js';
 import { AlertsModule } from './modules/alerts/alerts.module.js';
+import { AdminModule } from './modules/admin/admin.module.js';
 import { AnalystModule } from './modules/analyst/analyst.module.js';
 import { WhatsAppModule } from './modules/whatsapp/whatsapp.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
@@ -69,6 +70,7 @@ export class AppModule {
         AlertsModule,
         WhatsAppModule,
         AnalystModule,
+        AdminModule,
         ...(options.imports ?? []),
       ],
       providers: [

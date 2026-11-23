@@ -1,0 +1,63 @@
+import { Inject, Module } from '@nestjs/common';
+import type { OnApplicationShutdown } from '@nestjs/common';
+import type { Redis } from 'ioredis';
+import { CLOCK } from '../../common/clock.js';
+import type { Clock } from '../../common/clock.js';
+import { ENV } from '../../config/config.module.js';
+import type { Env } from '../../config/env.js';
+import type { Db } from '../../database/client.js';
+import { DRIZZLE } from '../../database/database.module.js';
+import { AuthModule } from '../auth/auth.module.js';
+import { InternalModule } from '../internal/internal.module.js';
+import { MailQueueModule } from '../mail/mail.queue.js';
+import { ADMIN_ARTICLES, AdminArticlesController } from './admin-articles.controller.js';
+import { AdminArticlesRepository } from './admin-articles.repository.js';
+import { phoneCipherFromEnv } from '../auth/phone-cipher.js';
+import { SESSION_REDIS } from '../auth/tokens.js';
+import { UsersRepository, undecryptablePhone } from '../auth/users.repository.js';
+import { AdminSessions } from './admin-session.js';
+import { ADMIN_QUEUE_STATS, ADMIN_REPOSITORY, AdminController } from './admin.controller.js';
+import { ADMIN_SESSIONS, ADMIN_USERS, AdminGuard } from './admin.guard.js';
+import { AdminRepository } from './admin.repository.js';
+import { QueueStats } from './queue-stats.js';
+
+@Module({
+  imports: [AuthModule, MailQueueModule, InternalModule],
+  controllers: [AdminController, AdminArticlesController],
+  providers: [
+    {
+      provide: ADMIN_USERS,
+      inject: [ENV, DRIZZLE],
+      useFactory: (env: Env, db: Db): UsersRepository =>
+        new UsersRepository(db, env.AUTH_SECRET, phoneCipherFromEnv(env), undecryptablePhone),
+    },
+    {
+      provide: ADMIN_SESSIONS,
+      inject: [SESSION_REDIS, CLOCK],
+      useFactory: (redis: Redis, clock: Clock): AdminSessions => new AdminSessions(redis, clock),
+    },
+    {
+      provide: ADMIN_REPOSITORY,
+      inject: [DRIZZLE],
+      useFactory: (db: Db): AdminRepository => new AdminRepository(db),
+    },
+    {
+      provide: ADMIN_QUEUE_STATS,
+      inject: [ENV],
+      useFactory: (env: Env): QueueStats => new QueueStats(env.VALKEY_QUEUE_URL),
+    },
+    {
+      provide: ADMIN_ARTICLES,
+      inject: [DRIZZLE],
+      useFactory: (db: Db): AdminArticlesRepository => new AdminArticlesRepository(db),
+    },
+    AdminGuard,
+  ],
+})
+export class AdminModule implements OnApplicationShutdown {
+  constructor(@Inject(ADMIN_QUEUE_STATS) private readonly queues: QueueStats) {}
+
+  async onApplicationShutdown(): Promise<void> {
+    await this.queues.close();
+  }
+}

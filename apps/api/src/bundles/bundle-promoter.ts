@@ -63,10 +63,15 @@ export async function promoteBundle(
         : '0'.repeat(64);
       await db.execute(sql`
         INSERT INTO forecast_artifacts (bundle_id, model_name, model_version, data_version,
-          preprocess_version, data_cutoff, issued_at, checksum_sha256, status, is_demo)
+          preprocess_version, data_cutoff, issued_at, checksum_sha256, status, is_demo,
+          reject_reasons)
         VALUES (${meta.bundle_id}, ${meta.model_name}, ${meta.model_version}, ${meta.data_version},
           ${meta.preprocess_version}, ${meta.data_cutoff}, ${meta.issued_at}, ${checksum},
-          'rejected', ${meta.model_name === DEMO_MODEL_NAME})`);
+          'rejected', ${meta.model_name === DEMO_MODEL_NAME},
+          ARRAY[${sql.join(
+            reasons.map((r) => sql`${r}`),
+            sql`, `,
+          )}]::text[])`);
     }
     return {
       status: 'rejected',

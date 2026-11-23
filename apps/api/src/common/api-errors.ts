@@ -67,3 +67,6 @@ export const conflict = (field: string): ApiHttpError =>
 
 export const forbidden = (): ApiHttpError =>
   new ApiHttpError(HttpStatus.FORBIDDEN, 'forbidden', 'forbidden');
+
+export const reauthRequired = (): ApiHttpError =>
+  new ApiHttpError(HttpStatus.FORBIDDEN, 'reauth_required', 'password confirmation required');

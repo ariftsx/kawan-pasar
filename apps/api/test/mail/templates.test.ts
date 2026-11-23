@@ -40,6 +40,34 @@ describe('renderMail', () => {
     expect(mail?.html).not.toContain('a@b.id');
   });
 
+  it('analyst decision: link to Mode Analis, or the admin note (escaped) and how to ask again', () => {
+    const ok = renderMail({ template: 'analyst_approved', to: 'a@b.id' }, SITE);
+    expect(ok?.text).toContain(`${SITE}/analis`);
+    const no = renderMail(
+      { template: 'analyst_rejected', to: 'a@b.id', lines: ['Kurang rinci <script>x</script>'] },
+      SITE,
+    );
+    expect(no?.text).toContain('Catatan dari admin: Kurang rinci');
+    expect(no?.html).not.toContain('<script>');
+    expect(no?.text).toContain(`${SITE}/akun#mode-analis`);
+    expect(renderMail({ template: 'analyst_rejected', to: 'a@b.id' }, SITE)?.text).not.toContain(
+      'Catatan',
+    );
+  });
+
+  it('admin sign-in notice: device and time, and what to do if it was not you', () => {
+    const mail = renderMail(
+      {
+        template: 'admin_sign_in',
+        to: 'a@b.id',
+        lines: ['Chrome · Windows', '23 November 2026 09.00 WIB'],
+      },
+      SITE,
+    );
+    expect(mail?.text).toContain('Chrome · Windows, 23 November 2026 09.00 WIB');
+    expect(mail?.text).toContain(`${SITE}/akun`);
+  });
+
   it('sends nothing for the no-op job', () => {
     expect(renderMail({ template: 'noop' }, SITE)).toBeNull();
   });

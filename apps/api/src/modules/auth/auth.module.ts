@@ -30,7 +30,7 @@ import { UsersRepository, undecryptablePhone } from './users.repository.js';
   controllers: [AuthController, AccountController],
   // The alerts module guards its routes with the same session and CSRF checks.
   // SESSION_REDIS: the analyst module counts its downloads in the same never-evicted store.
-  exports: [SESSION_STORE, SESSION_REDIS, SessionGuard, CsrfGuard],
+  exports: [AUTH_SERVICE, SESSION_STORE, SESSION_REDIS, SessionGuard, CsrfGuard],
   providers: [
     {
       provide: SESSION_REDIS,

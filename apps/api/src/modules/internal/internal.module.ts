@@ -14,6 +14,8 @@ const warnings = new ThrottledWarning(10_000, (m) => {
 @Module({
   imports: [AlertsQueueModule],
   controllers: [InternalController],
+  // Also used by the admin article editor (Fase 3B) after publishing.
+  exports: [WebRevalidator],
   providers: [
     {
       provide: WebRevalidator,

@@ -74,6 +74,11 @@ describe('promoteBundle (as app_rw)', () => {
     expect(result.status).toBe('rejected');
     expect(result.reasons).toContain('schema');
     expect(await statuses()).toEqual({ 'a-1': 'active', 'a-bad': 'rejected' });
+    // Fase 3B: the reasons are kept for the admin monitoring page.
+    const stored = await owner.query<{ reject_reasons: string[] | null }>(
+      "SELECT reject_reasons FROM forecast_artifacts WHERE bundle_id IN ('a-1', 'a-bad') ORDER BY id",
+    );
+    expect(stored.rows).toEqual([{ reject_reasons: null }, { reject_reasons: result.reasons }]);
   });
 
   it('marks demo bundles and keeps them active next to a real model', async () => {

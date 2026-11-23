@@ -48,6 +48,8 @@ export const notificationKind = pgEnum('notification_kind', [
   'forecast_rise',
   'price_threshold',
   'weekly',
+  // Fase 3B: an admin approved or rejected the user's Analyst request.
+  'role_decision',
 ]);
 // Fase 2C — WhatsApp (local mock adapter).
 export const whatsappStatus = pgEnum('whatsapp_status', ['pending', 'verified', 'stopped']);
@@ -70,4 +72,13 @@ export const auditAction = pgEnum('audit_action', [
   'role_reject',
   'export_prices',
   'export_forecasts',
+  // Fase 3B — admin.
+  'admin_grant',
+  'admin_revoke',
+  'role_approve',
+  'admin_confirm',
+  'article_save',
+  'article_publish',
+  'article_unpublish',
+  'article_restore',
 ]);

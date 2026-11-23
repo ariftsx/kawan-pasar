@@ -1,3 +1,4 @@
+import { parseImageOrigins } from '@kawan-pasar/contracts/article-body';
 import { z } from 'zod';
 
 const postgresUrl = z.url({ protocol: /^postgres(ql)?$/ }).describe('postgres:// connection URL');
@@ -61,6 +62,21 @@ export const EnvSchema = z.object({
     (v) => (v === '' ? undefined : v),
     z.string().min(32).optional(),
   ),
+  /**
+   * Fase 3B (K2): https origins article images may come from, comma-separated. Default: Wikimedia
+   * and Unsplash. The web's CSP img-src must list the same origins.
+   */
+  ARTICLE_IMAGE_ORIGINS: z
+    .string()
+    .optional()
+    .transform((v, ctx) => {
+      try {
+        return parseImageOrigins(v);
+      } catch (e) {
+        ctx.addIssue({ code: 'custom', message: e instanceof Error ? e.message : 'invalid' });
+        return z.NEVER;
+      }
+    }),
   /** Argon2 hashes that may run at once (≈ API cores) and may wait (HashGate, Fase 2A). */
   AUTH_HASH_CONCURRENCY: z.coerce.number().int().min(1).max(32).default(2),
   AUTH_HASH_QUEUE: z.coerce.number().int().min(0).max(1000).default(16),

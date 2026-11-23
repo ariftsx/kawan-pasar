@@ -24,6 +24,7 @@ import type { AuthTokenService } from './auth-token.service.js';
 import type { LockoutService } from './lockout.service.js';
 import type { PasswordService } from './password.service.js';
 import { SESSION } from './policy.js';
+import { deviceOf } from './session.store.js';
 import type { Session, SessionStore } from './session.store.js';
 import type { UsersRepository } from './users.repository.js';
 
@@ -34,6 +35,15 @@ export interface Caller {
 }
 
 /** The authenticated session of a request (set by SessionGuard). */
+const WIB_DATE_TIME = new Intl.DateTimeFormat('id-ID', {
+  timeZone: 'Asia/Jakarta',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
 export interface AuthContext {
   token: string;
   session: Session;
@@ -104,6 +114,17 @@ export class AuthService {
     }
     const { token, csrf } = await this.d.sessions.create(user.id, caller.userAgent);
     await this.d.users.recordEvent(user.id, 'login_ok', caller.ip, now);
+    if (user.role === 'admin') {
+      // Fase 3B (design § 1, P2 without 2FA): every admin sign-in is announced to the owner.
+      await this.d.outbox.send({
+        template: 'admin_sign_in',
+        to: user.email,
+        lines: [
+          deviceOf(caller.userAgent),
+          WIB_DATE_TIME.format(now).replace(/\s*pukul\s*/, ' ') + ' WIB',
+        ],
+      });
+    }
     return {
       token,
       csrf,
@@ -223,6 +244,13 @@ export class AuthService {
     await this.d.outbox.send({ template: 'account_deleted', to: user.email });
     // Recorded after deletion: the audit trail keeps the event, not the person.
     await this.d.users.recordEvent(null, 'account_delete', caller.ip, this.d.clock.now());
+  }
+
+  /** Admin password confirmation (Fase 3B): same checks and lockout as a sign-in. */
+  async reauthenticate(auth: AuthContext, password: string, caller: Caller): Promise<void> {
+    const user = await this.requireUser(auth);
+    await this.confirmPassword(user.email, user.passwordHash, password, caller);
+    await this.d.lockout.reset(user.email);
   }
 
   private async requireUser(

@@ -1,0 +1,1 @@
+ALTER TABLE "forecast_artifacts" ADD COLUMN "reject_reasons" text[];

@@ -18,7 +18,9 @@
     "bundle:demo": "node --env-file=../../.env --import tsx src/bundles/cli.ts demo",
     "bundle:prices": "node --env-file=../../.env --import tsx src/bundles/cli.ts prices",
     "role:grant": "node --env-file=../../.env --import tsx src/cli/role-grant.ts",
-    "db:seed:articles": "node --env-file=../../.env --import tsx src/database/seed/articles.seed.ts"
+    "admin:grant": "node --env-file=../../.env --import tsx src/cli/admin-grant.ts grant",
+    "admin:revoke": "node --env-file=../../.env --import tsx src/cli/admin-grant.ts revoke",
+    "articles:import": "node --env-file=../../.env --import tsx src/database/seed/articles.import.ts"
   },
   "dependencies": {
     "@fastify/helmet": "13.2.0",

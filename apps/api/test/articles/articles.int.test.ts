@@ -7,7 +7,7 @@ import { Redis } from 'ioredis';
 import type pg from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createDb } from '../../src/database/client.js';
-import { seedArticles } from '../../src/database/seed/articles.seed.js';
+import { importArticles } from '../../src/database/seed/articles.import.js';
 import { serviceToken, startApp } from '../helpers/test-app.js';
 import { poolFor, resetTestDatabase } from '../helpers/test-db.js';
 
@@ -39,7 +39,7 @@ beforeAll(async () => {
   await writeFile(path.join(dir, 'b.md'), file('pola-musiman', 'published', 2));
   await writeFile(path.join(dir, 'a.md'), file('apa-itu-inflasi', 'published', 1));
   await writeFile(path.join(dir, 'c.md'), file('draf-anggaran', 'draft', 3, 'prediksi'));
-  await seedArticles(createDb(owner), dir);
+  await importArticles(createDb(owner), dir);
   app = await startApp();
 });
 
@@ -57,24 +57,28 @@ afterAll(async () => {
   redis.disconnect();
 });
 
-describe('seedArticles', () => {
-  it('keeps the first publication time when seeded again', async () => {
-    const before = await owner.query<{ published_at: Date }>(
-      "SELECT published_at FROM articles WHERE slug = 'apa-itu-inflasi'",
+describe('importArticles (Fase 3B K1: one-time import, the web editor owns articles after)', () => {
+  it('refuses to run again once articles exist, so web edits are never overwritten', async () => {
+    await owner.query(
+      "UPDATE articles SET title = 'Disunting di web' WHERE slug = 'apa-itu-inflasi'",
     );
-    await seedArticles(createDb(owner), dir);
-    const after = await owner.query<{ published_at: Date; n: number }>(
-      "SELECT published_at, (SELECT count(*)::int FROM articles) AS n FROM articles WHERE slug = 'apa-itu-inflasi'",
+    expect(await importArticles(createDb(owner), dir)).toEqual({ imported: 0, refused: true });
+    const res = await owner.query<{ title: string; n: number }>(
+      "SELECT title, (SELECT count(*)::int FROM articles) AS n FROM articles WHERE slug = 'apa-itu-inflasi'",
     );
-    expect(after.rows[0]?.n).toBe(3);
-    expect(after.rows[0]?.published_at.getTime()).toBe(before.rows[0]?.published_at.getTime());
+    expect(res.rows).toEqual([{ title: 'Disunting di web', n: 3 }]);
+    await owner.query(
+      "UPDATE articles SET title = 'Judul apa-itu-inflasi' WHERE slug = 'apa-itu-inflasi'",
+    );
   });
 
-  it('stores drafts without a publication time', async () => {
-    const res = await owner.query<{ published_at: Date | null }>(
-      "SELECT published_at FROM articles WHERE slug = 'draf-anggaran'",
+  it('stores drafts without a publication time, and each article as revision 1', async () => {
+    const res = await owner.query<{ published_at: Date | null; revision: number; revs: number }>(
+      `SELECT a.published_at, a.revision,
+              (SELECT count(*)::int FROM article_revisions r WHERE r.article_id = a.id AND r.revision = 1) AS revs
+       FROM articles a WHERE slug = 'draf-anggaran'`,
     );
-    expect(res.rows[0]?.published_at).toBeNull();
+    expect(res.rows).toEqual([{ published_at: null, revision: 1, revs: 1 }]);
   });
 });
 

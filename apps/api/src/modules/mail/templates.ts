@@ -116,6 +116,26 @@ export function renderMail(job: MailJob, siteUrl: string): RenderedMail | null {
         },
       );
     }
+    case 'admin_sign_in': {
+      const [device, at] = job.lines ?? [];
+      return compose('Akun admin Kawan Pasar baru saja masuk', [
+        `Akun admin Kawan Pasar dengan email ini baru saja masuk: ${device ?? 'perangkat tidak diketahui'}, ${at ?? 'waktu tidak diketahui'}.`,
+        `Bila bukan Anda, segera ganti kata sandi di ${site}/akun dan keluarkan semua sesi lain.`,
+      ]);
+    }
+    case 'analyst_approved':
+      return compose('Pengajuan peran Analis Anda disetujui', [
+        'Akun Kawan Pasar Anda kini berperan Analis. Anda bisa mengunduh data harga dan prediksi (CSV) di Mode Analis.',
+        `Buka ${site}/analis untuk mulai. Batas 30 unduhan per jam.`,
+      ]);
+    case 'analyst_rejected': {
+      const note = job.lines?.[0];
+      return compose('Pengajuan peran Analis Anda belum disetujui', [
+        'Pengajuan peran Analis untuk akun Kawan Pasar Anda belum disetujui.',
+        ...(note === undefined ? [] : [`Catatan dari admin: ${note}`]),
+        `Anda bisa mengajukan lagi dari halaman akun: ${site}/akun#mode-analis.`,
+      ]);
+    }
     case 'account_deleted':
       return compose('Akun Kawan Pasar Anda telah dihapus', [
         'Akun Kawan Pasar dengan email ini telah dihapus beserta datanya, sesuai permintaan Anda.',

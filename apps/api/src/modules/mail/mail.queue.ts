@@ -16,6 +16,11 @@ export type MailTemplate =
   | 'account_deleted'
   /** Fase 2B: the weekly summary (facts only), with a one-click unsubscribe link. */
   | 'weekly_summary'
+  /** Fase 3B: the decision on an Analyst request (`lines` = the admin's note, rejection only). */
+  | 'analyst_approved'
+  /** Fase 3B: an admin account signed in (`lines` = device, WIB time; never an address). */
+  | 'admin_sign_in'
+  | 'analyst_rejected'
   /** Resolved by the worker into reset_password (or nothing): see forgot.ts. */
   | 'forgot_password'
   /** Nothing is sent; queued so "unknown address" costs the same as a real e-mail. */

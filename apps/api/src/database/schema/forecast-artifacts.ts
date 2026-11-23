@@ -16,6 +16,8 @@ export const forecastArtifacts = pgTable(
     checksumSha256: text().notNull(),
     status: artifactStatus().notNull().default('pending'),
     isDemo: boolean().notNull().default(false),
+    /** Fase 3B: why a bundle was rejected (verifier codes), shown on the admin monitoring page. */
+    rejectReasons: text().array(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

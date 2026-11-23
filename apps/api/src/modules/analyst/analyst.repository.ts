@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, gte, inArray, lte } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
+import { UNIQUE_VIOLATION, pgCode } from '../../common/pg-errors.js';
 import type { Db } from '../../database/client.js';
 import {
   analystRequests,
@@ -49,7 +50,6 @@ export interface LatestRequest {
   note: string | null;
 }
 
-const UNIQUE_VIOLATION = '23505';
 /** Upper bound per export (review finding): the whole history is about 6 000 rows today. */
 export const EXPORT_MAX_ROWS = 100_000;
 
@@ -183,13 +183,4 @@ export class AnalystRepository {
       .limit(EXPORT_MAX_ROWS);
     return { artifact, rows };
   }
-}
-
-/** SQLSTATE of a pg error, also when Drizzle wraps it (DrizzleQueryError.cause). */
-function pgCode(e: unknown): string | undefined {
-  if (typeof e !== 'object' || e === null) return undefined;
-  const own: unknown = Reflect.get(e, 'code');
-  if (typeof own === 'string') return own;
-  const cause: unknown = Reflect.get(e, 'cause');
-  return cause === undefined ? undefined : pgCode(cause);
 }
