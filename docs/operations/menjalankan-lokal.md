@@ -75,7 +75,9 @@ Uji ingest (`cd services/ingest && uv run pytest`) memakai database `kawanpasar_
 pnpm --filter @kawan-pasar/api bundle:demo        # bundel prediksi demo berlabel (ADR 0006)
 pnpm model:export                                 # bundel ARIF-Net (ADR 0012); menggeser bundel demo
 pnpm wa:balas 081234567890 STOP                   # balasan WhatsApp tiruan dari HP (ADR 0013); pesan WA tampil di Mailpit
-pnpm --filter @kawan-pasar/api db:seed:articles   # artikel dari content/articles (lihat docs/product/konten-artikel.md)
+pnpm --filter @kawan-pasar/api articles:import    # impor awal artikel ke DB kosong (sekali; setelah itu sunting di /admin)
+pnpm --filter @kawan-pasar/api admin:grant <email> # jadikan akun admin (hanya dari server; cabut: admin:revoke)
+pnpm --filter @kawan-pasar/api role:grant <email> analyst   # beri peran Analis tanpa halaman admin
 ```
 
 ## Port di mesin lokal

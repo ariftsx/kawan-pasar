@@ -111,3 +111,14 @@ Sisa 5xx terjadi pada ~500 permintaan per detik yang langsung ke API 0,4 vCPU (m
   - aplikasi hanya boleh SELECT dan INSERT;
   - entri berumur lebih dari 365 hari dihapus oleh `prune_audit_log()`, fungsi `SECURITY DEFINER` dengan `search_path = pg_catalog, public` dan nama tabel lengkap dengan skema;
   - aplikasi yang disusupi tidak bisa menghapus jejak terbaru.
+
+## Tambahan Fase 3B (admin, ADR 0014)
+
+- **Admin hanya dari server:** `admin:grant` / `admin:revoke`. Web tidak pernah memberi atau mencabut admin; admin tidak bisa mengubah perannya sendiri atau admin lain.
+- **`AdminGuard`:** peran dari basis data tiap permintaan; sesi admin mutlak 12 jam dan diam 2 jam (kunci Valkey terpisah). Kedaluwarsa → seluruh sesi dicabut.
+- **Konfirmasi sandi:** jendela 10 menit untuk setiap perubahan (`403 reauth_required`). Sandi salah dihitung ke lockout akun (5 → terkunci).
+- **Email masuk baru** ke setiap akun admin yang masuk (perangkat, waktu WIB, tanpa IP).
+- **Pencarian pengguna:** email persis di badan `POST` (tidak di URL, tidak masuk log); hasil tersamar. Tidak ada daftar atau pencarian awalan.
+- **Artikel:** isi diperiksa dengan parser Markdown yang sama dengan perender; tautan `https:`/path/`#`, gambar `https:` dari `ARTICLE_IMAGE_ORIGINS` dengan deskripsi, HTML ditolak, 50 KB. Perender publik juga hanya menampilkan gambar dari asal itu (tanpa referrer), dan CSP `img-src` hanya menambah asal itu. Revisi hanya bisa ditambah (SELECT/INSERT).
+- **Pemantauan** hanya menampilkan jumlah job per antrean, tidak pernah isi job (alamat email, token).
+- **Tanpa 2FA** (keputusan pemilik): risiko dan mitigasi di ADR 0014.

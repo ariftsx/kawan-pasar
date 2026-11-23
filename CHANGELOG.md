@@ -2,6 +2,27 @@
 
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/). Versi produk mengikuti fase pengembangan.
 
+## [Fase 3B — Admin] — 2026-11-23
+
+### Ditambahkan
+
+- **Halaman admin `/admin`** (ADR 0014), hanya untuk admin (selain itu 404):
+  - **Pengajuan:** setujui atau tolak pengajuan peran Analis dengan catatan; pengaju diberi kabar dan email;
+  - **Pengguna:** cari dengan email lengkap (hasil tersamar), cabut peran Analis;
+  - **Artikel:** editor Markdown dengan pratinjau, terbitkan/tarik, riwayat revisi dan pulihkan;
+  - **Pemantauan:** impor harga, bundel prediksi (dengan alasan ditolak), dan jumlah job antrean.
+- Konfirmasi sandi 10 menit untuk setiap perubahan admin, ditanyakan di formulir itu sendiri.
+- Sesi admin: mutlak 12 jam, diam 2 jam. Email "masuk baru" setiap kali akun admin masuk.
+- CLI `admin:grant` / `admin:revoke` (admin hanya dibuat dari server) dan `articles:import` (impor awal artikel ke DB kosong).
+- Gambar di artikel dari `upload.wikimedia.org`, `images.unsplash.com`, dan domain tim (`ARTICLE_IMAGE_ORIGINS`), tanpa referrer.
+- Kode galat `reauth_required` (403). Migrasi `0011_admin` (revisi artikel, aksi audit, kabar `role_decision`) dan `0012_bundle_reasons`.
+
+### Diubah
+
+- Seed artikel `db:seed:articles` (menimpa isi) diganti `articles:import` yang menolak berjalan bila artikel sudah ada, sehingga suntingan di web tidak tertimpa.
+- Tag cache artikel kini kedaluwarsa seketika saat direvalidasi; artikel yang ditarik tidak pernah tampil lagi.
+- Promosi bundel menyimpan alasan penolakan (`reject_reasons`).
+
 ## [Fase 3A — Mode Analis] — 2026-11-23
 
 ### Ditambahkan

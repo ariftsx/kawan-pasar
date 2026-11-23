@@ -1,6 +1,6 @@
 # Konten Artikel Edukasi
 
-Artikel disimpan sebagai berkas Markdown di `content/articles/` dan dimasukkan ke database dengan `pnpm --filter @kawan-pasar/api db:seed:articles` (idempoten, upsert berdasarkan `slug`).
+Sejak Fase 3B (ADR 0014), artikel dikelola di halaman admin (`/admin/artikel`): sunting Markdown, pratinjau, terbitkan atau tarik, dan pulihkan revisi lama. Berkas di `content/articles/` hanya isi awal: `pnpm --filter @kawan-pasar/api articles:import` memasukkannya sekali ke database yang masih kosong, dan menolak berjalan bila sudah ada artikel, sehingga suntingan di web tidak pernah tertimpa.
 
 ## Format berkas
 
@@ -22,12 +22,12 @@ Bila satu berkas tidak valid, seed **dibatalkan seluruhnya** dan galatnya menyeb
 
 ## Alur tinjau (draf → terbit)
 
-1. Tim/pemilik membaca draf di `content/articles/`.
-2. Revisi isi seperlunya, lalu ubah `status: draft` menjadi `status: published`.
-3. Jalankan `pnpm --filter @kawan-pasar/api db:seed:articles`, lalu `POST /internal/cache/invalidate {"scope":"articles"}` (atau tunggu TTL 6 jam).
-4. Commit perubahan konten (oleh pemilik).
+1. Admin membuka `/admin/artikel`, menyunting draf, lalu memeriksa pratinjau (perender yang sama dengan halaman publik).
+2. Simpan. Setiap simpan menjadi revisi baru; bila orang lain sudah menyimpan sejak halaman dibuka, simpan ditolak agar tidak saling menimpa.
+3. Terbitkan. Artikel langsung tampil di Edukasi (cache API dihapus dan halaman web kedaluwarsa saat itu juga). Tarik untuk menyembunyikannya lagi.
+4. Perubahan yang keliru dipulihkan dari riwayat revisi.
 
-`published_at` diisi saat pertama kali terbit dan tidak berubah pada seed berikutnya. Mengembalikan `status` ke `draft` menyembunyikan artikel lagi.
+Aturan isi: tautan hanya `https://`, path internal (`/harga`), atau `#bagian`; gambar `![deskripsi](https://…)` hanya dari asal di `ARTICLE_IMAGE_ORIGINS` (bawaan `upload.wikimedia.org`, `images.unsplash.com`; domain tim ditambahkan di `.env`, lalu web dibangun ulang); HTML tidak didukung; paling besar 50 KB.
 
 ## Pedoman bahasa (wajib)
 

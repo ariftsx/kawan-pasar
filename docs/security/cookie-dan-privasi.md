@@ -48,3 +48,9 @@ Ringkasan untuk pengguna ada di halaman `/privasi`. Rinciannya:
 - Pengajuan peran Analis menyimpan alasan (10–500 karakter) dan instansi (opsional). Keduanya terhapus bersama akun.
 - Setiap unduhan CSV dicatat di `audit_log` dengan id akun, jenis berkas, dan jumlah baris, tanpa email atau filter yang dipakai. Catatan ini disimpan 1 tahun.
 - CSV hanya berisi data harga pasar dan prediksi, tidak ada data pengguna.
+
+## Admin dan gambar artikel (Fase 3B)
+
+- Admin melihat email pengguna hanya tersamar (`s***@contoh.id`), dan hanya dengan mencari alamat lengkapnya.
+- Setiap tindakan admin tercatat di `audit_log` (hanya id), disimpan 1 tahun.
+- Gambar di artikel dapat dimuat langsung dari `upload.wikimedia.org`, `images.unsplash.com`, atau domain tim (`ARTICLE_IMAGE_ORIGINS`). Situs itu dapat melihat alamat IP pembaca, tetapi tidak menerima alamat halaman (tanpa referrer) atau cookie Kawan Pasar.
