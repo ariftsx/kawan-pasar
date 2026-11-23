@@ -260,6 +260,9 @@ export function ForecastPage({
               <Button href="/arif-net" variant="ghost" size="S" arrow className="self-start">
                 Bagaimana prediksi dibuat?
               </Button>
+              <Button href="/analis" variant="ghost" size="S" arrow className="self-start">
+                Bandingkan antarkomoditas di Mode Analis
+              </Button>
             </section>
             <KataKapa
               pose="belajar"

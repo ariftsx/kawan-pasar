@@ -27,6 +27,7 @@ export const accountHrefs = {
   notice: (key: keyof typeof NOTICES): Route => route(`/masuk?pesan=${key}`),
   sessions: (): Route => route(`${ACCOUNT_HOME}#sesi`),
   phone: (): Route => route(`${ACCOUNT_HOME}#hp`),
+  analyst: (): Route => route(`${ACCOUNT_HOME}#mode-analis`),
 };
 
 /** The alerts page with a tab, a page cursor, or a "saved" notice (Fase 2B). */

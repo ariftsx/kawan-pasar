@@ -117,10 +117,13 @@ export const config = {
     '/prediksi/:path*',
     '/edukasi/:path*',
     '/pasar/:path*',
+    // Exact: /analis/unduh/* is a Route Handler, not a page.
+    '/analis',
     '/:market/beranda',
     '/:market/harga/:path*',
     '/:market/prediksi/:path*',
     '/:market/edukasi/:path*',
     '/:market/pasar/:path*',
+    '/:market/analis',
   ],
 };

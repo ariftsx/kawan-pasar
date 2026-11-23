@@ -1,3 +1,4 @@
+import type { AnalystStatusResponse } from '@kawan-pasar/contracts';
 import { TokenSchema } from '@kawan-pasar/contracts/auth';
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
@@ -11,7 +12,9 @@ import {
   ResendVerificationForm,
   RevokeSessionForm,
 } from '@/components/organisms/auth/AccountForms';
+import { AnalystRequestForm } from '@/components/organisms/analyst/AnalystRequestForm';
 import { PageContainer } from '@/components/templates/SiteShell';
+import { requestAnalystAction } from '@/lib/analyst/actions';
 import {
   changePasswordAction,
   deleteAccountAction,
@@ -21,7 +24,7 @@ import {
   revokeSessionAction,
   setPhoneAction,
 } from '@/lib/auth/actions';
-import { alertsApi, authApi } from '@/lib/auth/api';
+import { alertsApi, analystApi, authApi } from '@/lib/auth/api';
 import { SESSION_COOKIE } from '@/lib/auth/cookie';
 import { formatDateWib } from '@/lib/format';
 import { accountHrefs } from '@/lib/hrefs';
@@ -51,13 +54,65 @@ function Section({
   );
 }
 
+const ROLE_LABEL = { user: 'Pengguna', analyst: 'Analis', admin: 'Admin' } as const;
+
+function AnalystPanel({
+  status,
+  csrf,
+}: {
+  status: AnalystStatusResponse | null;
+  csrf: string;
+}): ReactNode {
+  if (status === null) {
+    return <p className="text-body-medium-15">Status peran belum bisa dimuat.</p>;
+  }
+  const { role, request, canRequest } = status;
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-body-medium-15">
+        Peran: <strong>{ROLE_LABEL[role]}</strong>
+      </p>
+      {role === 'user' ? (
+        <p className="text-body-small-13 text-ink-2">
+          Grafik perbandingan terbuka untuk semua. Unduhan CSV harga dan prediksi perlu peran
+          Analis.
+        </p>
+      ) : (
+        <p className="text-body-small-13 text-ink-2">Anda bisa mengunduh CSV di Mode Analis.</p>
+      )}
+      {request?.status === 'pending' ? (
+        <p className="text-body-small-13">
+          Pengajuan {formatDateWib(request.createdAt.slice(0, 10), 'short')} sedang ditinjau.
+        </p>
+      ) : null}
+      {role === 'user' && request?.status === 'rejected' ? (
+        <p className="text-body-small-13">
+          Pengajuan sebelumnya belum disetujui{request.note === null ? '.' : `: ${request.note}`}
+        </p>
+      ) : null}
+      {canRequest ? <AnalystRequestForm action={requestAnalystAction} csrf={csrf} /> : null}
+      {role === 'user' && !canRequest && request?.status !== 'pending' ? (
+        <p className="text-body-small-13 text-muted-text">
+          Verifikasi email Anda dulu untuk mengajukan peran Analis.
+        </p>
+      ) : null}
+      <div>
+        <Button href="/analis" variant="secondary" size="S">
+          Buka Mode Analis
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default async function AccountPage(): Promise<ReactNode> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value ?? '';
   if (!TokenSchema.safeParse(token).success) redirect(accountHrefs.signIn());
-  const [me, sessions, unread] = await Promise.all([
+  const [me, sessions, unread, analyst] = await Promise.all([
     authApi.me(token),
     authApi.sessions(token),
     alertsApi.unreadCount(token),
+    analystApi.status(token),
   ]);
   if (!me.ok && me.code === 'unauthenticated') redirect(accountHrefs.notice('sesi-berakhir'));
   if (!me.ok || !sessions.ok) {
@@ -123,6 +178,10 @@ export default async function AccountPage(): Promise<ReactNode> {
             csrf={csrf}
             masked={phone}
           />
+        </Section>
+
+        <Section id="mode-analis" title="Mode Analis">
+          <AnalystPanel status={analyst.ok ? analyst.data : null} csrf={csrf} />
         </Section>
 
         <Section id="sandi" title="Ganti kata sandi">

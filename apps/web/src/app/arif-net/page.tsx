@@ -279,9 +279,14 @@ export default function ArifNet(): ReactNode {
             angka prediksi.
           </p>
         </div>
-        <Button href="/arif-net/keterbatasan" arrow>
-          Baca keterbatasan
-        </Button>
+        <div className="flex flex-wrap gap-3">
+          <Button href="/arif-net/keterbatasan" arrow>
+            Baca keterbatasan
+          </Button>
+          <Button href="/analis" variant="secondary" arrow>
+            Unduh data di Mode Analis
+          </Button>
+        </div>
       </section>
     </PageContainer>
   );

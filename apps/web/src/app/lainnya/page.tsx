@@ -59,11 +59,11 @@ const ITEMS: readonly {
     body: 'Inflasi pangan, membaca harga & prediksi',
   },
   {
-    href: null,
+    href: '/analis',
     icon: 'unduh',
     tone: 'surface',
     title: 'Mode Analis',
-    body: 'Bandingkan & unduh data (segera)',
+    body: 'Bandingkan & unduh data',
   },
 ];
 

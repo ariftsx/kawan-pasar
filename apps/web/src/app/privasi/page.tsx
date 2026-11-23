@@ -28,6 +28,7 @@ const SECTIONS: readonly { title: string; items: readonly string[] }[] = [
       'Catatan keamanan (masuk, gagal masuk, ganti kata sandi) disimpan 90 hari tanpa email; alamat IP hanya sebagai hash yang berganti setiap hari.',
       'Email hanya dipakai untuk verifikasi, atur ulang kata sandi, pemberitahuan keamanan akun, dan peringatan harga yang Anda aktifkan. Email yang gagal terkirim dihapus dari antrean paling lambat 1 hari.',
       'Komoditas yang Anda pantau dan pengaturan peringatan disimpan bersama akun. Kabar peringatan di aplikasi disimpan 180 hari, lalu dihapus otomatis. Ringkasan mingguan lewat email hanya dikirim bila Anda menyalakannya, dan bisa dimatikan dengan satu klik dari email itu.',
+      'Bila Anda mengajukan peran Analis, kami menyimpan alasan dan instansi yang Anda tulis bersama akun. Setiap unduhan CSV di Mode Analis dicatat (akun, jenis berkas, jumlah baris, tanpa email) selama 1 tahun.',
     ],
   },
   {

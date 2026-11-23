@@ -2,7 +2,14 @@
  * Public data URLs and their market-scoped internal routes (ADR 0009). Used by next.config
  * (rewrites) and checked against `proxy.ts` `matcher` by `proxy.test.ts`.
  */
-export const DATA_SECTIONS = ['beranda', 'harga', 'prediksi', 'edukasi', 'pasar'] as const;
+export const DATA_SECTIONS = [
+  'beranda',
+  'harga',
+  'prediksi',
+  'edukasi',
+  'pasar',
+  'analis',
+] as const;
 export type DataSection = (typeof DATA_SECTIONS)[number];
 
 /** Sections with a second segment and what that segment is. */

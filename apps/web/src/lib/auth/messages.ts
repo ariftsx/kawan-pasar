@@ -31,6 +31,8 @@ export function failureMessage(failure: AuthFailure): string {
       return 'Periksa kembali isian yang ditandai.';
     case 'unauthenticated':
       return 'Sesi Anda berakhir. Silakan masuk lagi.';
+    case 'forbidden':
+      return 'Akun Anda belum memiliki akses untuk tindakan ini.';
     case 'conflict':
       return failure.fields?.[0] === 'limit'
         ? 'Batas 20 komoditas pantauan sudah tercapai. Hapus salah satu dulu.'

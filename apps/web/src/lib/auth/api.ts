@@ -1,6 +1,7 @@
 import 'server-only';
 import {
   AlertsResponseSchema,
+  AnalystStatusResponseSchema,
   ApiErrorSchema,
   LoginResponseSchema,
   NotificationsResponseSchema,
@@ -11,6 +12,8 @@ import {
 } from '@kawan-pasar/contracts';
 import type {
   AlertPreferences,
+  AnalystRequestInput,
+  AnalystStatusResponse,
   AlertsResponse,
   ApiErrorCode,
   MarkReadInput,
@@ -197,4 +200,12 @@ export const whatsappApi = {
     call('POST', '/v1/whatsapp/verify', null, { session, csrf, body: { code } }),
   disconnect: (session: string, csrf: string): Done =>
     call('DELETE', '/v1/whatsapp', null, { session, csrf }),
+};
+
+/** Mode Analis role and request (Fase 3A). CSV downloads go through app/analis/unduh. */
+export const analystApi = {
+  status: (session: string): Promise<AuthResult<AnalystStatusResponse>> =>
+    call('GET', '/v1/analyst', AnalystStatusResponseSchema, { session }),
+  request: (session: string, csrf: string, input: AnalystRequestInput): Done =>
+    call('POST', '/v1/analyst/request', null, { session, csrf, body: input }),
 };

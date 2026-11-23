@@ -32,7 +32,7 @@ const COLUMNS: readonly { title: string; links: readonly FooterLink[] }[] = [
     links: [
       { label: 'Kenalan', href: '/arif-net' },
       { label: 'Keterbatasan', href: '/arif-net/keterbatasan' },
-      { label: 'Mode Analis (segera)', href: null },
+      { label: 'Mode Analis', href: '/analis' },
     ],
   },
 ];
