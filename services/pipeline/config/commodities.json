@@ -1,0 +1,35 @@
+{
+  "_meta": "Mirror of packages/catalog for the Python pipeline (checked by packages/catalog tests). pihps_name = the commodity's name in PIHPS (ARIF-Net configs/project.json). comcat_id null = not collected yet.",
+  "commodities": [
+    {
+      "code": "cabai-merah-keriting",
+      "comcat_id": "com_14",
+      "name": "Cabai Merah Keriting",
+      "pihps_name": "Cabai Merah Keriting"
+    },
+    {
+      "code": "bawang-merah",
+      "comcat_id": "com_11",
+      "name": "Bawang Merah Ukuran Sedang",
+      "pihps_name": "Bawang Merah Ukuran Sedang"
+    },
+    {
+      "code": "beras-medium-1",
+      "comcat_id": "com_3",
+      "name": "Beras Kualitas Medium I",
+      "pihps_name": "Beras Kualitas Medium I"
+    },
+    {
+      "code": "cabai-rawit-hijau",
+      "comcat_id": "com_15",
+      "name": "Cabai Rawit Hijau",
+      "pihps_name": "Cabai Rawit Hijau"
+    },
+    {
+      "code": "cabai-rawit-merah",
+      "comcat_id": "com_16",
+      "name": "Cabai Rawit Merah",
+      "pihps_name": "Cabai Rawit Merah"
+    }
+  ]
+}

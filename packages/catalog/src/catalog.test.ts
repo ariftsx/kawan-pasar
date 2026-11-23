@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { COMMODITIES, HORIZONS, MARKETS, findCommodityBySourceRef } from './index.js';
 
@@ -13,8 +14,26 @@ describe('commodity catalog', () => {
     expect(COMMODITIES.map((c) => c.sortOrder)).toEqual([1, 2, 3, 4, 5]);
   });
 
-  it('maps PIHPS source refs only for commodities present in the seed dataset', () => {
-    expect(COMMODITIES.map((c) => c.sourceRef)).toEqual(['com_14', 'com_11', 'com_3', null, null]);
+  it('maps every commodity to its PIHPS comcat_id (cabai rawit verified 23 Nov 2026, Fase 4A)', () => {
+    expect(COMMODITIES.map((c) => c.sourceRef)).toEqual([
+      'com_14',
+      'com_11',
+      'com_3',
+      'com_15',
+      'com_16',
+    ]);
+  });
+
+  it('agrees with the Python pipeline mirror (services/pipeline/config/commodities.json)', () => {
+    const mirror = JSON.parse(
+      readFileSync(
+        new URL('../../../services/pipeline/config/commodities.json', import.meta.url),
+        'utf8',
+      ),
+    ) as { commodities: { code: string; comcat_id: string | null }[] };
+    expect(mirror.commodities.map((c) => [c.code, c.comcat_id])).toEqual(
+      COMMODITIES.map((c) => [c.code, c.sourceRef]),
+    );
   });
 
   it('marks only the first three commodities as covered by the model', () => {

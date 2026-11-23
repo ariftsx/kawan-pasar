@@ -45,7 +45,7 @@ export const COMMODITIES = [
   {
     code: 'cabai-rawit-hijau',
     name: 'Cabai rawit hijau',
-    sourceRef: null,
+    sourceRef: 'com_15',
     unit: 'kg',
     modelCoverage: 'pending',
     sortOrder: 4,
@@ -53,7 +53,7 @@ export const COMMODITIES = [
   {
     code: 'cabai-rawit-merah',
     name: 'Cabai rawit merah',
-    sourceRef: null,
+    sourceRef: 'com_16',
     unit: 'kg',
     modelCoverage: 'pending',
     sortOrder: 5,
