@@ -4,7 +4,16 @@
  * come from our own origin (with SRI); no third-party origin is allowed anywhere. Pages that
  * render per request (accounts, Fase 2) get a nonce-based policy instead.
  */
-export function buildCsp({ dev, nonce }: { dev: boolean; nonce?: string }): string {
+export function buildCsp({
+  dev,
+  nonce,
+  imageOrigins = [],
+}: {
+  dev: boolean;
+  nonce?: string;
+  /** Fase 3B (K2): https origins article images may come from (ARTICLE_IMAGE_ORIGINS). */
+  imageOrigins?: readonly string[];
+}): string {
   // Account pages (ADR 0011): rendered per request, so every Next.js script carries the nonce.
   const scripts =
     nonce === undefined ? ["'self'", "'unsafe-inline'"] : [`'nonce-${nonce}'`, "'strict-dynamic'"];
@@ -15,7 +24,7 @@ export function buildCsp({ dev, nonce }: { dev: boolean; nonce?: string }): stri
     'script-src': [...scripts, ...(dev ? ["'unsafe-eval'"] : [])],
     // React/Next inject inline style attributes; styles cannot execute code.
     'style-src': ["'self'", "'unsafe-inline'"],
-    'img-src': ["'self'", 'data:'],
+    'img-src': ["'self'", 'data:', ...imageOrigins],
     'font-src': ["'self'"],
     'connect-src': ["'self'", ...(dev ? ['ws:'] : [])],
     'object-src': ["'none'"],

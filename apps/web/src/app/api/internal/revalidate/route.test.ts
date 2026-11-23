@@ -44,6 +44,18 @@ describe('POST /api/internal/revalidate', () => {
     ]);
   });
 
+  it('expires article tags at once (a withdrawn article must never be served again)', async () => {
+    const res = await call(
+      JSON.stringify({ tags: ['articles', 'article:apa-itu-inflasi'] }),
+      TOKEN,
+    );
+    expect(res.status).toBe(204);
+    expect(revalidateTag.mock.calls).toEqual([
+      ['articles', { expire: 0 }],
+      ['article:apa-itu-inflasi', { expire: 0 }],
+    ]);
+  });
+
   it('answers a missing and a wrong token identically', async () => {
     const missing = await call(valid);
     const wrong = await call(valid, 'x'.repeat(40));

@@ -2,12 +2,13 @@ import { fileURLToPath } from 'node:url';
 import type { NextConfig } from 'next';
 import { MARKETS } from '@kawan-pasar/catalog';
 import { buildCsp } from './src/lib/csp';
+import { IMAGE_ORIGINS } from './src/lib/image-origins';
 import { dataRewrites } from './src/lib/routes';
 
 const dev = process.env.NODE_ENV === 'development';
 
 const securityHeaders = [
-  { key: 'Content-Security-Policy', value: buildCsp({ dev }) },
+  { key: 'Content-Security-Policy', value: buildCsp({ dev, imageOrigins: IMAGE_ORIGINS }) },
   { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },

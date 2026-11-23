@@ -31,6 +31,8 @@ export function failureMessage(failure: AuthFailure): string {
       return 'Periksa kembali isian yang ditandai.';
     case 'unauthenticated':
       return 'Sesi Anda berakhir. Silakan masuk lagi.';
+    case 'reauth_required':
+      return 'Konfirmasi kata sandi Anda dulu untuk melanjutkan.';
     case 'forbidden':
       return 'Akun Anda belum memiliki akses untuk tindakan ini.';
     case 'conflict':

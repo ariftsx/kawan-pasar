@@ -1,5 +1,12 @@
 import 'server-only';
 import {
+  AdminArticleListResponseSchema,
+  AdminArticleResponseSchema,
+  AdminArticleSavedSchema,
+  AdminMonitoringResponseSchema,
+  AdminRequestsResponseSchema,
+  AdminStatusResponseSchema,
+  AdminUserSearchResponseSchema,
   AlertsResponseSchema,
   AnalystStatusResponseSchema,
   ApiErrorSchema,
@@ -11,6 +18,17 @@ import {
   SessionsResponseSchema,
 } from '@kawan-pasar/contracts';
 import type {
+  AdminArticleCreate,
+  AdminArticleListResponse,
+  AdminArticleResponse,
+  AdminArticleRestore,
+  AdminArticleSaved,
+  AdminArticleUpdate,
+  AdminDecisionInput,
+  AdminMonitoringResponse,
+  AdminRequestsResponse,
+  AdminStatusResponse,
+  AdminUserSearchResponse,
   AlertPreferences,
   AnalystRequestInput,
   AnalystStatusResponse,
@@ -208,4 +226,75 @@ export const analystApi = {
     call('GET', '/v1/analyst', AnalystStatusResponseSchema, { session }),
   request: (session: string, csrf: string, input: AnalystRequestInput): Done =>
     call('POST', '/v1/analyst/request', null, { session, csrf, body: input }),
+};
+
+/** Admin pages (Fase 3B). Every change needs a password confirmation from the last 10 minutes. */
+export const adminApi = {
+  status: (session: string): Promise<AuthResult<AdminStatusResponse>> =>
+    call('GET', '/v1/admin', AdminStatusResponseSchema, { session }),
+  confirm: (session: string, csrf: string, password: string): Done =>
+    call('POST', '/v1/admin/confirm', null, { session, csrf, body: { password } }),
+  requests: (session: string): Promise<AuthResult<AdminRequestsResponse>> =>
+    call('GET', '/v1/admin/requests', AdminRequestsResponseSchema, { session }),
+  decide: (session: string, csrf: string, id: number, input: AdminDecisionInput): Done =>
+    call('POST', `/v1/admin/requests/${String(id)}/decision`, null, { session, csrf, body: input }),
+  searchUser: (
+    session: string,
+    csrf: string,
+    email: string,
+  ): Promise<AuthResult<AdminUserSearchResponse>> =>
+    call('POST', '/v1/admin/users/search', AdminUserSearchResponseSchema, {
+      session,
+      csrf,
+      body: { email },
+    }),
+  revokeAnalyst: (session: string, csrf: string, id: string): Done =>
+    call('POST', `/v1/admin/users/${encodeURIComponent(id)}/revoke-analyst`, null, {
+      session,
+      csrf,
+    }),
+  monitoring: (session: string): Promise<AuthResult<AdminMonitoringResponse>> =>
+    call('GET', '/v1/admin/monitoring', AdminMonitoringResponseSchema, { session }),
+  articles: (session: string): Promise<AuthResult<AdminArticleListResponse>> =>
+    call('GET', '/v1/admin/articles', AdminArticleListResponseSchema, { session }),
+  article: (session: string, slug: string): Promise<AuthResult<AdminArticleResponse>> =>
+    call('GET', `/v1/admin/articles/${encodeURIComponent(slug)}`, AdminArticleResponseSchema, {
+      session,
+    }),
+  createArticle: (
+    session: string,
+    csrf: string,
+    input: AdminArticleCreate,
+  ): Promise<AuthResult<AdminArticleSaved>> =>
+    call('POST', '/v1/admin/articles', AdminArticleSavedSchema, { session, csrf, body: input }),
+  updateArticle: (
+    session: string,
+    csrf: string,
+    slug: string,
+    input: AdminArticleUpdate,
+  ): Promise<AuthResult<AdminArticleSaved>> =>
+    call('PUT', `/v1/admin/articles/${encodeURIComponent(slug)}`, AdminArticleSavedSchema, {
+      session,
+      csrf,
+      body: input,
+    }),
+  restoreArticle: (
+    session: string,
+    csrf: string,
+    slug: string,
+    input: AdminArticleRestore,
+  ): Promise<AuthResult<AdminArticleSaved>> =>
+    call(
+      'POST',
+      `/v1/admin/articles/${encodeURIComponent(slug)}/restore`,
+      AdminArticleSavedSchema,
+      { session, csrf, body: input },
+    ),
+  publishArticle: (session: string, csrf: string, slug: string, publish: boolean): Done =>
+    call(
+      'POST',
+      `/v1/admin/articles/${encodeURIComponent(slug)}/${publish ? 'publish' : 'unpublish'}`,
+      null,
+      { session, csrf },
+    ),
 };

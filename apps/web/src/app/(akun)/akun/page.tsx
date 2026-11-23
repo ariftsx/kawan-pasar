@@ -96,10 +96,15 @@ function AnalystPanel({
           Verifikasi email Anda dulu untuk mengajukan peran Analis.
         </p>
       ) : null}
-      <div>
+      <div className="flex flex-wrap gap-3">
         <Button href="/analis" variant="secondary" size="S">
           Buka Mode Analis
         </Button>
+        {role === 'admin' ? (
+          <Button href="/admin" size="S">
+            Buka Admin
+          </Button>
+        ) : null}
       </div>
     </div>
   );

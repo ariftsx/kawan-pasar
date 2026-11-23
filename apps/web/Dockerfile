@@ -6,6 +6,9 @@ FROM node:24-alpine AS build
 # Public origin for canonical URLs and the sitemap; static pages bake it in at build time.
 ARG PUBLIC_SITE_URL=http://127.0.0.1:8080
 ENV PUBLIC_SITE_URL=$PUBLIC_SITE_URL
+# Article image origins (Fase 3B, K2): the static pages' CSP img-src is fixed at build time.
+ARG ARTICLE_IMAGE_ORIGINS=
+ENV ARTICLE_IMAGE_ORIGINS=$ARTICLE_IMAGE_ORIGINS
 RUN npm install -g pnpm@11.15.1
 ENV NEXT_TELEMETRY_DISABLED=1
 WORKDIR /repo

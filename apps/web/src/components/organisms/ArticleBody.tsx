@@ -2,9 +2,24 @@ import type { Element, ElementContent } from 'hast';
 import type { ReactNode } from 'react';
 import Markdown, { defaultUrlTransform } from 'react-markdown';
 import type { Components } from 'react-markdown';
+import { IMAGE_ORIGINS } from '@/lib/image-origins';
 
 /** Elements an article may produce. Anything else is unwrapped to plain text. */
-const ALLOWED = ['h2', 'h3', 'p', 'ul', 'ol', 'li', 'strong', 'em', 'a', 'blockquote', 'code'];
+const ALLOWED = [
+  'h2',
+  'h3',
+  'p',
+  'ul',
+  'ol',
+  'li',
+  'strong',
+  'em',
+  'a',
+  'blockquote',
+  'code',
+  // Fase 3B (K2): only from the allowed origins, see `img` below.
+  'img',
+];
 
 export function slugify(text: string): string {
   return text
@@ -65,6 +80,15 @@ function textOf(node: Element | ElementContent | undefined): string {
   return '';
 }
 
+function safeImage(src: string): string | null {
+  try {
+    const u = new URL(src);
+    return u.protocol === 'https:' && IMAGE_ORIGINS.includes(u.origin) ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+
 const components = (nextId: (text: string) => string): Components => ({
   h2: ({ node, children }) => (
     <h2 id={nextId(textOf(node))} className="mt-8 scroll-mt-28 text-heading-title-20 first:mt-0">
@@ -85,6 +109,25 @@ const components = (nextId: (text: string) => string): Components => ({
   code: ({ children }) => (
     <code className="rounded bg-surface-2 px-1 font-mono text-[0.9em]">{children}</code>
   ),
+  img: ({ src, alt }) => {
+    // Only https images from ARTICLE_IMAGE_ORIGINS (also the CSP img-src). Anything else keeps
+    // its description as text and is never requested, so no tracker can be embedded.
+    const url = typeof src === 'string' ? safeImage(src) : null;
+    if (url === null) return alt === undefined || alt === '' ? null : <>{alt}</>;
+    return (
+      // Plain <img> on purpose: next/image would make our server fetch third-party images (and
+      // need remotePatterns); the browser loads them directly, limited by CSP img-src.
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={url}
+        alt={alt ?? ''}
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+        className="mt-4 h-auto w-full rounded-lg"
+      />
+    );
+  },
   a: ({ href, children }) => {
     // urlTransform already emptied unsafe targets (javascript:, data:, …): render plain text.
     if (href === undefined || href === '') return <>{children}</>;

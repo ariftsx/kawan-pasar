@@ -39,3 +39,13 @@ export const alertHrefs = {
   saved: (section: 'pengaturan' | 'pantauan'): Route =>
     route(`/peringatan?disimpan=${section}#${section}`),
 };
+
+/** Admin pages with a notice after a change (Fase 3B); slugs are validated catalog-style slugs. */
+export const adminHrefs = {
+  requests: (notice?: 'diputuskan'): Route =>
+    route(`/admin${notice === undefined ? '' : `?pesan=${notice}`}`),
+  article: (slug: string, notice?: 'disimpan' | 'terbit' | 'ditarik' | 'dipulihkan'): Route =>
+    route(
+      `/admin/artikel/${encodeURIComponent(slug)}${notice === undefined ? '' : `?pesan=${notice}`}`,
+    ),
+};

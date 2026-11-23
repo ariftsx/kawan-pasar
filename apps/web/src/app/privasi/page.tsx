@@ -16,6 +16,7 @@ const SECTIONS: readonly { title: string; items: readonly string[] }[] = [
     items: [
       'Halaman harga, prediksi, dan edukasi bisa dipakai tanpa akun. Tidak ada analitik, iklan, atau pelacak pihak ketiga.',
       'Satu cookie fungsional (kp_onboarded) hanya mengingat bahwa Anda sudah melihat halaman orientasi.',
+      'Sebagian artikel edukasi memuat gambar langsung dari Wikimedia, Unsplash, atau situs gambar tim Kawan Pasar. Situs itu dapat melihat alamat IP Anda, tetapi tidak menerima alamat halaman yang Anda baca maupun cookie Kawan Pasar.',
     ],
   },
   {

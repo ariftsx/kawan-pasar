@@ -8,7 +8,31 @@ export interface FormState {
   /** Field name → message. Never contains the submitted value. */
   fields?: Record<string, string>;
   /** Values safe to put back into the form (never passwords or tokens). */
-  values?: { email?: string; phone?: string; reason?: string; organization?: string };
+  values?: {
+    email?: string;
+    phone?: string;
+    reason?: string;
+    organization?: string;
+    // Fase 3B admin forms (article editor, decisions).
+    slug?: string;
+    category?: string;
+    title?: string;
+    summary?: string;
+    bodyMd?: string;
+    note?: string;
+  };
+  /** Fase 3B: the admin must (re)enter the password; the form shows the field. */
+  needsConfirm?: boolean;
+  /** Fase 3B: the password was just confirmed (the form stops asking for it). */
+  confirmedNow?: boolean;
+  /** Fase 3B: a found account (admin user search), shown under the form. */
+  found?: {
+    id: string;
+    email: string;
+    role: string;
+    emailVerified: boolean;
+    createdAt: string;
+  } | null;
 }
 
 export const IDLE: FormState = { status: 'idle' };

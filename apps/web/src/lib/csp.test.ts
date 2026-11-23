@@ -22,8 +22,18 @@ describe('buildCsp', () => {
     expect(prod).not.toContain('strict-dynamic');
   });
 
-  it('allows no external origin at all', () => {
+  it('allows no external origin, except the configured article image origins in img-src', () => {
     expect(prod).not.toMatch(/https?:|\*/);
+    const withImages = buildCsp({
+      dev: false,
+      imageOrigins: ['https://upload.wikimedia.org', 'https://cdn.tim.example'],
+    });
+    const directives = withImages.split('; ');
+    expect(directives).toContain(
+      "img-src 'self' data: https://upload.wikimedia.org https://cdn.tim.example",
+    );
+    // Nowhere else: scripts, styles, connections and frames stay first-party.
+    expect(directives.filter((d) => d.includes('https:'))).toHaveLength(1);
   });
 
   it('account pages (nonce): only scripts carrying the nonce, no inline allowance (ADR 0011)', () => {

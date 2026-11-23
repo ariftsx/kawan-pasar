@@ -5,6 +5,7 @@ import type { NextRequest } from 'next/server';
 import { SESSION_COOKIE } from './lib/auth/cookie';
 import { ACCOUNT_HOME, AUTH_PAGES } from './lib/auth/redirect';
 import { buildCsp } from './lib/csp';
+import { IMAGE_ORIGINS } from './lib/image-origins';
 import { DATA_SECTIONS, NOT_FOUND_PATH, SECTION_PARAM } from './lib/routes';
 import type { DataSection } from './lib/routes';
 
@@ -37,9 +38,16 @@ function validParam(section: DataSection, value: string): boolean {
  *    Static pages and assets never reach this function (see `matcher`).
  */
 /** Account pages (ADR 0011): rendered per request, never cached, scripts need the nonce. */
-const ACCOUNT_PREFIXES = ['/akun', '/peringatan', '/berhenti-ringkasan', ...AUTH_PAGES] as const;
+const ACCOUNT_PREFIXES = [
+  '/akun',
+  '/peringatan',
+  '/berhenti-ringkasan',
+  // Fase 3B: admin pages (the API checks the role; non-admins get a 404 page).
+  '/admin',
+  ...AUTH_PAGES,
+] as const;
 /** Pages for signed-in users only: without a session cookie they go to sign-in first. */
-const SIGNED_IN_ONLY = [ACCOUNT_HOME, '/peringatan'] as const;
+const SIGNED_IN_ONLY = [ACCOUNT_HOME, '/peringatan', '/admin'] as const;
 /** Pages opened from e-mailed links that carry a token: the URL must not leak via Referer. */
 const TOKEN_PAGES = new Set<string>([
   '/atur-ulang-sandi',
@@ -66,7 +74,11 @@ function accountPage(request: NextRequest): NextResponse {
   // 128 random bits per request. Next.js reads the nonce from the forwarded request CSP header
   // and puts it on every script it emits; the response header replaces the static policy.
   const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString('base64');
-  const csp = buildCsp({ dev: process.env.NODE_ENV === 'development', nonce });
+  const csp = buildCsp({
+    dev: process.env.NODE_ENV === 'development',
+    nonce,
+    imageOrigins: IMAGE_ORIGINS,
+  });
   const forwarded = new Headers(request.headers);
   forwarded.set('x-nonce', nonce);
   forwarded.set('content-security-policy', csp);
@@ -106,6 +118,8 @@ export const config = {
     '/akun/:path*',
     '/peringatan/:path*',
     '/berhenti-ringkasan',
+    '/admin',
+    '/admin/:path*',
     '/masuk',
     '/daftar',
     '/lupa-sandi',

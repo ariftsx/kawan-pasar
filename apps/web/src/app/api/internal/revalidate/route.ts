@@ -69,7 +69,12 @@ export async function POST(request: Request): Promise<Response> {
   }
   const body = BodySchema.safeParse(json);
   if (!body.success) return problem(400, 'bad_request');
-  for (const tag of body.data.tags) revalidateTag(tag, 'max');
+  // Data (prices, forecasts) may be served stale once while it refreshes: fast, and never wrong
+  // for long. Articles expire at once (Fase 3B): an article withdrawn by an admin must not be
+  // shown again, and a newly published one must not stay "not found" for the next visitor.
+  for (const tag of body.data.tags) {
+    revalidateTag(tag, tag === 'articles' || tag.startsWith('article:') ? { expire: 0 } : 'max');
+  }
   log('info', 'revalidated', { tags: body.data.tags.length });
   return new Response(null, { status: 204 });
 }

@@ -131,6 +131,8 @@ describe('proxy: account pages (ADR 0011)', () => {
       '/verifikasi-email',
       '/peringatan',
       '/berhenti-ringkasan',
+      '/admin',
+      '/admin/artikel/harga-cabai',
     ]) {
       const res = account(path, 's'.repeat(43));
       expect(res.headers.get('x-middleware-next'), path).toBe('1');
@@ -157,6 +159,19 @@ describe('proxy: account pages (ADR 0011)', () => {
     expect(account('/berhenti-ringkasan').headers.get('referrer-policy')).toBe('no-referrer');
   });
 
+  it('admin pages (Fase 3B): sign-in first, then private, nonce CSP with the image origins', () => {
+    const out = account('/admin/artikel');
+    expect(out.status).toBe(307);
+    expect(out.headers.get('location')).toBe('http://web:3000/masuk?ke=%2Fadmin%2Fartikel');
+    const inside = account('/admin', 'a'.repeat(43));
+    expect(inside.headers.get('cache-control')).toBe('private, no-store');
+    const csp = inside.headers.get('content-security-policy') ?? '';
+    expect(scriptSrc(csp)).toContain("'nonce-");
+    expect(csp).toContain(
+      "img-src 'self' data: https://upload.wikimedia.org https://images.unsplash.com",
+    );
+  });
+
   it('covers every account page in the matcher', () => {
     const matchers = config.matcher.map(matcherRegExp);
     for (const path of [
@@ -169,6 +184,8 @@ describe('proxy: account pages (ADR 0011)', () => {
       '/verifikasi-email',
       '/peringatan',
       '/berhenti-ringkasan',
+      '/admin',
+      '/admin/artikel/harga-cabai',
     ]) {
       expect(
         matchers.some((m) => m.test(path)),

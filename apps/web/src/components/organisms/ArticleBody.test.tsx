@@ -16,6 +16,28 @@ describe('ArticleBody', () => {
     expect(container.querySelectorAll('ol li')).toHaveLength(2);
   });
 
+  it('renders Markdown images only from the allowed origins, lazily and without a referrer', () => {
+    // Default origins (ARTICLE_IMAGE_ORIGINS unset in tests): Wikimedia and Unsplash.
+    const { container } = render(
+      <ArticleBody
+        markdown={[
+          '![Pasar pagi](https://upload.wikimedia.org/pasar.jpg)',
+          '![Pelacak](https://evil.example/t.gif)',
+          '![Data](data:image/png;base64,AAAA)',
+        ].join('\n\n')}
+      />,
+    );
+    const imgs = container.querySelectorAll('img');
+    expect(imgs).toHaveLength(1);
+    expect(imgs[0]?.getAttribute('src')).toBe('https://upload.wikimedia.org/pasar.jpg');
+    expect(imgs[0]?.getAttribute('alt')).toBe('Pasar pagi');
+    expect(imgs[0]?.getAttribute('referrerpolicy')).toBe('no-referrer');
+    expect(imgs[0]?.getAttribute('loading')).toBe('lazy');
+    // A refused image keeps its description as text, so the reader loses nothing.
+    expect(container.textContent).toContain('Pelacak');
+    expect(container.innerHTML).not.toContain('evil.example');
+  });
+
   it('never renders raw HTML, scripts or event handlers', () => {
     const { container } = render(
       <ArticleBody
