@@ -15,6 +15,8 @@ export const ApiErrorCodeSchema = z.enum([
   'csrf',
   // Alerts (Fase 2B): already watched, or the watch limit is reached.
   'conflict',
+  // Fase 3: signed in, but the role does not allow it.
+  'forbidden',
 ]);
 export type ApiErrorCode = z.infer<typeof ApiErrorCodeSchema>;
 

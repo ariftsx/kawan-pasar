@@ -23,6 +23,10 @@
     "./whatsapp": {
       "types": "./dist/whatsapp.d.ts",
       "default": "./dist/whatsapp.js"
+    },
+    "./analyst": {
+      "types": "./dist/analyst.d.ts",
+      "default": "./dist/analyst.js"
     }
   },
   "files": [
