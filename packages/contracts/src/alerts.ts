@@ -65,6 +65,8 @@ export const NotificationKindSchema = z.enum([
   'forecast_rise',
   'price_threshold',
   'weekly',
+  // Fase 3B: the decision on the user's Analyst request.
+  'role_decision',
 ]);
 export type NotificationKind = z.infer<typeof NotificationKindSchema>;
 

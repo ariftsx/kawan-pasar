@@ -17,6 +17,8 @@ export const ApiErrorCodeSchema = z.enum([
   'conflict',
   // Fase 3: signed in, but the role does not allow it.
   'forbidden',
+  // Fase 3B: an admin change needs the password confirmed in the last 10 minutes.
+  'reauth_required',
 ]);
 export type ApiErrorCode = z.infer<typeof ApiErrorCodeSchema>;
 

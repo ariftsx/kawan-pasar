@@ -27,6 +27,14 @@
     "./analyst": {
       "types": "./dist/analyst.d.ts",
       "default": "./dist/analyst.js"
+    },
+    "./admin": {
+      "types": "./dist/admin.d.ts",
+      "default": "./dist/admin.js"
+    },
+    "./article-body": {
+      "types": "./dist/article-body.d.ts",
+      "default": "./dist/article-body.js"
     }
   },
   "files": [
@@ -40,11 +48,13 @@
   },
   "dependencies": {
     "@kawan-pasar/catalog": "workspace:*",
+    "mdast-util-from-markdown": "2.1.0",
     "zod": "4.6.7"
   },
   "devDependencies": {
     "@kawan-pasar/eslint-config": "workspace:*",
     "@kawan-pasar/tsconfig": "workspace:*",
+    "@types/mdast": "4.0.4",
     "@types/node": "24.19.2",
     "eslint": "10.14.0",
     "typescript": "6.0.3",

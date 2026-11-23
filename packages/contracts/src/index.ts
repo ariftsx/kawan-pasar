@@ -11,3 +11,5 @@ export * from './auth.js';
 export * from './alerts.js';
 export * from './whatsapp.js';
 export * from './analyst.js';
+export * from './admin.js';
+export * from './image-origins.js';
