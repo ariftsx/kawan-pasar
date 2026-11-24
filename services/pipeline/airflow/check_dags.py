@@ -15,10 +15,18 @@ from airflow.sdk.exceptions import AirflowSkipException
 
 EXPECTED = {
     "harga_harian": ("0 10 * * 1-5", ["check_lock", "collect_prices", "import_prices", "clean"]),
-    "latih_ulang": ("0 2 * * 1", ["check_lock", "check_quota", "retrain", "register"]),
+    "latih_ulang": (
+        "0 2 * * *",
+        ["check_schedule", "check_lock", "check_quota", "retrain", "register", "clean"],
+    ),
+    "status_kunci": ("5 * * * *", ["status"]),
 }
-# Tasks that write to the evidence store or the runs folder: one at a time across both DAGs.
-POOLED = {"harga_harian": {"collect_prices", "clean"}, "latih_ulang": {"retrain"}}
+# Tasks that write to the evidence store or the runs folder: one at a time across the DAGs.
+POOLED = {
+    "harga_harian": {"collect_prices", "clean"},
+    "latih_ulang": {"retrain", "clean"},
+    "status_kunci": set(),
+}
 LOCKED = {"open": False, "data_ceiling": "2026-09-30", "reason": "OPENED.json belum ada"}
 OPEN = {"open": True, "data_ceiling": "None", "reason": "terbuka"}
 
@@ -37,6 +45,11 @@ def chain(dag: Any) -> list[str]:
         task = nxt[0]
 
 
+class _Run:
+    def __init__(self, run_type: str) -> None:
+        self.run_type = run_type
+
+
 def gate(
     dag: Any,
     task_id: str,
@@ -44,16 +57,21 @@ def gate(
     status: dict | None = None,
     params: dict | None = None,
     quota: int | None = None,
+    run_type: str = "scheduled",
+    schedule: dict | None = None,
 ) -> Callable[[], Any]:
-    """The task's own function with its lock status, context and CLI call stubbed."""
+    """The task's own function with its lock status, context, Core API and CLI call stubbed."""
     fn = dag.get_task(task_id).python_callable
     g = fn.__globals__
     if status is not None:
         g["lock_status"] = lambda: status
-    g["get_current_context"] = lambda: {"params": params or {}}
+    g["get_current_context"] = lambda: {"params": params or {}, "dag_run": _Run(run_type)}
     if quota is not None:
         g["call"] = lambda argv, allow=(): f'{{"count": {quota}}}'
-    return (lambda: fn({})) if task_id == "check_quota" else fn
+    if schedule is not None:
+        g["core_api"] = lambda path: schedule
+    takes_upstream = task_id in {"check_quota"} or (task_id == "check_lock" and dag.dag_id == "latih_ulang")
+    return (lambda: fn({})) if takes_upstream else fn
 
 
 def skips(run: Callable[[], Any]) -> bool:
@@ -101,6 +119,19 @@ def main() -> int:
         ),
         "latih_ulang runs once open": not skips(
             gate(train, "check_lock", status=OPEN, params={"even_if_locked": False})
+        ),
+        "latih_ulang trains on a schedule day": not skips(
+            gate(train, "check_schedule", schedule={"train": True, "preset": "daily"})
+        ),
+        "latih_ulang skips a day outside the schedule": skips(
+            gate(
+                train,
+                "check_schedule",
+                schedule={"train": False, "preset": "weekly_monday", "next": "2026-12-07"},
+            )
+        ),
+        "latih_ulang manual runs ignore the schedule": not skips(
+            gate(train, "check_schedule", run_type="manual", schedule={"train": False, "preset": "manual"})
         ),
         "latih_ulang stops at 3 runs a day": skips(gate(train, "check_quota", quota=3)),
         "latih_ulang allows a 3rd run": not skips(gate(train, "check_quota", quota=2)),

@@ -276,7 +276,14 @@ services:
       # replica that is down (or a failed shared write) does not lose the revalidation.
       WEB_INTERNAL_URL: http://web-1:3000,http://web-2:3000
       WEB_REVALIDATE_TOKEN: ${WEB_REVALIDATE_TOKEN:?set WEB_REVALIDATE_TOKEN (node scripts/gen-env.mjs --add-missing)}
+      # Fase 4C: Airflow REST API (profile airflow; unset or down → "Airflow tidak aktif") and the
+      # pipeline's run folders, read-only, for the model audit page.
+      AIRFLOW_API_URL: http://airflow-api-server:8080
+      AIRFLOW_API_PASSWORD: ${AIRFLOW_API_PASSWORD:?run node scripts/gen-env.mjs --add-missing}
+      PIPELINE_RUNS_DIR: /data/pipeline-runs
       <<: *account-env
+    volumes:
+      - ../../data/pipeline/runs:/data/pipeline-runs:ro
     networks: [backend]
 
   # Background jobs (e-mail from Fase 2A). Same image as the API, no port, dynamic address: it is

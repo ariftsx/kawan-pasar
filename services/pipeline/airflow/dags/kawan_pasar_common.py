@@ -18,9 +18,10 @@ INGEST_PYTHON = os.environ.get("KP_INGEST_PYTHON", "/opt/ingest/.venv/bin/python
 STORE = os.environ.get("KP_STORE", "/data/store")
 RUNS = os.environ.get("KP_RUNS", "/data/runs")
 # Price-only runs kept on disk; the rest are removed (never the evidence store). Retraining runs
-# hold the candidate bundles an admin still has to audit: they are not cleaned here (4C cleans
-# them by candidate status).
+# are cleaned by latih_ulang by candidate status (Fase 4C).
 KEEP_PRICE_RUNS = max(1, int(os.environ.get("KP_KEEP_RUNS", "10")))
+# Retraining runs kept besides the ones the Core API names (pending candidates, the active bundle).
+KEEP_TRAIN_RUNS = max(1, int(os.environ.get("KP_KEEP_TRAIN_RUNS", "3")))
 # Design § 4: at most 3 retraining runs a day (rejections re-run the pipeline in 4C).
 TRAIN_RUNS_PER_DAY = 3
 # One writer at a time on the evidence store, across both DAGs (pool made by airflow-init).
@@ -99,6 +100,23 @@ def last_json(output: str) -> dict:
 def lock_status() -> dict:
     """{"open": bool, "data_ceiling": "YYYY-MM-DD" | "None", "reason": str}"""
     return last_json(call([PIPELINE, "status"]))
+
+
+def core_api(path: str, timeout: float = 15.0) -> dict:
+    """GET on the Core API's internal routes with the service token (Fase 4C: schedule gate,
+    runs to keep). Runs in the task process, never in a step subprocess."""
+    import urllib.request
+
+    base = os.environ.get("API_INTERNAL_URL", "")
+    token = os.environ.get("SERVICE_TOKEN", "")
+    if not base.startswith(("http://", "https://")) or not token:
+        raise RuntimeError("API_INTERNAL_URL and SERVICE_TOKEN are required")
+    request = urllib.request.Request(  # noqa: S310 - scheme checked above
+        f"{base.rstrip('/')}{path}",
+        headers={"accept": "application/json", "x-service-token": token},
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as res:  # noqa: S310
+        return json.loads(res.read())
 
 
 def run_state(rid: str) -> dict:

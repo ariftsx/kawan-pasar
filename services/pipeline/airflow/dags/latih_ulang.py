@@ -1,9 +1,11 @@
-"""Weekly ARIF-Net A0 retraining → candidate (Fase 4B, owner decisions P4, P5, P8).
+"""ARIF-Net A0 retraining → candidate (Fase 4B/4C, owner decisions P4, P5, P8, K2).
 
-Monday 02.00 WIB: check the lock → at most 3 runs a day → full pipeline (collect → preprocess →
-score → final fit → bundle) → register the candidate with the Core API.
-A candidate is never promoted here: an admin audits and approves it (4C). Its run folder holds the
-bundle under audit, so retraining runs are never removed by this DAG.
+Every day at 02.00 WIB: is today a training day (the admin's schedule preset, Fase 4C K2)? → check
+the lock → at most 3 runs a day → full pipeline (collect → preprocess → score → final fit →
+bundle) → register the candidate with the Core API → remove old retraining runs, keeping the ones
+an admin still has to decide and the one whose bundle is active.
+A candidate is never promoted here: an admin audits and approves it on the Model page.
+Manual runs (from the admin page) do not depend on the schedule.
 
 While the prospective-test lock holds, scheduled runs are skipped. A manual run with
 `even_if_locked` (verification only) trains on data up to 2026-09-30, which the protocol allows:
@@ -16,12 +18,14 @@ import pendulum
 from airflow.sdk import DAG, Param, get_current_context, task
 from airflow.sdk.exceptions import AirflowSkipException
 from kawan_pasar_common import (
+    KEEP_TRAIN_RUNS,
     PIPELINE,
     RUNS,
     STORE,
     STORE_POOL,
     TRAIN_RUNS_PER_DAY,
     call,
+    core_api,
     last_json,
     lock_status,
     run_id,
@@ -30,7 +34,8 @@ from kawan_pasar_common import (
 with DAG(
     dag_id="latih_ulang",
     description="Latih ulang ARIF-Net A0 → kandidat untuk diaudit admin",
-    schedule="0 2 * * 1",
+    # The admin's preset decides which of these daily runs actually train (check_schedule).
+    schedule="0 2 * * *",
     start_date=pendulum.datetime(2026, 11, 23, tz="Asia/Jakarta"),
     catchup=False,
     max_active_runs=1,
@@ -43,7 +48,18 @@ with DAG(
 ) as dag:
 
     @task
-    def check_lock() -> dict:
+    def check_schedule() -> dict:
+        ctx = get_current_context()
+        if ctx["dag_run"].run_type == "manual":
+            return {"manual": True}
+        gate = core_api("/internal/pipeline/schedule")
+        if not gate["train"]:
+            nxt = gate.get("next") or "hanya manual"
+            raise AirflowSkipException(f"Bukan jadwal latih ulang ({gate['preset']}); berikutnya: {nxt}.")
+        return gate
+
+    @task
+    def check_lock(_: dict) -> dict:
         params = get_current_context()["params"]
         status = lock_status()
         if not status["open"] and not params["even_if_locked"]:
@@ -88,4 +104,24 @@ with DAG(
             )
         )
 
-    register(retrain(check_quota(check_lock())))
+    @task(pool=STORE_POOL)
+    def clean(_: dict) -> dict:
+        keep = core_api("/internal/pipeline/keep-runs")["runIds"]
+        return last_json(
+            call(
+                [
+                    PIPELINE,
+                    "clean",
+                    "--runs",
+                    RUNS,
+                    "--prefix",
+                    "train-",
+                    "--keep",
+                    ",".join(keep),
+                    "--keep-latest",
+                    str(KEEP_TRAIN_RUNS),
+                ]
+            )
+        )
+
+    clean(register(retrain(check_quota(check_lock(check_schedule())))))

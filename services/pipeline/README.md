@@ -44,10 +44,11 @@ Gudang dan run ada di `data/pipeline/` (di-gitignore). **Jangan** menghapus fold
 
 Pipeline dijadwalkan dan dipantau di Apache Airflow 3.3.2 (ADR 0016). Profilnya terpisah dari stack produk, dan definisinya ada di `airflow/`.
 
-| DAG            | Jadwal (WIB)      | Langkah                                                                                      |
-| -------------- | ----------------- | -------------------------------------------------------------------------------------------- |
-| `harga_harian` | Senin–Jumat 10.00 | kunci → `run --steps prepare,collect,preprocess,prices` → `kp_ingest import-pihps` → `clean` |
-| `latih_ulang`  | Senin 02.00       | kunci → kuota (maks 3/hari) → run penuh → `register` (kandidat `pending`)                    |
+| DAG            | Jadwal (WIB)                                  | Langkah                                                                                                     |
+| -------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `harga_harian` | Senin–Jumat 10.00                             | kunci → `run --steps prepare,collect,preprocess,prices` → `kp_ingest import-pihps` → `clean`                |
+| `latih_ulang`  | Tiap hari 02.00 (dilatih sesuai jadwal admin) | jadwal? → kunci → kuota (maks 3/hari) → run penuh → `register` (kandidat `pending`) → `clean` run `train-*` |
+| `status_kunci` | Tiap jam (menit 5)                            | `kp-pipeline status` → dibaca halaman admin Pipeline                                                        |
 
 - Selama kunci uji prospektif tertutup, run terjadwal **dilewati** (_skipped_) dengan alasannya di log tugas. Status ini diharapkan, bukan kegagalan.
 - `latih_ulang` dapat dipicu manual dengan parameter `even_if_locked` (verifikasi, data ≤ 2026-09-30) dan `quick` (1 epoch, hanya uji).
@@ -57,7 +58,8 @@ Pipeline dijadwalkan dan dipantau di Apache Airflow 3.3.2 (ADR 0016). Profilnya 
   - `import-pihps` menerima `INGEST_DATABASE_URL` (ditambah URL dan token Core API untuk membuang cache harga);
   - run pipeline, termasuk kode ARIF-Net yang mengakses internet, tidak menerima kredensial apa pun.
 - Pool Airflow `kp_store` (1 slot, dibuat `airflow-init`) menjaga agar hanya satu langkah yang menulis ke gudang bukti dan folder run, lintas kedua DAG.
-- `clean` hanya menghapus run `prices-*` (10 terbaru disimpan). Run `train-*` menyimpan bundel kandidat yang menunggu audit admin, sehingga tidak dihapus di 4B. Pembersihan menurut status kandidat dikerjakan di 4C.
+- `harga_harian` hanya membersihkan run `prices-*` (10 terbaru disimpan). `latih_ulang` membersihkan run `train-*` dan menyimpan run yang disebut Core API (`/internal/pipeline/keep-runs`: kandidat `pending` dan bundel aktif) serta 3 run terbaru.
+- Jadwal latih ulang dipilih admin di halaman Pipeline (Fase 4C, ADR 0017). Tugas `check_schedule` bertanya ke `/internal/pipeline/schedule`; run manual tidak bergantung pada jadwal.
 - Pendaftaran kandidat bersifat idempoten. Run dan bundel yang persis sama dijawab 200 dengan id lama, sedangkan run id atau bundel id yang sudah dipakai pendaftaran lain dijawab 409, yang dianggap galat.
 - Bila tugas dihentikan (batas waktu atau ditandai gagal), seluruh grup proses langkah ikut dihentikan.
 - `airflow/check_dags.py` memeriksa DAG di dalam image: lolos import, jadwal, zona waktu, urutan tugas, pool, `catchup=False`, dan `max_active_runs=1`. Pemeriksa juga memanggil tugas gerbang dengan status kunci tiruan: dilewati saat terkunci, `even_if_locked` hanya bila diminta, dan berhenti pada run ke-3 dalam sehari.
