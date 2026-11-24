@@ -18,6 +18,7 @@ import { resolveCommodity, toMarketDto } from '../../common/catalog-lookup.js';
 import { CLOCK } from '../../common/clock.js';
 import type { Clock } from '../../common/clock.js';
 import { ActiveArtifactRepository } from '../forecasts/active-artifact.repository.js';
+import { coverageOf } from '../forecasts/coverage.service.js';
 import { ageDays, forecastStatus } from '../forecasts/forecast-status.js';
 import { PricesRepository } from './prices.repository.js';
 import type { SummaryRow } from './prices.repository.js';
@@ -106,6 +107,12 @@ export class PricesService {
       this.prices.summary(market.code),
       this.artifacts.horizonSummary(market.code, 7),
     ]);
+    // Fase 4C K1, without a third query: same definition as CoverageService (a 7-day row of the
+    // commodity in the active bundle).
+    const coverage = {
+      active: forecast.issuedAt !== null,
+      codes: [...forecast.q50ByCommodity.keys()],
+    };
     const now = this.clock.now();
     const today = wibDate(now);
     const byCode = new Map(rows.map((r) => [r.code, r]));
@@ -114,8 +121,9 @@ export class PricesService {
       const row: SummaryRow | undefined = byCode.get(c.code);
       const latestOn = row?.latest_on ?? null;
       const price = row?.price_idr ?? null;
+      const modelCoverage = coverageOf(c.code, coverage);
       const byBundle = forecastStatus(
-        c.modelCoverage,
+        modelCoverage,
         forecast.issuedAt === null ? null : { issuedAt: forecast.issuedAt },
         now,
       );
@@ -131,7 +139,7 @@ export class PricesService {
         code: c.code,
         name: c.name,
         unit: c.unit,
-        modelCoverage: c.modelCoverage,
+        modelCoverage,
         dataStatus: dataStatus(latestOn, today),
         latest:
           latestOn !== null && price !== null ? { observedOn: latestOn, priceIdr: price } : null,

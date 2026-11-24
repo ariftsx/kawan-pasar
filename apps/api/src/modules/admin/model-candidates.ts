@@ -11,7 +11,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import type { FastifyReply } from 'fastify';
 import { conflict } from '../../common/api-errors.js';
 import { UNIQUE_VIOLATION, pgCode } from '../../common/pg-errors.js';
@@ -68,27 +68,77 @@ export class ModelCandidatesRepository {
     }
   }
 
+  async byId(id: number): Promise<CandidateRow | null> {
+    const [row] = await this.db
+      .select()
+      .from(modelCandidates)
+      .where(eq(modelCandidates.id, id))
+      .limit(1);
+    return row ?? null;
+  }
+
+  /** A decision is taken once, from `pending` only; false when it was already decided. */
+  async decide(
+    id: number,
+    status: 'approved' | 'rejected',
+    userId: string,
+    note: string | null,
+    now: Date,
+  ): Promise<boolean> {
+    const rows = await this.db
+      .update(modelCandidates)
+      .set({ status, decidedBy: userId, decidedAt: now, note })
+      .where(and(eq(modelCandidates.id, id), eq(modelCandidates.status, 'pending')))
+      .returning({ id: modelCandidates.id });
+    return rows.length === 1;
+  }
+
+  /** Whether a newer bundle of this model is already active (approving would go backwards). */
+  async superseded(modelName: string, issuedAt: string): Promise<boolean> {
+    const rows = await this.db.execute(sql`
+      SELECT 1 FROM forecast_artifacts
+      WHERE status = 'active' AND model_name = ${modelName}
+        AND issued_at > ${issuedAt}::timestamptz LIMIT 1`);
+    return rows.rows.length > 0;
+  }
+
+  /** The overall relMAE of the approved candidate whose bundle is the active one. */
+  async activeOverall(): Promise<number | null> {
+    const rows = await this.db.execute(sql`
+      SELECT c.overall_relmae::float8 AS overall FROM model_candidates c
+      JOIN forecast_artifacts a ON a.bundle_id = c.bundle_id AND a.status = 'active'
+      WHERE c.status = 'approved' ORDER BY c.decided_at DESC LIMIT 1`);
+    const overall = rows.rows[0]?.['overall'];
+    return typeof overall === 'number' ? overall : null;
+  }
+
   async list(): Promise<AdminModelCandidatesResponse['items']> {
     const rows = await this.db
       .select()
       .from(modelCandidates)
       .orderBy(desc(modelCandidates.createdAt), desc(modelCandidates.id))
       .limit(50);
-    return rows.map((r) => ({
-      id: r.id,
-      runId: r.runId,
-      bundleId: r.bundleId,
-      modelVersion: r.modelVersion,
-      dataEnd: r.dataEnd,
-      lockOpen: r.lockOpen,
-      commodities: r.commodities as AdminModelCandidatesResponse['items'][number]['commodities'],
-      overallRelmae: r.overallRelmae,
-      scores: r.scores,
-      window: { start: r.windowStart, end: r.windowEnd },
-      status: r.status,
-      createdAt: r.createdAt.toISOString(),
-    }));
+    return rows.map(toItem);
   }
+}
+
+export type CandidateRow = typeof modelCandidates.$inferSelect;
+
+export function toItem(r: CandidateRow): AdminModelCandidatesResponse['items'][number] {
+  return {
+    id: r.id,
+    runId: r.runId,
+    bundleId: r.bundleId,
+    modelVersion: r.modelVersion,
+    dataEnd: r.dataEnd,
+    lockOpen: r.lockOpen,
+    commodities: r.commodities as AdminModelCandidatesResponse['items'][number]['commodities'],
+    overallRelmae: r.overallRelmae,
+    scores: r.scores,
+    window: { start: r.windowStart, end: r.windowEnd },
+    status: r.status,
+    createdAt: r.createdAt.toISOString(),
+  };
 }
 
 /** Registration by the pipeline (Airflow), with the service token like every internal route. */

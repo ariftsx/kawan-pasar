@@ -48,14 +48,23 @@ describe('verifyBundle', () => {
     ).toContain('schema');
   });
 
-  it('rejects commodities outside the model coverage', async () => {
+  // Fase 4C K1: every catalog commodity may be in a bundle (the coverage follows the bundle).
+  it('accepts every catalog commodity and rejects commodities outside the catalog', async () => {
+    expect(
+      await verify({
+        bundleId: 'b-cov-ok',
+        issuedAt: fresh,
+        rows: fullRows('cabai-rawit-hijau'),
+      }),
+    ).not.toContain('coverage');
     expect(
       await verify({
         bundleId: 'b-cov',
         issuedAt: fresh,
-        rows: [row({ commodity_code: 'cabai-rawit-hijau' })],
+        rows: [row({ commodity_code: 'durian' })],
       }),
-    ).toContain('coverage');
+      // The row schema already refuses codes outside the catalog.
+    ).toContain('schema');
   });
 
   it('rejects markets that are not available', async () => {

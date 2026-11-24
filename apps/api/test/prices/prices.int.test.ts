@@ -38,6 +38,8 @@ beforeEach(async () => {
   const keys = [
     ...(await redis.keys('kp:v1:prices:*')),
     ...(await redis.keys('kp:v1:json:prices:*')),
+    // The coverage snapshot (Fase 4C) lives in the forecasts scope and follows the active bundle.
+    ...(await redis.keys('kp:v1:forecasts:*')),
   ];
   if (keys.length > 0) await redis.del(...keys);
 });
@@ -189,7 +191,8 @@ describe('GET /v1/markets/:market/commodities/:commodity/history', () => {
 });
 
 describe('summary forecast status against the active bundle', () => {
-  it('reports unavailable for a covered commodity missing from the bundle', async () => {
+  // Fase 4C K1: a commodity missing from the active bundle is "menyusul" (pending).
+  it('reports a commodity missing from the active bundle as pending', async () => {
     const { promoteBundle } = await import('../../src/bundles/bundle-promoter.js');
     const { createDb } = await import('../../src/database/client.js');
     const { fullRows, writeBundle } = await import('../helpers/bundles.js');
@@ -210,10 +213,11 @@ describe('summary forecast status against the active bundle', () => {
     const body = PriceSummaryResponseSchema.parse((await get('/v1/markets/PIKJ/prices')).json());
     expect(body.items[0]?.forecast7d.status).toBe('available');
     expect(body.items[2]?.forecast7d).toEqual({
-      status: 'unavailable',
+      status: 'pending_coverage',
       q50Change: null,
       direction: null,
     });
+    expect(body.items[2]?.modelCoverage).toBe('pending');
     // Every forecast shown in the summary carries its model metadata (design anti-goal).
     expect(body.forecastArtifact?.modelVersion).toBeTruthy();
     expect(body.forecastArtifact?.dataVersion).toBeTruthy();

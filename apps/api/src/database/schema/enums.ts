@@ -81,6 +81,13 @@ export const auditAction = pgEnum('audit_action', [
   'article_publish',
   'article_unpublish',
   'article_restore',
+  // Fase 4C — pipeline and model.
+  'pipeline_trigger',
+  'pipeline_pause',
+  'pipeline_resume',
+  'pipeline_schedule',
+  'model_approve',
+  'model_reject',
 ]);
 // Fase 4B — candidates of the retraining pipeline, decided by an admin (4C).
 export const modelCandidateStatus = pgEnum('model_candidate_status', [

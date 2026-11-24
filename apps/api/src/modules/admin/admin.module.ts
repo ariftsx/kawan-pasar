@@ -26,6 +26,15 @@ import {
   ModelCandidatesRepository,
 } from './model-candidates.js';
 import { QueueStats } from './queue-stats.js';
+import { AdminModelAuditController, PIPELINE_RUNS_DIR } from './model-audit.js';
+import {
+  AIRFLOW_CLIENT,
+  AdminPipelineController,
+  PIPELINE_REPOSITORY,
+  PipelineInternalController,
+  PipelineRepository,
+} from './pipeline.js';
+import { AirflowClient } from '../pipeline/airflow-client.js';
 
 @Module({
   imports: [AuthModule, MailQueueModule, InternalModule],
@@ -34,6 +43,9 @@ import { QueueStats } from './queue-stats.js';
     AdminArticlesController,
     AdminModelCandidatesController,
     ModelCandidatesInternalController,
+    AdminModelAuditController,
+    AdminPipelineController,
+    PipelineInternalController,
   ],
   providers: [
     {
@@ -66,6 +78,27 @@ import { QueueStats } from './queue-stats.js';
       provide: MODEL_CANDIDATES,
       inject: [DRIZZLE],
       useFactory: (db: Db): ModelCandidatesRepository => new ModelCandidatesRepository(db),
+    },
+    {
+      provide: PIPELINE_REPOSITORY,
+      inject: [DRIZZLE],
+      useFactory: (db: Db): PipelineRepository => new PipelineRepository(db),
+    },
+    {
+      // Fase 4C: Airflow REST API on the backend network; unset → pages say "Airflow tidak aktif".
+      provide: AIRFLOW_CLIENT,
+      inject: [ENV],
+      useFactory: (env: Env): AirflowClient =>
+        new AirflowClient(
+          env.AIRFLOW_API_URL === undefined || env.AIRFLOW_API_PASSWORD === undefined
+            ? null
+            : { url: env.AIRFLOW_API_URL, password: env.AIRFLOW_API_PASSWORD },
+        ),
+    },
+    {
+      provide: PIPELINE_RUNS_DIR,
+      inject: [ENV],
+      useFactory: (env: Env): string | null => env.PIPELINE_RUNS_DIR ?? null,
     },
     AdminGuard,
   ],

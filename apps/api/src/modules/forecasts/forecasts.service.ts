@@ -6,6 +6,7 @@ import { CacheService } from '../../cache/cache.service.js';
 import { resolveCommodity, toMarketDto } from '../../common/catalog-lookup.js';
 import { CLOCK } from '../../common/clock.js';
 import type { Clock } from '../../common/clock.js';
+import { CoverageService } from './coverage.service.js';
 import { ageDays, forecastStatus } from './forecast-status.js';
 import { ForecastsRepository } from './forecasts.repository.js';
 import type { ForecastRow } from './forecasts.repository.js';
@@ -41,6 +42,7 @@ export class ForecastsService {
     private readonly repo: ForecastsRepository,
     private readonly cache: CacheService,
     @Inject(CLOCK) private readonly clock: Clock,
+    private readonly coverage: CoverageService,
   ) {}
 
   /**
@@ -49,6 +51,7 @@ export class ForecastsService {
    */
   async forCommodity(market: Market, commodityCode: string): Promise<ForecastResponse> {
     const commodity = resolveCommodity(commodityCode);
+    const modelCoverage = await this.coverage.of(commodity.code);
     const base: Omit<
       ForecastResponse,
       'status' | 'artifact' | 'baseDate' | 'basePriceIdr' | 'horizons'
@@ -57,15 +60,15 @@ export class ForecastsService {
       commodity: {
         code: commodity.code,
         name: commodity.name,
-        modelCoverage: commodity.modelCoverage,
+        modelCoverage,
       },
     };
     const empty = { artifact: null, baseDate: null, basePriceIdr: null, horizons: [] };
 
-    if (commodity.modelCoverage === 'pending' || market.status !== 'available') {
+    if (modelCoverage === 'pending' || market.status !== 'available') {
       return {
         ...base,
-        status: commodity.modelCoverage === 'pending' ? 'pending_coverage' : 'unavailable',
+        status: modelCoverage === 'pending' ? 'pending_coverage' : 'unavailable',
         ...empty,
       };
     }

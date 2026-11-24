@@ -16,6 +16,21 @@ export interface PromotionResult {
 
 const IdRow = z.object({ id: z.coerce.number().int() });
 
+/** The transaction handle `db.transaction` passes to its callback. */
+export type DbTx = Parameters<Parameters<Db['transaction']>[0]>[0];
+
+/** Fase 4C: promotion of an audited pipeline candidate by an admin. */
+export interface PromoteOptions {
+  /** The SHA256SUMS hash registered for the candidate: the files read now must be those. */
+  readonly expectedSumsSha256?: string;
+  /** Latest allowed `data_cutoff` (the candidate's data end, protocol lock). */
+  readonly maxDataCutoff?: Date;
+  /** false: a refused bundle leaves no `rejected` artifact row (the candidate stays decidable). */
+  readonly recordRejections?: boolean;
+  /** Runs inside the activation transaction; throwing rolls the activation back. */
+  readonly inTransaction?: (tx: DbTx) => Promise<void>;
+}
+
 /**
  * Verifies a bundle directory and, if valid, makes it the active bundle of its model in one
  * transaction (insert artifact + rows, retire the previous active bundle, activate the new one).
@@ -27,6 +42,7 @@ export async function promoteBundle(
   dir: string,
   now: Date,
   afterActivate?: () => Promise<void>,
+  options: PromoteOptions = {},
 ): Promise<PromotionResult> {
   const bundle = await readBundle(dir);
   const meta = bundle.metadata;
@@ -48,6 +64,19 @@ export async function promoteBundle(
 
   // A bundle older than the active one of the same model would replace newer forecasts.
   let reasons: RejectReason[] = verification.ok ? [] : [...verification.reasons];
+  if (
+    options.expectedSumsSha256 !== undefined &&
+    bundle.sumsSha256 !== options.expectedSumsSha256
+  ) {
+    reasons = [...new Set<RejectReason>([...reasons, 'checksum'])];
+  }
+  if (
+    options.maxDataCutoff !== undefined &&
+    meta !== null &&
+    new Date(meta.data_cutoff) > options.maxDataCutoff
+  ) {
+    reasons = [...new Set<RejectReason>([...reasons, 'cutoff'])];
+  }
   if (meta !== null) {
     const newer = await db.execute(sql`
       SELECT 1 FROM forecast_artifacts
@@ -57,7 +86,7 @@ export async function promoteBundle(
   }
 
   if (reasons.length > 0) {
-    if (meta !== null) {
+    if (meta !== null && options.recordRejections !== false) {
       const checksum = /^[0-9a-f]{64}$/.test(bundle.forecastsSha256)
         ? bundle.forecastsSha256
         : '0'.repeat(64);
@@ -115,6 +144,7 @@ export async function promoteBundle(
       UPDATE forecast_artifacts SET status = 'retired'
       WHERE status = 'active' AND model_name = ${meta.model_name}`);
     await tx.execute(sql`UPDATE forecast_artifacts SET status = 'active' WHERE id = ${artifactId}`);
+    if (options.inTransaction !== undefined) await options.inTransaction(tx);
   });
 
   if (afterActivate !== undefined) await afterActivate();

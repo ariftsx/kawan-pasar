@@ -102,10 +102,15 @@ describe('GET …/forecast', () => {
     expect(body).toMatchObject({ status: 'pending_coverage', artifact: null, horizons: [] });
   });
 
-  it('reports unavailable for a covered commodity missing from the bundle', async () => {
+  // Fase 4C K1: the coverage follows the active bundle, so a commodity missing from it is
+  // "menyusul" (pending), not "unavailable".
+  it('reports a catalog-covered commodity missing from the active bundle as pending', async () => {
     const { body } = await get('beras-medium-1');
-    expect(body.status).toBe('unavailable');
-    expect(body.horizons).toEqual([]);
+    expect(body).toMatchObject({
+      status: 'pending_coverage',
+      commodity: { modelCoverage: 'pending' },
+      horizons: [],
+    });
   });
 
   it('answers an unknown commodity with 404', async () => {
@@ -115,5 +120,35 @@ describe('GET …/forecast', () => {
       headers: { 'x-service-token': serviceToken() },
     });
     expect(res.statusCode).toBe(404);
+  });
+});
+
+describe('coverage follows the approved bundle (Fase 4C K1)', () => {
+  it('shows cabai rawit forecasts once a bundle with its rows is active, without a code change', async () => {
+    await loadObservations(owner, [
+      { commodity: 'cabai-rawit-hijau', date: '2026-09-30', price: 61_000 },
+    ]);
+    const result = await promoteBundle(
+      createDb(appPool),
+      await writeBundle({
+        bundleId: 'arifnet-5k',
+        issuedAt: '2026-11-10T07:00:00+07:00',
+        rows: [...fullRows(), ...fullRows('cabai-rawit-hijau', 61_000)],
+        modelName: 'arifnet',
+      }),
+      clock.now(),
+    );
+    expect(result).toMatchObject({ status: 'active', reasons: [] });
+    const stale = await redis.keys('kp:v1:*forecasts:*');
+    if (stale.length > 0) await redis.del(...stale);
+
+    const rawit = await get('cabai-rawit-hijau');
+    expect(rawit.body).toMatchObject({
+      status: 'available',
+      commodity: { modelCoverage: 'covered' },
+    });
+    expect(rawit.body.horizons).toHaveLength(8);
+    // Still not in the active bundle: stays "menyusul".
+    expect((await get('cabai-rawit-merah')).body.status).toBe('pending_coverage');
   });
 });

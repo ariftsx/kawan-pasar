@@ -26,9 +26,9 @@ export type VerificationResult =
 /** Tolerated clock difference between the pipeline and the API. */
 const CLOCK_SKEW_MS = 5 * 60_000;
 
-const covered = new Set<string>(
-  COMMODITIES.filter((c) => c.modelCoverage === 'covered').map((c) => c.code),
-);
+// Fase 4C (K1): the model coverage follows the active bundle, so a bundle may hold any catalog
+// commodity; `coverage` now rejects only codes outside the catalog.
+const covered = new Set<string>(COMMODITIES.map((c) => c.code));
 const available = new Set<string>(
   MARKETS.filter((m) => m.status === 'available').map((m) => m.code),
 );

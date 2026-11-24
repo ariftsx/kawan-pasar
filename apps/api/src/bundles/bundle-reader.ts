@@ -38,6 +38,8 @@ export interface ReadBundle {
   readonly checksumOk: boolean;
   /** SHA-256 (hex) of forecasts.csv as read. */
   readonly forecastsSha256: string;
+  /** SHA-256 (hex) of SHA256SUMS as read ('' when missing): the hash a pipeline candidate registers. */
+  readonly sumsSha256: string;
 }
 
 const sha256 = (data: Buffer): string => createHash('sha256').update(data).digest('hex');
@@ -130,5 +132,6 @@ export async function readBundle(dir: string): Promise<ReadBundle> {
     expected.get('forecasts.csv') === forecastsSha256 &&
     expected.get('metadata.json') === sha256(metaRaw);
 
-  return { metadata, rows, schemaErrors, checksumOk, forecastsSha256 };
+  const sumsSha256 = sumsRaw === null ? '' : sha256(sumsRaw);
+  return { metadata, rows, schemaErrors, checksumOk, forecastsSha256, sumsSha256 };
 }

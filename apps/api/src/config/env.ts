@@ -1,3 +1,4 @@
+import { isAbsolute } from 'node:path';
 import { parseImageOrigins } from '@kawan-pasar/contracts/article-body';
 import { z } from 'zod';
 
@@ -50,6 +51,16 @@ export const EnvSchema = z.object({
     )
     .optional(),
   WEB_REVALIDATE_TOKEN: z.string().min(32).optional(),
+  // --- Apache Airflow (Fase 4C, ADR 0017): REST API on the backend network, service account ---
+  /** Airflow api-server, e.g. http://airflow-api-server:8080. Unset: pipeline pages say "inactive". */
+  AIRFLOW_API_URL: z.url({ protocol: /^https?$/ }).optional(),
+  /** Password of the `kawanpasar-api` Airflow user (role user: view, trigger, pause). */
+  AIRFLOW_API_PASSWORD: z.string().min(32).optional(),
+  /** Run folders of the pipeline, mounted read-only (candidate bundles under audit, Fase 4C). */
+  PIPELINE_RUNS_DIR: z
+    .string()
+    .refine((p) => isAbsolute(p), 'absolute path')
+    .optional(),
   // --- accounts (Fase 2A) ---
   /** Sessions, lockouts and account rate limits (valkey-session: noeviction, ADR 0011). */
   VALKEY_SESSION_URL: redisUrl,
@@ -95,6 +106,12 @@ const EnvWithRulesSchema = EnvSchema.refine(
   {
     path: ['WEB_REVALIDATE_TOKEN'],
     message: 'WEB_INTERNAL_URL and WEB_REVALIDATE_TOKEN go together',
+  },
+).refine(
+  (env) => (env.AIRFLOW_API_URL === undefined) === (env.AIRFLOW_API_PASSWORD === undefined),
+  {
+    path: ['AIRFLOW_API_PASSWORD'],
+    message: 'AIRFLOW_API_URL and AIRFLOW_API_PASSWORD go together',
   },
 );
 
