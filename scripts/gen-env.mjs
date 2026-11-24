@@ -9,9 +9,24 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 const target = new URL('../.env', import.meta.url);
 const secret = () => randomBytes(32).toString('base64url');
+// Airflow's Fernet key: url-safe base64 of 32 bytes WITH padding (44 characters).
+const fernetKey = () => randomBytes(32).toString('base64').replace(/\+/g, '-').replace(/\//g, '_');
+// Generators other than secret() (Fase 4B).
+const SPECIAL = { AIRFLOW_FERNET_KEY: fernetKey };
+const make = (key) => (SPECIAL[key] ?? secret)();
 
 // Secrets added after Fase 0. They do not affect any data volume, so they can be added safely.
-const LATER_SECRETS = ['WEB_REVALIDATE_TOKEN', 'AUTH_SECRET', 'PHONE_ENC_KEY'];
+const LATER_SECRETS = [
+  'WEB_REVALIDATE_TOKEN',
+  'AUTH_SECRET',
+  'PHONE_ENC_KEY',
+  // Fase 4B: Apache Airflow (own database role, UI admin, Core API service account, keys).
+  'AIRFLOW_DB_PASSWORD',
+  'AIRFLOW_ADMIN_PASSWORD',
+  'AIRFLOW_API_PASSWORD',
+  'AIRFLOW_JWT_SECRET',
+  'AIRFLOW_FERNET_KEY',
+];
 
 if (process.argv.includes('--add-missing')) {
   if (!existsSync(target)) {
@@ -41,7 +56,7 @@ if (process.argv.includes('--add-missing')) {
     const kept = lines.filter((l) => !missing.some((k) => l.startsWith(`${k}=`)));
     const head = kept.join('\n').replace(/\n*$/, '\n');
     const added = [
-      ...missingSecrets.map((k) => `${k}=${secret()}`),
+      ...missingSecrets.map((k) => `${k}=${make(k)}`),
       ...missingUrls.map((k) => `${k}=${laterUrls[k]()}`),
     ].join('\n');
     writeFileSync(target, `${head}${added}\n`, { mode: 0o600 });
@@ -68,6 +83,11 @@ const s = {
   WEB_REVALIDATE_TOKEN: secret(),
   AUTH_SECRET: secret(),
   PHONE_ENC_KEY: secret(),
+  AIRFLOW_DB_PASSWORD: secret(),
+  AIRFLOW_ADMIN_PASSWORD: secret(),
+  AIRFLOW_API_PASSWORD: secret(),
+  AIRFLOW_JWT_SECRET: secret(),
+  AIRFLOW_FERNET_KEY: fernetKey(),
 };
 
 const pg = (user, pw, port, db) => `postgres://${user}:${pw}@127.0.0.1:${port}/${db}`;

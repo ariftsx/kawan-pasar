@@ -37,6 +37,8 @@ const EXPECTED_HOST_PORTS = new Set([
   '18025',
   '11025',
 ]);
+// Fase 4B: the Airflow UI/REST API (profile airflow), checked only while that profile runs.
+const OPTIONAL_HOST_PORTS = new Set(['8081']);
 const results = [];
 const secrets = Object.entries(env)
   .filter(([k, v]) => /PASSWORD|TOKEN|SECRET/.test(k) && v.length > 0)
@@ -171,7 +173,10 @@ check('only expected host ports, all bound to 127.0.0.1', () => {
   // A missing dev port means compose ran without the dev-tools overlay (use scripts/compose.mjs).
   if (missing.length > 0)
     throw new Error(`expected host ports not published: ${missing.join(', ')}`);
-  return bindings.every((b) => b.url === '127.0.0.1' && EXPECTED_HOST_PORTS.has(b.port));
+  return bindings.every(
+    (b) =>
+      b.url === '127.0.0.1' && (EXPECTED_HOST_PORTS.has(b.port) || OPTIONAL_HOST_PORTS.has(b.port)),
+  );
 });
 
 async function checkAsync(name, fn) {
@@ -449,6 +454,70 @@ await checkAsync('ISR: data page is cached after the first request', async () =>
   const res = await edge('/pasar');
   return res.status === 200 && res.headers.get('x-nextjs-cache') === 'HIT';
 });
+
+// --- Fase 4B: Apache Airflow (ADR 0016), only when the airflow profile is running ---
+if (containerId('airflow-api-server')) {
+  for (const s of ['airflow-api-server', 'airflow-scheduler']) {
+    check(`${s} healthy`, () => {
+      const id = containerId(s);
+      if (!id) throw new Error('not running');
+      return docker(['inspect', '-f', '{{.State.Health.Status}}', id]).trim() === 'healthy';
+    });
+  }
+  check('airflow-dag-processor running', () => {
+    const id = containerId('airflow-dag-processor');
+    if (!id) throw new Error('not running');
+    return docker(['inspect', '-f', '{{.State.Status}}', id]).trim() === 'running';
+  });
+  const psqlDirect = (user, password, db) =>
+    docker(
+      [
+        'exec',
+        '-e',
+        'PGPASSWORD',
+        containerId('postgres'),
+        'psql',
+        '-h',
+        '127.0.0.1',
+        '-U',
+        user,
+      ].concat(['-d', db, '-tAc', 'select current_user']),
+      { PGPASSWORD: password },
+    ).trim();
+  const refused = (fn) => {
+    try {
+      fn();
+      return false;
+    } catch {
+      return true;
+    }
+  };
+  check(
+    'airflow role reaches only its own database',
+    () =>
+      psqlDirect('airflow', env.AIRFLOW_DB_PASSWORD, 'airflow') === 'airflow' &&
+      refused(() => psqlDirect('airflow', env.AIRFLOW_DB_PASSWORD, 'kawanpasar')),
+  );
+  check('app roles cannot connect to the airflow database', () =>
+    refused(() => psqlDirect('app_rw', env.APP_RW_PASSWORD, 'airflow')),
+  );
+  const airflowToken = (username, password) =>
+    fetch('http://127.0.0.1:8081/auth/token', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+      signal: AbortSignal.timeout(10000),
+    }).then((r) => r.status);
+  await checkAsync(
+    'airflow UI: wrong password refused, admin and API account accepted',
+    async () => {
+      const wrong = await airflowToken('admin', 'wrong-password');
+      const admin = await airflowToken('admin', env.AIRFLOW_ADMIN_PASSWORD);
+      const api = await airflowToken('kawanpasar-api', env.AIRFLOW_API_PASSWORD);
+      return wrong === 401 && [200, 201].includes(admin) && [200, 201].includes(api);
+    },
+  );
+}
 
 const width = Math.max(...results.map(([n]) => n.length));
 for (const [name, status] of results) console.log(`${name.padEnd(width)}  ${status}`);

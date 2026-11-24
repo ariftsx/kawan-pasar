@@ -20,7 +20,9 @@
     "env:init": "node scripts/gen-env.mjs",
     "audit:all": "node scripts/audit.mjs",
     "ingest:import": "node scripts/compose.mjs --profile jobs run --rm ingest import-csv --file /data/seed/prices_combined.csv",
-    "pipeline": "node scripts/pipeline.mjs"
+    "pipeline": "node scripts/pipeline.mjs",
+    "airflow:up": "node scripts/compose.mjs --profile airflow up -d --wait airflow-api-server airflow-scheduler airflow-dag-processor",
+    "airflow:down": "node scripts/compose.mjs --profile airflow stop airflow-scheduler airflow-dag-processor airflow-api-server"
   },
   "devDependencies": {
     "prettier": "3.9.10",

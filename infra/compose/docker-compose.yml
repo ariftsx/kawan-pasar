@@ -5,6 +5,38 @@ x-hardening: &hardening
   security_opt:
     - no-new-privileges:true
 
+# Fase 4B: Apache Airflow (ADR 0016), profile `airflow`. Its own database and role; the UI and
+# the REST API only on 127.0.0.1. Users come from .env (SimpleAuthManager): `admin` for the UI and
+# `kawanpasar-api` (role user: view and trigger DAGs) for the Core API in 4C.
+x-airflow-env: &airflow-env
+  AIRFLOW__CORE__EXECUTOR: LocalExecutor
+  AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
+  AIRFLOW__CORE__DEFAULT_TIMEZONE: Asia/Jakarta
+  AIRFLOW__CORE__PARALLELISM: '4'
+  AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'False'
+  AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY:?run node scripts/gen-env.mjs --add-missing}
+  AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-api-server:8080/execution/
+  AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:${AIRFLOW_DB_PASSWORD}@postgres:5432/airflow
+  AIRFLOW__DATABASE__SQL_ALCHEMY_POOL_SIZE: '3'
+  AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_SECRET:?run node scripts/gen-env.mjs --add-missing}
+  AIRFLOW__API__WORKERS: '1'
+  AIRFLOW__API__EXPOSE_CONFIG: 'False'
+  AIRFLOW__WEBSERVER__WARN_DEPLOYMENT_EXPOSURE: 'False'
+  AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'True'
+
+x-airflow: &airflow
+  <<: *hardening
+  profiles: [airflow]
+  cap_drop: [ALL]
+  build:
+    context: ../../services
+    dockerfile: pipeline/airflow/Dockerfile
+  image: kawan-pasar/airflow:local
+  depends_on:
+    airflow-init: { condition: service_completed_successfully }
+  volumes:
+    - airflow-logs:/opt/airflow/logs
+
 # Account settings shared by the API and the worker (Fase 2A).
 x-account-env: &account-env
   VALKEY_SESSION_URL: redis://:${VALKEY_PASSWORD}@valkey-session:6379/0
@@ -69,6 +101,7 @@ networks:
 
 volumes:
   pgdata:
+  airflow-logs:
   valkey-queue-data:
 
 services:
@@ -83,6 +116,8 @@ services:
       APP_RW_PASSWORD: ${APP_RW_PASSWORD:?set APP_RW_PASSWORD}
       INGEST_W_PASSWORD: ${INGEST_W_PASSWORD:?set INGEST_W_PASSWORD}
       PGBOUNCER_AUTH_PASSWORD: ${PGBOUNCER_AUTH_PASSWORD:?set PGBOUNCER_AUTH_PASSWORD}
+      # Fase 4B: role and database of Apache Airflow (init/02-airflow.sh).
+      AIRFLOW_DB_PASSWORD: ${AIRFLOW_DB_PASSWORD:?run node scripts/gen-env.mjs --add-missing}
       TZ: Asia/Jakarta
     command: >
       postgres
@@ -352,3 +387,114 @@ services:
       # Fase 4A: PIHPS price files written by the retraining pipeline (import-pihps).
       - ../../data/pipeline/runs:/data/pipeline-runs:ro
     networks: [backend]
+
+  # --- Fase 4B: Apache Airflow (profile airflow) ---
+  # Creates the airflow role and database on a volume made before Fase 4B (idempotent).
+  airflow-db:
+    profiles: [airflow]
+    image: postgres:18-alpine
+    security_opt:
+      - no-new-privileges:true
+    restart: 'no'
+    depends_on:
+      postgres: { condition: service_healthy }
+    entrypoint: ['/bin/sh', '/init/02-airflow.sh']
+    environment:
+      PGHOST: postgres
+      POSTGRES_USER: postgres
+      PGPASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?set POSTGRES_SUPERUSER_PASSWORD in .env}
+      AIRFLOW_DB_PASSWORD: ${AIRFLOW_DB_PASSWORD:?run node scripts/gen-env.mjs --add-missing}
+    volumes:
+      - ../postgres/init/02-airflow.sh:/init/02-airflow.sh:ro
+    networks: [backend]
+
+  airflow-init:
+    <<: *airflow
+    restart: 'no'
+    depends_on:
+      airflow-db: { condition: service_completed_successfully }
+    # Migrates the metadata database, then the pool that keeps one writer on the evidence store.
+    command:
+      - bash
+      - -c
+      - >-
+        airflow db migrate &&
+        airflow pools set kp_store 1 'Gudang bukti PIHPS dan folder run: satu penulis'
+    environment:
+      <<: *airflow-env
+    networks: [backend]
+    deploy:
+      resources:
+        limits: { cpus: '1', memory: 768M }
+
+  airflow-api-server:
+    <<: *airflow
+    command:
+      - bash
+      - -c
+      - >-
+        umask 077 &&
+        printf '{"admin": "%s", "kawanpasar-api": "%s"}' "$$AIRFLOW_ADMIN_PASSWORD" "$$AIRFLOW_API_PASSWORD"
+        > /tmp/simple_auth_passwords.json &&
+        unset AIRFLOW_ADMIN_PASSWORD AIRFLOW_API_PASSWORD &&
+        exec airflow api-server
+    environment:
+      <<: *airflow-env
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_USERS: admin:admin,kawanpasar-api:user
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_PASSWORDS_FILE: /tmp/simple_auth_passwords.json
+      AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:?run node scripts/gen-env.mjs --add-missing}
+      AIRFLOW_API_PASSWORD: ${AIRFLOW_API_PASSWORD:?run node scripts/gen-env.mjs --add-missing}
+    ports:
+      - '127.0.0.1:8081:8080'
+    # edge only because a port cannot be published from the internal backend network; the
+    # database is on backend.
+    networks: [edge, backend]
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -fsS http://127.0.0.1:8080/api/v2/version >/dev/null || exit 1']
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+    deploy:
+      resources:
+        limits: { cpus: '1', memory: 1G }
+
+  # LocalExecutor: the DAG tasks (and so the training) run in this container.
+  airflow-scheduler:
+    <<: *airflow
+    command: ['scheduler']
+    depends_on:
+      airflow-init: { condition: service_completed_successfully }
+      airflow-api-server: { condition: service_healthy }
+    environment:
+      <<: *airflow-env
+      # Read by the DAG steps (the Airflow settings above are removed from their environment).
+      API_INTERNAL_URL: http://api:3001
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?set SERVICE_TOKEN}
+      INGEST_DATABASE_URL: postgres://ingest_w:${INGEST_W_PASSWORD:?set INGEST_W_PASSWORD}@pgbouncer:6432/kawanpasar
+    volumes:
+      - airflow-logs:/opt/airflow/logs
+      - ../../data/pipeline:/data
+      - ../../services/pipeline/config/prospective:/opt/pipeline/config/prospective:ro
+    # edge for PIHPS (internet), backend for the Core API and the price import.
+    networks: [edge, backend]
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -fsS http://127.0.0.1:8974/health >/dev/null || exit 1']
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    deploy:
+      resources:
+        # Training peaks near 3 GB (Fase 4A); needs Docker Desktop with 6 GB (plan 4B, K1).
+        limits: { cpus: '2', memory: 4G }
+
+  airflow-dag-processor:
+    <<: *airflow
+    command: ['dag-processor']
+    environment:
+      <<: *airflow-env
+    networks: [backend]
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: 768M }
