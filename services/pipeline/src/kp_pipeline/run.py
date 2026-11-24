@@ -26,6 +26,7 @@ from kp_pipeline.store import (
     export_prices,
     forget_open_month,
     remove_run_dir,
+    run_created_utc,
     write_climate_placeholder,
 )
 from kp_pipeline.vendor import stage
@@ -34,6 +35,8 @@ PRODUCT_CALENDAR = product_calendar()
 RUN_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 STEPS = ("prepare", "collect", "preprocess", "prices", "train", "bundle")
 WIB = timedelta(hours=7)
+# Credentials of other steps (Airflow scheduler environment), removed before running ARIF-Net code.
+STEP_SECRETS = frozenset({"SERVICE_TOKEN", "INGEST_DATABASE_URL", "API_INTERNAL_URL"})
 
 
 class StepError(RuntimeError):
@@ -50,6 +53,21 @@ class RunOptions:
     calendar: Path = PRODUCT_CALENDAR
     prospective_dir: Path = PROSPECTIVE_DIR
     today: date | None = None  # tests
+
+
+def wib_today() -> date:
+    return (datetime.now(UTC) + WIB).date()
+
+
+def runs_created_on(runs: Path, day: date, prefix: str = "") -> int:
+    """Runs whose id starts with `prefix` and whose run.json was created on `day` (WIB): the
+    retraining DAG allows at most 3 a day (design § 4)."""
+    n = 0
+    for d in runs.iterdir() if runs.exists() else []:
+        created = run_created_utc(d) if d.name.startswith(prefix) else None
+        if created and (datetime.fromisoformat(created) + WIB).date() == day:
+            n += 1
+    return n
 
 
 def data_end_for(lock: LockState, today_wib: date) -> date:
@@ -97,8 +115,9 @@ class Run:
         return date.fromisoformat(str(self.state["data_end"]))
 
     def _env(self) -> dict[str, str]:
+        # The vendored ARIF-Net code and kp_model never need the service credentials.
         return {
-            **os.environ,
+            **{k: v for k, v in os.environ.items() if k not in STEP_SECRETS},
             "ARIFNET_PHASE": "development",
             "PYTHONPATH": str(self.root),
             "PYTHONIOENCODING": "utf-8",

@@ -34,6 +34,8 @@ class Registration:
     train_end: date
     cutoff: date
     frozen_sha256: str
+    # sha256 of ARIF-Net's REGISTERED.json: the file must accompany OPENED.json (Fase 4B).
+    registered_file_sha256: str
 
     @staticmethod
     def load(folder: Path = PROSPECTIVE_DIR) -> "Registration":
@@ -43,6 +45,7 @@ class Registration:
             train_end=date.fromisoformat(str(raw["train_end"])),
             cutoff=date.fromisoformat(str(raw["cutoff"])),
             frozen_sha256=str(raw["frozen_sha256"]),
+            registered_file_sha256=str(raw["registered_file_sha256"]),
         )
 
 
@@ -76,6 +79,13 @@ def evaluate(reg: Registration, folder: Path = PROSPECTIVE_DIR) -> LockState:
         return locked("Pembukaan uji prospektif belum selesai.")
     if frozen_sha256(opened.get("frozen")) != reg.frozen_sha256:
         return locked("Konfigurasi beku di OPENED.json tidak sama dengan registrasi.")
+    # The frozen hash is public (this repository); the registration file is not. Requiring it,
+    # byte for byte, ties the opening to the researcher's own registration (Fase 4B, task 7).
+    registered = folder / "REGISTERED.json"
+    if not registered.is_file():
+        return locked("REGISTERED.json ARIF-Net harus diletakkan di samping OPENED.json.")
+    if hashlib.sha256(registered.read_bytes()).hexdigest() != reg.registered_file_sha256:
+        return locked("REGISTERED.json di samping OPENED.json bukan registrasi yang tercatat.")
     return LockState(
         open=True,
         data_ceiling=None,

@@ -57,3 +57,4 @@ playwright-report/
 next-env.d.ts
 # Proof of the ARIF-Net prospective opening, placed by the owner (Fase 4): carries machine details.
 services/pipeline/config/prospective/OPENED.json
+services/pipeline/config/prospective/REGISTERED.json

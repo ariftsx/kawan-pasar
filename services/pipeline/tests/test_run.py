@@ -118,3 +118,16 @@ def test_a_failed_prepare_can_be_retried(tmp_path: Path) -> None:
 def test_run_ids_cannot_leave_the_runs_folder(tmp_path: Path, run_id: str) -> None:
     with pytest.raises(ValueError, match="run id"):
         Run(RunOptions(store=tmp_path / "s", runs=tmp_path / "r", run_id=run_id))
+
+
+def test_vendored_code_never_receives_service_credentials(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from kp_pipeline.run import STEP_SECRETS
+
+    for k in STEP_SECRETS:
+        monkeypatch.setenv(k, "rahasia")
+    run = Run(RunOptions(store=tmp_path / "store", runs=tmp_path / "runs", run_id="x"))
+    env = run._env()
+    assert not STEP_SECRETS & set(env)
+    assert env["ARIFNET_PHASE"] == "development"

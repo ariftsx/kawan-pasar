@@ -8,6 +8,7 @@ so a daily run only fetches the newest month. The three original commodities' hi
 
 import csv
 import hashlib
+import json
 import os
 import shutil
 import sys
@@ -191,3 +192,37 @@ def remove_run_dir(run_dir: Path) -> None:
         raise RuntimeError(f"{link}: expected a link to the store, found a folder; not deleting")
     if run_dir.exists():
         shutil.rmtree(run_dir)
+
+
+def run_created_utc(run_dir: Path) -> str | None:
+    """`created_utc` of a run folder, or None when it is not a readable run (no or corrupt run.json):
+    such folders are never counted or removed."""
+    state = run_dir / "run.json"
+    if not (run_dir.is_dir() and state.is_file()):
+        return None
+    try:
+        data = json.loads(state.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return str(data.get("created_utc", "")) if isinstance(data, dict) else None
+
+
+def clean_runs(runs: Path, keep_latest: int, keep: set[str], prefix: str = "") -> list[str]:
+    """Removes run folders whose id starts with `prefix`, except the `keep_latest` newest (by run.json
+    created_utc) and the run ids in `keep` (candidates still awaiting an admin, the approved one).
+    Folders without a readable run.json are not runs and are left alone. Returns the removed run
+    ids, oldest first."""
+    found = []
+    for d in runs.iterdir() if runs.exists() else []:
+        created = run_created_utc(d) if d.name.startswith(prefix) else None
+        if created is not None:
+            found.append((created, d))
+    found.sort()
+    newest = {d.name for _, d in found[-keep_latest:]} if keep_latest > 0 else set()
+    removed = []
+    for _, d in found:
+        if d.name in newest or d.name in keep:
+            continue
+        remove_run_dir(d)
+        removed.append(d.name)
+    return removed

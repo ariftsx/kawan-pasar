@@ -89,6 +89,7 @@ def locked_until(folder: Path, end: date) -> Path:
                 "train_end": end.isoformat(),
                 "cutoff": "2023-08-31",
                 "frozen_sha256": frozen_sha256({}),
+                "registered_file_sha256": "0" * 64,
             }
         ),
         encoding="utf-8",

@@ -1,0 +1,11 @@
+# Build context: services/. Only what the Dockerfile copies; never local environments, caches or
+# the proof of the prospective-test opening (machine details; mounted read-only at run time).
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/.coverage
+pipeline/config/prospective/OPENED.json
+pipeline/config/prospective/REGISTERED.json
+model-arifnet/artifacts
