@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { EmailSchema } from './auth.js';
 import { ArticleCategorySchema, ArticleSlugSchema } from './articles.js';
-import { IsoDateTime } from './common.js';
+import { CommodityCodeSchema, IsoDate, IsoDateTime } from './common.js';
 
 // Admin (Fase 3B). Validated in the BFF and again in the API.
 
@@ -159,3 +159,56 @@ export const AdminArticleResponseSchema = z.strictObject({
   ),
 });
 export type AdminArticleResponse = z.infer<typeof AdminArticleResponseSchema>;
+
+// Model candidates (Fase 4B task 5): registered by the retraining pipeline (Airflow), audited and
+// decided by an admin (4C). A candidate is never active until an admin approves it.
+
+const RelMae = z.number().nonnegative().max(100);
+const RUN_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+/** ARIF-Net prospective-test protocol v1.1.0: the data ceiling while the test is not opened. */
+export const PROSPECTIVE_LOCKED_DATA_END = '2026-09-30';
+
+export const ModelCandidateInputSchema = z
+  .strictObject({
+    runId: z.string().regex(RUN_ID),
+    bundleId: z.string().regex(/^arifnet-[a-z0-9._-]{1,120}$/),
+    bundleSha256: z.string().regex(/^[0-9a-f]{64}$/),
+    modelVersion: z.string().min(1).max(120),
+    dataEnd: IsoDate,
+    /** The prospective-test lock when the run was made. */
+    lockOpen: z.boolean(),
+    commodities: z.array(CommodityCodeSchema).min(1).max(10),
+    overallRelmae: RelMae,
+    /** relMAE per product commodity code and horizon (days). */
+    // partialRecord: an enum-keyed z.record is exhaustive in zod 4 (every commodity required).
+    scores: z.partialRecord(CommodityCodeSchema, z.record(z.string().regex(/^\d{1,3}$/), RelMae)),
+    window: z.strictObject({ start: IsoDate, end: IsoDate }),
+  })
+  // A candidate trained while the lock was closed cannot have data after the ceiling.
+  .refine((c) => c.lockOpen || c.dataEnd <= PROSPECTIVE_LOCKED_DATA_END, {
+    path: ['dataEnd'],
+    message: 'data after the prospective-test ceiling while the lock was closed',
+  });
+export type ModelCandidateInput = z.infer<typeof ModelCandidateInputSchema>;
+
+export const ModelCandidateStatusSchema = z.enum(['pending', 'approved', 'rejected']);
+
+export const AdminModelCandidatesResponseSchema = z.strictObject({
+  items: z.array(
+    z.strictObject({
+      id: z.int().positive(),
+      runId: z.string(),
+      bundleId: z.string(),
+      modelVersion: z.string(),
+      dataEnd: IsoDate,
+      lockOpen: z.boolean(),
+      commodities: z.array(CommodityCodeSchema),
+      overallRelmae: z.number(),
+      scores: z.record(z.string(), z.record(z.string(), z.number())),
+      window: z.strictObject({ start: IsoDate, end: IsoDate }),
+      status: ModelCandidateStatusSchema,
+      createdAt: IsoDateTime,
+    }),
+  ),
+});
+export type AdminModelCandidatesResponse = z.infer<typeof AdminModelCandidatesResponseSchema>;
