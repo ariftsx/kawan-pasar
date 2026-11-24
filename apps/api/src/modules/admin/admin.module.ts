@@ -19,11 +19,22 @@ import { AdminSessions } from './admin-session.js';
 import { ADMIN_QUEUE_STATS, ADMIN_REPOSITORY, AdminController } from './admin.controller.js';
 import { ADMIN_SESSIONS, ADMIN_USERS, AdminGuard } from './admin.guard.js';
 import { AdminRepository } from './admin.repository.js';
+import {
+  AdminModelCandidatesController,
+  MODEL_CANDIDATES,
+  ModelCandidatesInternalController,
+  ModelCandidatesRepository,
+} from './model-candidates.js';
 import { QueueStats } from './queue-stats.js';
 
 @Module({
   imports: [AuthModule, MailQueueModule, InternalModule],
-  controllers: [AdminController, AdminArticlesController],
+  controllers: [
+    AdminController,
+    AdminArticlesController,
+    AdminModelCandidatesController,
+    ModelCandidatesInternalController,
+  ],
   providers: [
     {
       provide: ADMIN_USERS,
@@ -50,6 +61,11 @@ import { QueueStats } from './queue-stats.js';
       provide: ADMIN_ARTICLES,
       inject: [DRIZZLE],
       useFactory: (db: Db): AdminArticlesRepository => new AdminArticlesRepository(db),
+    },
+    {
+      provide: MODEL_CANDIDATES,
+      inject: [DRIZZLE],
+      useFactory: (db: Db): ModelCandidatesRepository => new ModelCandidatesRepository(db),
     },
     AdminGuard,
   ],
