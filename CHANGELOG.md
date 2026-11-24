@@ -2,6 +2,24 @@
 
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/). Versi produk mengikuti fase pengembangan.
 
+## [Fase 4B — Apache Airflow] — 2026-11-24
+
+### Ditambahkan
+
+- **Apache Airflow 3.3.2** (ADR 0016), profil `airflow` terpisah. Terdiri dari `airflow-api-server` (UI dan REST API di `127.0.0.1:8081`), `airflow-scheduler` (LocalExecutor), `airflow-dag-processor`, serta database dan role `airflow` sendiri. Perintah: `pnpm airflow:up` / `pnpm airflow:down`.
+- **DAG `harga_harian`** (Senin–Jumat 10.00 WIB): harga PIHPS → `import-pihps` ke produk → pembersihan run lama.
+- **DAG `latih_ulang`** (Senin 02.00 WIB): latih ulang ARIF-Net A0 → kandidat didaftarkan ke Core API, maksimal 3 kali per hari.
+- Pool Airflow `kp_store`: satu penulis pada gudang bukti lintas DAG. Kredensial diberikan per langkah, dan kode ARIF-Net tidak menerima kredensial apa pun.
+- Selama kunci uji prospektif tertutup, kedua DAG dilewati dengan alasannya.
+- **Kandidat model:** tabel `model_candidates` (migrasi `0013`, tidak bisa dihapus oleh aplikasi), `POST /internal/model-candidates` (token layanan; pendaftaran yang sama dijawab 200, pendaftaran yang bertabrakan dijawab 409; kandidat terkunci dengan data sesudah 30 Sep 2026 ditolak), dan `GET /v1/admin/model-candidates` (admin).
+- Perintah pipeline `register`, `runs-today`, `clean`.
+- `infra:check` memeriksa Airflow saat profilnya menyala.
+
+### Diubah
+
+- Kunci uji prospektif kini juga mewajibkan `REGISTERED.json` asli di samping `OPENED.json` (sha256 tercatat di ringkasan registrasi).
+- Image `pipeline` dan `airflow` memakai berkas `Dockerfile.dockerignore`, sehingga berkas kunci, `.venv`, dan cache tidak pernah masuk image.
+
 ## [Fase 4A — Pipeline latih ulang ARIF-Net] — 2026-11-23
 
 ### Ditambahkan

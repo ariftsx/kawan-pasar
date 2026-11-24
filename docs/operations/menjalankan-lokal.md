@@ -36,7 +36,7 @@ Sejak Fase 1D web berjalan sebagai **dua replika** (`web-1`, `web-2`) dengan cac
 
 ### Memperbarui `.env` dari fase sebelumnya
 
-Fase 1B menambah `WEB_REVALIDATE_TOKEN`. Untuk `.env` yang sudah ada, jalankan perintah di bawah. Perintah ini hanya menambah rahasia yang belum ada, tidak mengubah nilai lama, dan tidak menyentuh volume data:
+Fase 1B menambah `WEB_REVALIDATE_TOKEN`, dan Fase 4B menambah rahasia Apache Airflow (`AIRFLOW_*`). Untuk `.env` yang sudah ada, jalankan perintah di bawah. Perintah ini hanya menambah rahasia yang belum ada, tidak mengubah nilai lama, dan tidak menyentuh volume data:
 
 ```bash
 node scripts/gen-env.mjs --add-missing
@@ -84,17 +84,18 @@ pnpm --filter @kawan-pasar/api role:grant <email> analyst   # beri peran Analis 
 
 Semua port hanya terikat ke `127.0.0.1`, tidak terbuka ke jaringan lain.
 
-| Layanan                   | Port host | Keterangan                                                |
-| ------------------------- | --------- | --------------------------------------------------------- |
-| Traefik (pintu masuk web) | 8080      | Satu-satunya pintu masuk aplikasi (situs web)             |
-| PostgreSQL (langsung)     | 15432     | Untuk migrasi (`kp_owner`) dan alat dev; profil dev-tools |
-| PgBouncer                 | 16432     | Jalur koneksi aplikasi dan ingest                         |
-| Core API                  | 3001      | Hanya untuk alat dev; di produksi tidak terbuka           |
-| Valkey cache              | 16379     |                                                           |
-| Valkey antrean            | 16380     |                                                           |
-| Valkey sesi               | 16381     | Sesi, lockout, rate limit akun (Fase 2A)                  |
-| Mailpit (kotak masuk web) | 18025     | Email lokal: buka http://127.0.0.1:18025 (Fase 2A)        |
-| Mailpit (SMTP)            | 11025     | Untuk uji integrasi worker email                          |
+| Layanan                   | Port host | Keterangan                                                       |
+| ------------------------- | --------- | ---------------------------------------------------------------- |
+| Traefik (pintu masuk web) | 8080      | Satu-satunya pintu masuk aplikasi (situs web)                    |
+| PostgreSQL (langsung)     | 15432     | Untuk migrasi (`kp_owner`) dan alat dev; profil dev-tools        |
+| PgBouncer                 | 16432     | Jalur koneksi aplikasi dan ingest                                |
+| Core API                  | 3001      | Hanya untuk alat dev; di produksi tidak terbuka                  |
+| Valkey cache              | 16379     |                                                                  |
+| Valkey antrean            | 16380     |                                                                  |
+| Valkey sesi               | 16381     | Sesi, lockout, rate limit akun (Fase 2A)                         |
+| Mailpit (kotak masuk web) | 18025     | Email lokal: buka http://127.0.0.1:18025 (Fase 2A)               |
+| Mailpit (SMTP)            | 11025     | Untuk uji integrasi worker email                                 |
+| Apache Airflow (UI, REST) | 8081      | Hanya saat profil `airflow` menyala: `pnpm airflow:up` (Fase 4B) |
 
 Port 5432, 6379, dan sejenisnya sengaja **tidak** dipakai agar tidak bentrok dengan PostgreSQL atau Redis yang mungkin sudah terpasang di Windows.
 
@@ -105,6 +106,8 @@ pnpm infra:up       # menyalakan
 pnpm infra:down     # mematikan (data tetap tersimpan di volume)
 node scripts/compose.mjs logs -f postgres   # melihat log satu layanan
 node scripts/compose.mjs ps                 # status kontainer
+pnpm airflow:up     # Apache Airflow (Fase 4B): UI http://127.0.0.1:8081, pengguna admin
+pnpm airflow:down
 ```
 
 ## Rotasi rahasia / mulai dari nol
@@ -119,11 +122,14 @@ pnpm infra:up
 
 ## Troubleshooting
 
-| Gejala                                                                    | Penyebab                                                                                          | Solusi                                                                                                                                                                                                                     |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ports are not available … bind: An attempt was made to access a socket…` | Port host dipakai proses lain atau masuk rentang port yang dicadangkan Windows                    | Cek dengan `Get-NetTCPConnection -LocalPort <port> -State Listen` dan `netsh interface ipv4 show excludedportrange protocol=tcp`, lalu ubah port di `infra/compose/docker-compose.dev-tools.yml` dan `scripts/gen-env.mjs` |
-| `pgbouncer` tidak healthy                                                 | PostgreSQL belum siap atau `PGBOUNCER_AUTH_PASSWORD` berbeda dari yang dipakai saat volume dibuat | `docker compose -p kawan-pasar logs pgbouncer`; bila password berubah, ikuti bagian rotasi                                                                                                                                 |
-| `password authentication failed` setelah membuat ulang `.env`             | Volume lama menyimpan password lama                                                               | Ikuti bagian rotasi (`down -v`)                                                                                                                                                                                            |
-| `pnpm install` menolak sebuah versi (`MINIMUM_RELEASE_AGE_VIOLATION`)     | Versi tersebut terlalu baru dirilis (gerbang rantai pasok)                                        | Pakai versi stabil sebelumnya; jangan menambah pengecualian tanpa ADR                                                                                                                                                      |
-| Perubahan `infra/traefik/dynamic/*.yml` tidak berlaku                     | Docker Desktop di Windows tidak meneruskan event perubahan berkas bind mount ke kontainer         | `node scripts/compose.mjs restart traefik`                                                                                                                                                                                 |
-| `:8080` menampilkan versi web lama                                        | Image `web-1`/`web-2` belum dibangun ulang                                                        | `node scripts/compose.mjs up -d --wait --build web-1 web-2`                                                                                                                                                                |
+| Gejala                                                                    | Penyebab                                                                                          | Solusi                                                                                                                                                                                                                                    |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ports are not available … bind: An attempt was made to access a socket…` | Port host dipakai proses lain atau masuk rentang port yang dicadangkan Windows                    | Cek dengan `Get-NetTCPConnection -LocalPort <port> -State Listen` dan `netsh interface ipv4 show excludedportrange protocol=tcp`, lalu ubah port di `infra/compose/docker-compose.dev-tools.yml` dan `scripts/gen-env.mjs`                |
+| `pgbouncer` tidak healthy                                                 | PostgreSQL belum siap atau `PGBOUNCER_AUTH_PASSWORD` berbeda dari yang dipakai saat volume dibuat | `docker compose -p kawan-pasar logs pgbouncer`; bila password berubah, ikuti bagian rotasi                                                                                                                                                |
+| `password authentication failed` setelah membuat ulang `.env`             | Volume lama menyimpan password lama                                                               | Ikuti bagian rotasi (`down -v`)                                                                                                                                                                                                           |
+| `pnpm install` menolak sebuah versi (`MINIMUM_RELEASE_AGE_VIOLATION`)     | Versi tersebut terlalu baru dirilis (gerbang rantai pasok)                                        | Pakai versi stabil sebelumnya; jangan menambah pengecualian tanpa ADR                                                                                                                                                                     |
+| Perubahan `infra/traefik/dynamic/*.yml` tidak berlaku                     | Docker Desktop di Windows tidak meneruskan event perubahan berkas bind mount ke kontainer         | `node scripts/compose.mjs restart traefik`                                                                                                                                                                                                |
+| `:8080` menampilkan versi web lama                                        | Image `web-1`/`web-2` belum dibangun ulang                                                        | `node scripts/compose.mjs up -d --wait --build web-1 web-2`                                                                                                                                                                               |
+| Docker Desktop tidak mau menyala, `unmounting WSL VHDX` / disk C: penuh   | `docker_data.vhdx` membesar oleh image dan build cache (image Airflow 6,6 GB)                     | Bebaskan ruang, atau pindahkan folder `%LOCALAPPDATA%\Docker\wsl\disk` ke drive lain lalu pasang junction (`New-Item -ItemType Junction`) ke lokasi lama saat Docker dan WSL mati. Build cache bisa dibuang dengan `docker builder prune` |
+| Latih ulang di Airflow dihentikan (OOM) atau memori Docker hanya ~3,7 GB  | Backend WSL2 memakai batas memori dari `.wslconfig`, bukan dari menu Resources                    | Isi `%UserProfile%\.wslconfig` dengan `[wsl2]` dan `memory=6GB`, lalu jalankan `wsl --shutdown` dan buka ulang Docker Desktop                                                                                                             |
+| DAG Airflow selalu _skipped_                                              | Kunci uji prospektif ARIF-Net masih tertutup (sebelum pembukaan)                                  | Diharapkan. Alasannya ada di log tugas `check_lock`. Lihat `services/pipeline/README.md`                                                                                                                                                  |
