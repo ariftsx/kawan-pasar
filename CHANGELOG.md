@@ -2,6 +2,30 @@
 
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/). Versi produk mengikuti fase pengembangan.
 
+## [Fase 4C — Admin Pipeline dan Model] — 2026-11-25
+
+### Ditambahkan
+
+- **Halaman admin Pipeline** (`/admin/pipeline`, ADR 0017):
+  - status kunci uji prospektif;
+  - jadwal latih ulang (setiap Senin, setiap hari, dua minggu sekali, Senin pertama tiap bulan, atau hanya manual);
+  - kuota 3 latih ulang per hari;
+  - run terakhir `harga_harian` dan `latih_ulang` beserta status tugasnya;
+  - picu, jeda, dan lanjutkan DAG.
+  - Airflow dihubungi lewat Core API saja. Bila Airflow mati, halaman menampilkan "Airflow tidak aktif".
+- **Halaman admin Model** (`/admin/model`, `/admin/model/<id>`):
+  - laporan audit kandidat: verifikator promosi, sha256, relMAE gabungan < 1 dibandingkan dengan model aktif, tabel relMAE komoditas × horizon, dan contoh prediksi rupiah;
+  - **Setujui** mengaktifkan bundel lewat jalur promosi Fase 1/2B;
+  - **Tolak** wajib disertai alasan, dan memicu latih ulang bila uji prospektif sudah dibuka dan kuota tersisa;
+  - kandidat dari run terkunci tidak bisa disetujui.
+- DAG `status_kunci` (tiap jam). `latih_ulang` kini berjalan tiap hari 02.00 dengan gerbang jadwal, dan membersihkan run `train-*` lama.
+- Migrasi `0014_pipeline_settings` (pengaturan jadwal; aksi audit `pipeline_*` dan `model_*`). Kode galat `airflow_unavailable` dan `quota_exceeded`.
+
+### Diubah
+
+- **Cakupan prediksi mengikuti bundel aktif:** komoditas tanpa prediksi di bundel aktif berstatus "menyusul". Setelah bundel 5 komoditas disetujui, prediksi cabai rawit tampil tanpa ubah kode. Verifikator hanya menolak komoditas di luar katalog.
+- Sitemap memuat halaman prediksi semua komoditas.
+
 ## [Fase 4B — Apache Airflow] — 2026-11-24
 
 ### Ditambahkan
