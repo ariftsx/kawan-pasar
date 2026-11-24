@@ -212,3 +212,127 @@ export const AdminModelCandidatesResponseSchema = z.strictObject({
   ),
 });
 export type AdminModelCandidatesResponse = z.infer<typeof AdminModelCandidatesResponseSchema>;
+
+// --- Fase 4C: pipeline (Airflow) and model audit pages -------------------------------------------
+
+export const SchedulePresetSchema = z.enum([
+  'weekly_monday',
+  'daily',
+  'biweekly_monday',
+  'monthly_first_monday',
+  'manual',
+]);
+export type SchedulePreset = z.infer<typeof SchedulePresetSchema>;
+
+export const AdminScheduleInputSchema = z.strictObject({ preset: SchedulePresetSchema });
+export type AdminScheduleInput = z.infer<typeof AdminScheduleInputSchema>;
+
+/** DAGs an admin may trigger, pause or resume (status_kunci is internal). */
+export const AdminPipelineDagSchema = z.enum(['harga_harian', 'latih_ulang']);
+export type AdminPipelineDag = z.infer<typeof AdminPipelineDagSchema>;
+
+export const AdminPipelineDagInputSchema = z.strictObject({ dag: AdminPipelineDagSchema });
+export type AdminPipelineDagInput = z.infer<typeof AdminPipelineDagInputSchema>;
+
+const PipelineTaskSchema = z.strictObject({
+  id: z.string(),
+  state: z.string().nullable(),
+  durationSeconds: z.number().nullable(),
+});
+
+const PipelineRunSchema = z.strictObject({
+  runId: z.string(),
+  state: z.string().nullable(),
+  runType: z.string(),
+  runAfter: IsoDateTime.nullable(),
+  startedAt: IsoDateTime.nullable(),
+  endedAt: IsoDateTime.nullable(),
+  tasks: z.array(PipelineTaskSchema),
+});
+
+export const AdminPipelineResponseSchema = z.strictObject({
+  /** `inactive`: Airflow is not configured or not answering; the rest is then empty. */
+  airflow: z.enum(['active', 'inactive']),
+  lock: z
+    .strictObject({
+      open: z.boolean(),
+      dataCeiling: IsoDate.nullable(),
+      reason: z.string(),
+      checkedAt: IsoDateTime.nullable(),
+    })
+    .nullable(),
+  schedule: z.strictObject({
+    preset: SchedulePresetSchema,
+    label: z.string(),
+    next: IsoDate.nullable(),
+  }),
+  /** Retraining runs triggered from the admin today (WIB), out of `limit`. */
+  triggersToday: z.strictObject({ used: z.int().nonnegative(), limit: z.int().positive() }),
+  dags: z.array(
+    z.strictObject({
+      id: AdminPipelineDagSchema,
+      paused: z.boolean(),
+      runs: z.array(PipelineRunSchema),
+    }),
+  ),
+});
+export type AdminPipelineResponse = z.infer<typeof AdminPipelineResponseSchema>;
+
+export const ModelCandidateBlockerSchema = z.enum([
+  'locked',
+  'quality',
+  'runtime',
+  'expired',
+  'decided',
+  'files',
+  // A newer bundle of the same model is already active: this one would replace newer forecasts.
+  'superseded',
+]);
+export type ModelCandidateBlocker = z.infer<typeof ModelCandidateBlockerSchema>;
+
+const QuantilesSchema = z.strictObject({
+  q10: z.int().nullable(),
+  q50: z.int().nullable(),
+  q90: z.int().nullable(),
+});
+
+export const AdminModelCandidateDetailSchema = z.strictObject({
+  candidate: AdminModelCandidatesResponseSchema.shape.items.element.extend({
+    note: z.string().nullable(),
+    decidedAt: IsoDateTime.nullable(),
+  }),
+  audit: z.strictObject({
+    /** The promotion verifier on the bundle files, without writing anything. */
+    runtime: z.strictObject({ ok: z.boolean(), reasons: z.array(z.string()) }),
+    quality: z.strictObject({
+      overall: z.number(),
+      pass: z.boolean(),
+      /** The active ARIF-Net candidate's score, when there is one. */
+      activeOverall: z.number().nullable(),
+    }),
+    /** Median and range in rupiah at 7, 30 and 90 days, for a human check. */
+    samples: z.array(
+      z.strictObject({
+        commodity: CommodityCodeSchema,
+        basePriceIdr: z.int().nullable(),
+        h7: QuantilesSchema,
+        h30: QuantilesSchema,
+        h90: QuantilesSchema,
+      }),
+    ),
+    issuedAt: IsoDateTime.nullable(),
+    blockers: z.array(ModelCandidateBlockerSchema),
+  }),
+});
+export type AdminModelCandidateDetail = z.infer<typeof AdminModelCandidateDetailSchema>;
+
+export const AdminModelRejectInputSchema = z.strictObject({
+  note: z.string().trim().min(3).max(500),
+});
+export type AdminModelRejectInput = z.infer<typeof AdminModelRejectInputSchema>;
+
+export const AdminModelRejectResponseSchema = z.strictObject({
+  /** Whether a new retraining run was triggered (only with the lock open and quota left, K4). */
+  retrain: z.enum(['triggered', 'locked', 'quota', 'airflow_inactive']),
+});
+export type AdminModelRejectResponse = z.infer<typeof AdminModelRejectResponseSchema>;

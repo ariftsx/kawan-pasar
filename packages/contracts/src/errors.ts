@@ -19,6 +19,9 @@ export const ApiErrorCodeSchema = z.enum([
   'forbidden',
   // Fase 3B: an admin change needs the password confirmed in the last 10 minutes.
   'reauth_required',
+  // Fase 4C — Airflow not answering; daily retraining quota used up.
+  'airflow_unavailable',
+  'quota_exceeded',
 ]);
 export type ApiErrorCode = z.infer<typeof ApiErrorCodeSchema>;
 
