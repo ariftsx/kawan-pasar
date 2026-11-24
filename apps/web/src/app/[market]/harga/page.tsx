@@ -1,4 +1,3 @@
-import { COMMODITIES } from '@kawan-pasar/catalog';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/atoms/Button';
@@ -47,7 +46,8 @@ export default async function Harga({
   const pointsAll = requireData(all).points;
   const featured = summary.items.find((i) => i.code === FEATURED_COMMODITY);
   const tip = featured === undefined ? null : kataKapa(featured);
-  const covered = COMMODITIES.filter((c) => c.modelCoverage === 'covered').length;
+  // Fase 4C K1: the coverage comes from the API (it follows the active bundle).
+  const covered = summary.items.filter((i) => i.modelCoverage === 'covered').length;
 
   return (
     <PageContainer className="flex flex-col gap-8 py-6 lg:py-10">

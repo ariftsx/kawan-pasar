@@ -102,7 +102,7 @@ export default async function Detail({ params }: { params: Params }): Promise<Re
               <Chip tone="neutral" size="S">
                 per kg
               </Chip>
-              {commodity.modelCoverage === 'covered' ? (
+              {forecast.commodity.modelCoverage === 'covered' ? (
                 <Chip tone="terong" size="S">
                   ★ Bisa diprediksi
                 </Chip>

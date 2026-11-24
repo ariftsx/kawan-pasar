@@ -31,15 +31,19 @@ export default async function PrediksiKomoditas({
 }): Promise<ReactNode> {
   const market = await marketFrom(params);
   const commodity = commodityFrom((await params).commodity);
-  const [forecast, history] = await Promise.all([
+  const [forecast, history, summary] = await Promise.all([
     api.forecast(market, commodity.code),
     api.history(market, commodity.code, '90d'),
+    api.priceSummary(market),
   ]);
   return (
     <ForecastPage
       commodity={commodity}
       forecast={requireData(forecast)}
       actual={requireData(history).points}
+      covered={requireData(summary)
+        .items.filter((i) => i.modelCoverage === 'covered')
+        .map((i) => i.code)}
     />
   );
 }

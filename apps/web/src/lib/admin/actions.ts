@@ -1,6 +1,8 @@
 'use server';
 
 import {
+  AdminModelRejectInputSchema,
+  SchedulePresetSchema,
   AdminArticleCreateSchema,
   AdminArticleUpdateSchema,
   AdminDecisionInputSchema,
@@ -50,6 +52,7 @@ async function change<T>(
   form: FormData,
   values: Values,
   run: (csrf: string) => Promise<AuthResult<T>>,
+  problems: Record<string, string> = ARTICLE_PROBLEM,
 ): Promise<{ ok: true; data: T } | { ok: false; state: FormState }> {
   const csrf = text(form, 'csrf');
   const password = text(form, 'adminPassword');
@@ -72,11 +75,11 @@ async function change<T>(
   }
   // The password was accepted even though the change failed: the form must stop asking for it.
   const extra = confirmedNow ? { confirmedNow: true } : {};
-  const named = (result.fields ?? []).map((f) => ARTICLE_PROBLEM[f]).filter((m) => m !== undefined);
+  const named = (result.fields ?? []).map((f) => problems[f]).filter((m) => m !== undefined);
   if (named.length > 0) {
     const fields = Object.fromEntries(
       (result.fields ?? []).flatMap((f) => {
-        const m = ARTICLE_PROBLEM[f];
+        const m = problems[f];
         // Body problems belong to the body field.
         const key = ['size', 'link', 'image_origin', 'image_alt', 'html'].includes(f)
           ? 'bodyMd'
@@ -216,4 +219,101 @@ export async function restoreArticleAction(_prev: FormState, form: FormData): Pr
     if (!r.ok) return r.state;
     redirect(adminHrefs.article(slug.data, 'dipulihkan'));
   }, '/admin/artikel');
+}
+
+// --- Fase 4C: pipeline and model ---------------------------------------------------------------
+
+const BLOCKER: Record<string, string> = {
+  locked:
+    'Kandidat dari run terkunci (data sampai 30 Sep 2026) hanya untuk verifikasi: tidak bisa disetujui sebelum uji prospektif dibuka.',
+  quality: 'relMAE gabungan kandidat belum di bawah 1 (belum lebih baik dari naive).',
+  runtime: 'Bundel kandidat tidak lolos verifikator.',
+  expired: 'Bundel kandidat sudah lebih dari 28 hari: jalankan latih ulang.',
+  decided: 'Kandidat ini sudah diputuskan.',
+  files: 'Berkas bundel kandidat tidak ditemukan.',
+  superseded:
+    'Sudah ada bundel yang lebih baru aktif: menyetujui kandidat ini akan memundurkan prediksi.',
+};
+
+const RETRAIN: Record<string, string> = {
+  triggered: 'Kandidat ditolak. Latih ulang sudah dipicu.',
+  locked: 'Kandidat ditolak. Latih ulang tidak dipicu karena uji prospektif masih terkunci.',
+  quota:
+    'Kandidat ditolak. Batas 3 latih ulang hari ini sudah tercapai: latih ulang mengikuti jadwal.',
+  airflow_inactive: 'Kandidat ditolak. Airflow tidak aktif, jadi latih ulang belum dipicu.',
+};
+
+const DAGS = ['harga_harian', 'latih_ulang'] as const;
+const OPS = ['trigger', 'pause', 'resume'] as const;
+const OP_DONE = {
+  trigger: 'Run baru sudah dipicu. Statusnya muncul di tabel dalam beberapa detik.',
+  pause: 'DAG dijeda: run terjadwal tidak berjalan sampai dilanjutkan.',
+  resume: 'DAG dilanjutkan.',
+} as const;
+
+export async function pipelineAction(_prev: FormState, form: FormData): Promise<FormState> {
+  return withSession(async (session) => {
+    const op = OPS.find((o) => o === text(form, 'op'));
+    const dag = DAGS.find((d) => d === text(form, 'dag'));
+    if (op === undefined || dag === undefined) {
+      return { status: 'error', message: 'Permintaan tidak dikenal.' };
+    }
+    const r = await change(session, form, {}, (csrf) =>
+      adminApi.pipelineAction(session, csrf, op, dag),
+    );
+    if (!r.ok) return r.state;
+    return { status: 'done', message: OP_DONE[op] };
+  }, '/admin/pipeline');
+}
+
+export async function scheduleAction(_prev: FormState, form: FormData): Promise<FormState> {
+  return withSession(async (session) => {
+    const preset = SchedulePresetSchema.safeParse(text(form, 'preset'));
+    if (!preset.success) return { status: 'error', message: 'Pilih salah satu jadwal.' };
+    const r = await change(session, form, {}, (csrf) =>
+      adminApi.pipelineSchedule(session, csrf, preset.data),
+    );
+    if (!r.ok) return r.state;
+    return { status: 'done', message: 'Jadwal latih ulang disimpan.' };
+  }, '/admin/pipeline');
+}
+
+export async function decideCandidateAction(_prev: FormState, form: FormData): Promise<FormState> {
+  return withSession(async (session) => {
+    const id = Number(text(form, 'id'));
+    const decision = text(form, 'decision');
+    const note = text(form, 'note').trim();
+    if (!Number.isInteger(id) || id <= 0 || (decision !== 'approve' && decision !== 'reject')) {
+      return { status: 'error', message: 'Permintaan tidak dikenal.' };
+    }
+    if (decision === 'reject') {
+      const input = AdminModelRejectInputSchema.safeParse({ note });
+      if (!input.success) {
+        return {
+          status: 'error',
+          message: 'Tulis alasan penolakan (3–500 karakter).',
+          fields: { note: 'Alasan wajib diisi.' },
+          values: { note },
+        };
+      }
+      const r = await change(
+        session,
+        form,
+        { note },
+        (csrf) => adminApi.rejectCandidate(session, csrf, id, input.data.note),
+        BLOCKER,
+      );
+      if (!r.ok) return r.state;
+      return { status: 'done', message: RETRAIN[r.data.retrain] ?? 'Kandidat ditolak.' };
+    }
+    const r = await change(
+      session,
+      form,
+      { note },
+      (csrf) => adminApi.approveCandidate(session, csrf, id),
+      BLOCKER,
+    );
+    if (!r.ok) return r.state;
+    redirect(adminHrefs.models('disetujui'));
+  }, '/admin/model');
 }

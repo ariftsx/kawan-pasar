@@ -23,13 +23,19 @@ import { PageContainer } from './SiteShell';
 
 const PANEL = 'prediksi-panel';
 
-function CommodityPicker({ active }: { active: Commodity }): ReactNode {
+function CommodityPicker({
+  active,
+  covered,
+}: {
+  active: Commodity;
+  covered: readonly string[];
+}): ReactNode {
   return (
     <nav aria-label="Pilih komoditas" data-picker-fallback>
       <p className="mb-1.5 text-overline-11 text-muted-text uppercase">Komoditas</p>
       <ul className="flex flex-wrap gap-2">
         {COMMODITIES.map((c) =>
-          c.modelCoverage === 'covered' ? (
+          covered.includes(c.code) ? (
             <li key={c.code}>
               <Link
                 href={hrefs.forecast(c.code)}
@@ -123,10 +129,13 @@ export function ForecastPage({
   commodity,
   forecast,
   actual,
+  covered,
 }: {
   commodity: Commodity;
   forecast: ForecastResponse;
   actual: readonly PricePoint[];
+  /** Commodity codes the active bundle covers (Fase 4C K1: from the API, not the catalog). */
+  covered: readonly string[];
 }): ReactNode {
   const view = forecastView(forecast);
   const ready =
@@ -154,7 +163,7 @@ export function ForecastPage({
       </section>
 
       <div className="flex flex-col gap-4">
-        <CommodityPicker active={commodity} />
+        <CommodityPicker active={commodity} covered={covered} />
         <dl className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
           <div>
             <dt className="text-overline-11 text-muted-text uppercase">Pasar</dt>

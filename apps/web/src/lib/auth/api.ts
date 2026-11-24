@@ -1,5 +1,9 @@
 import 'server-only';
 import {
+  AdminModelCandidateDetailSchema,
+  AdminModelCandidatesResponseSchema,
+  AdminModelRejectResponseSchema,
+  AdminPipelineResponseSchema,
   AdminArticleListResponseSchema,
   AdminArticleResponseSchema,
   AdminArticleSavedSchema,
@@ -18,6 +22,12 @@ import {
   SessionsResponseSchema,
 } from '@kawan-pasar/contracts';
 import type {
+  AdminModelCandidateDetail,
+  AdminModelCandidatesResponse,
+  AdminModelRejectResponse,
+  AdminPipelineDag,
+  AdminPipelineResponse,
+  SchedulePreset,
   AdminArticleCreate,
   AdminArticleListResponse,
   AdminArticleResponse,
@@ -296,5 +306,40 @@ export const adminApi = {
       `/v1/admin/articles/${encodeURIComponent(slug)}/${publish ? 'publish' : 'unpublish'}`,
       null,
       { session, csrf },
+    ),
+  // --- Fase 4C: pipeline (Airflow through the Core API) and model audit ---
+  pipeline: (session: string): Promise<AuthResult<AdminPipelineResponse>> =>
+    call('GET', '/v1/admin/pipeline', AdminPipelineResponseSchema, { session }),
+  pipelineAction: (
+    session: string,
+    csrf: string,
+    op: 'trigger' | 'pause' | 'resume',
+    dag: AdminPipelineDag,
+  ): Done => call('POST', `/v1/admin/pipeline/${op}`, null, { session, csrf, body: { dag } }),
+  pipelineSchedule: (session: string, csrf: string, preset: SchedulePreset): Done =>
+    call('PUT', '/v1/admin/pipeline/schedule', null, { session, csrf, body: { preset } }),
+  candidates: (session: string): Promise<AuthResult<AdminModelCandidatesResponse>> =>
+    call('GET', '/v1/admin/model-candidates', AdminModelCandidatesResponseSchema, { session }),
+  candidate: (session: string, id: number): Promise<AuthResult<AdminModelCandidateDetail>> =>
+    call('GET', `/v1/admin/model-candidates/${String(id)}`, AdminModelCandidateDetailSchema, {
+      session,
+    }),
+  approveCandidate: (session: string, csrf: string, id: number): Done =>
+    call('POST', `/v1/admin/model-candidates/${String(id)}/approve`, null, { session, csrf }),
+  rejectCandidate: (
+    session: string,
+    csrf: string,
+    id: number,
+    note: string,
+  ): Promise<AuthResult<AdminModelRejectResponse>> =>
+    call(
+      'POST',
+      `/v1/admin/model-candidates/${String(id)}/reject`,
+      AdminModelRejectResponseSchema,
+      {
+        session,
+        csrf,
+        body: { note },
+      },
     ),
 };

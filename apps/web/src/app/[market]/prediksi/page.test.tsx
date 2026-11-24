@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { forecastFixture, historyFixture } from '../../../../test/fixtures';
+import { forecastFixture, historyFixture, summaryFixture } from '../../../../test/fixtures';
 
-const api = vi.hoisted(() => ({ forecast: vi.fn(), history: vi.fn() }));
+const api = vi.hoisted(() => ({ forecast: vi.fn(), history: vi.fn(), priceSummary: vi.fn() }));
 vi.mock('@/lib/api/endpoints', () => ({ api }));
 vi.mock('next/navigation', () => ({
   usePathname: () => '/prediksi',
@@ -20,6 +20,7 @@ const market = Promise.resolve({ market: 'PIKJ' });
 beforeEach(() => {
   api.forecast.mockResolvedValue({ ok: true, data: forecastFixture() });
   api.history.mockResolvedValue({ ok: true, data: historyFixture(64) });
+  api.priceSummary.mockResolvedValue({ ok: true, data: summaryFixture() });
 });
 
 const section = (): HTMLElement => {
@@ -52,6 +53,26 @@ describe('Prediksi', () => {
         '/prediksi/beras-medium-1',
       ]),
     );
+  });
+
+  // Fase 4C K1: the picker follows the API's coverage (the active bundle), not the catalog.
+  it('links a commodity once the active bundle covers it', async () => {
+    const base = summaryFixture();
+    api.priceSummary.mockResolvedValue({
+      ok: true,
+      data: {
+        ...base,
+        items: base.items.map((i) =>
+          i.code === 'cabai-rawit-hijau' ? { ...i, modelCoverage: 'covered' as const } : i,
+        ),
+      },
+    });
+    render(await Prediksi({ params: market }));
+    const links = [...document.querySelectorAll('[data-picker-fallback] a')].map((a) =>
+      a.getAttribute('href'),
+    );
+    expect(links).toContain('/prediksi/cabai-rawit-hijau');
+    expect(links).not.toContain('/prediksi/cabai-rawit-merah');
   });
 
   it('labels an expired forecast', async () => {

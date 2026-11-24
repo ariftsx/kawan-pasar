@@ -11,6 +11,8 @@ const TABS: readonly { href: Route; label: string }[] = [
   { href: '/admin/pengguna', label: 'Pengguna' },
   { href: '/admin/artikel', label: 'Artikel' },
   { href: '/admin/pemantauan', label: 'Pemantauan' },
+  { href: '/admin/pipeline', label: 'Pipeline' },
+  { href: '/admin/model', label: 'Model' },
 ];
 
 export function AdminTabs(): ReactNode {

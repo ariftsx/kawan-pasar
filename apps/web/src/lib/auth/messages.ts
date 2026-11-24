@@ -39,6 +39,10 @@ export function failureMessage(failure: AuthFailure): string {
       return failure.fields?.[0] === 'limit'
         ? 'Batas 20 komoditas pantauan sudah tercapai. Hapus salah satu dulu.'
         : 'Komoditas ini sudah ada di daftar pantauan Anda.';
+    case 'airflow_unavailable':
+      return 'Airflow tidak aktif. Nyalakan profil airflow, lalu coba lagi.';
+    case 'quota_exceeded':
+      return 'Batas 3 latih ulang per hari sudah tercapai. Coba lagi besok.';
     case 'not_found':
     case 'unauthorized':
     case 'internal':

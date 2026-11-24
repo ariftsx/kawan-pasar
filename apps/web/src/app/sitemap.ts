@@ -14,7 +14,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/arif-net/keterbatasan',
     '/pasar',
     ...COMMODITIES.map((c) => `/harga/${c.code}`),
-    ...COMMODITIES.filter((c) => c.modelCoverage === 'covered').map((c) => `/prediksi/${c.code}`),
+    // Every commodity has a forecast page ("menyusul" until a bundle covers it, Fase 4C K1).
+    ...COMMODITIES.map((c) => `/prediksi/${c.code}`),
   ];
   return paths.map((p) => ({ url: new URL(p, SITE_URL).href, changeFrequency: 'daily' }));
 }

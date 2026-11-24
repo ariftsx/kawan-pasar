@@ -48,4 +48,9 @@ export const adminHrefs = {
     route(
       `/admin/artikel/${encodeURIComponent(slug)}${notice === undefined ? '' : `?pesan=${notice}`}`,
     ),
+  // Fase 4C.
+  pipeline: (): Route => route('/admin/pipeline'),
+  models: (notice?: 'disetujui' | 'ditolak'): Route =>
+    route(`/admin/model${notice === undefined ? '' : `?pesan=${notice}`}`),
+  model: (id: number): Route => route(`/admin/model/${String(id)}`),
 };

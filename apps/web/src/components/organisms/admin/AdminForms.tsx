@@ -19,7 +19,7 @@ const CATEGORIES = [
 
 const ROLE = { user: 'Pengguna', analyst: 'Analis', admin: 'Admin' } as Record<string, string>;
 
-const Csrf = ({ value }: { value: string }): ReactNode => (
+export const Csrf = ({ value }: { value: string }): ReactNode => (
   <input type="hidden" name="csrf" value={value} />
 );
 
@@ -27,7 +27,7 @@ const Csrf = ({ value }: { value: string }): ReactNode => (
  * The admin's password, asked inline when no confirmation is open (or the API asked again), so a
  * change is never lost to a separate confirmation page.
  */
-function ConfirmField({ show, state }: { show: boolean; state: FormState }): ReactNode {
+export function ConfirmField({ show, state }: { show: boolean; state: FormState }): ReactNode {
   const id = useId();
   // Asked again by the API wins; a confirmation made by this form's last submit stops asking.
   if (state.needsConfirm !== true && (!show || state.confirmedNow === true)) return null;
