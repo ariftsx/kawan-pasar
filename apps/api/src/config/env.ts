@@ -94,6 +94,12 @@ export const EnvSchema = z.object({
   /** Outgoing mail (Mailpit locally). Only the worker connects; the API just queues. */
   SMTP_URL: z.url({ protocol: /^smtps?$/ }),
   MAIL_FROM: z.string().min(3).max(200),
+  /**
+   * WhatsApp mock delivery (Fase 2C, ADR 0013). Defaults to SMTP_URL. In production (Fase 5) it
+   * stays on the internal Mailpit: mock messages carry phone numbers and fake recipients, so they
+   * must never go to the real mail provider.
+   */
+  WA_SMTP_URL: z.url({ protocol: /^smtps?$/ }).optional(),
   /** Origin used in e-mailed links. */
   PUBLIC_SITE_URL: z.url({ protocol: /^https?$/ }),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),

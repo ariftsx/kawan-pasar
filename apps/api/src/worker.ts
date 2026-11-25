@@ -57,7 +57,7 @@ async function main(): Promise<void> {
     db,
     users,
     phones,
-    sender: mailpitWhatsAppSender(env.SMTP_URL, env.MAIL_FROM),
+    sender: mailpitWhatsAppSender(env.WA_SMTP_URL ?? env.SMTP_URL, env.MAIL_FROM),
     siteUrl: env.PUBLIC_SITE_URL,
     now: clock.now,
     log: writeLine,
