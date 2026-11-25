@@ -40,8 +40,9 @@ x-airflow: &airflow
 # Account settings shared by the API and the worker (Fase 2A).
 x-account-env: &account-env
   VALKEY_SESSION_URL: redis://:${VALKEY_PASSWORD}@valkey-session:6379/0
-  SMTP_URL: smtp://mailpit:1025
-  MAIL_FROM: 'Kawan Pasar <no-reply@kawanpasar.local>'
+  # Local: Mailpit. Production (Fase 5): the provider's SMTP URL and sender from .env.
+  SMTP_URL: ${MAIL_SMTP_URL:-smtp://mailpit:1025}
+  MAIL_FROM: ${MAIL_FROM:-Kawan Pasar <no-reply@kawanpasar.local>}
   PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://127.0.0.1:8080}
   AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET (node scripts/gen-env.mjs --add-missing)}
   PHONE_ENC_KEY: ${PHONE_ENC_KEY:?set PHONE_ENC_KEY (node scripts/gen-env.mjs --add-missing)}

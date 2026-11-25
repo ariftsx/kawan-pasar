@@ -1,0 +1,56 @@
+# Production overlay (Fase 5, ADR 0018). Used instead of docker-compose.dev-tools.yml, always
+# through `node scripts/compose.mjs --prod` (never plain `docker compose`). Only Traefik is
+# reachable from the internet (80 → redirect, 443 HTTPS); everything else stays on the Docker
+# networks. Values come from the server's own .env (never from git).
+volumes:
+  # Let's Encrypt account and certificates (renewed by Traefik).
+  letsencrypt:
+
+networks:
+  # Lets the server's own admin CLIs (migrations, catalog, bundles, admin:grant) reach the
+  # database on the server's loopback only, like the dev-tools overlay does on a laptop.
+  hostlocal:
+    name: kp-hostlocal
+
+services:
+  traefik:
+    ports: !override
+      - '80:80'
+      - '443:443'
+    environment:
+      # Host name of the site, read by infra/traefik/prod/routes.yml.
+      SITE_HOST: ${SITE_HOST:?set SITE_HOST in .env (e.g. kawanpasar.ariftsx.id)}
+    volumes: !override
+      - ../traefik/traefik.prod.yml:/etc/traefik/traefik.yml:ro
+      - ../traefik/dynamic/middlewares.yml:/etc/traefik/dynamic/middlewares.yml:ro
+      - ../traefik/prod/routes.yml:/etc/traefik/dynamic/routes.yml:ro
+      - letsencrypt:/letsencrypt
+
+  postgres:
+    ports: ['127.0.0.1:15432:5432']
+    networks: [backend, hostlocal]
+  pgbouncer:
+    ports: ['127.0.0.1:16432:6432']
+    networks: [backend, hostlocal]
+  valkey-cache:
+    ports: ['127.0.0.1:16379:6379']
+    networks: [backend, hostlocal]
+  valkey-session:
+    ports: ['127.0.0.1:16381:6379']
+    networks: [backend, hostlocal]
+
+  worker:
+    environment:
+      # Required in production: an empty value would silently fall back to the local Mailpit.
+      SMTP_URL: ${MAIL_SMTP_URL:?set MAIL_SMTP_URL in .env (smtps://login:key@smtp-relay.brevo.com:465)}
+      # The WhatsApp mock (ADR 0013) keeps delivering to the internal Mailpit: its messages hold
+      # phone numbers and fake recipients and must never reach the real mail provider.
+      WA_SMTP_URL: smtp://mailpit:1025
+    # Outgoing mail to the provider (MAIL_SMTP_URL): the backend network has no internet access.
+    networks: [backend, edge]
+
+  # 2 vCPU / 8 GB server: retraining may use 1.5 CPU, the site keeps the rest (plan Fase 5).
+  airflow-scheduler:
+    deploy:
+      resources:
+        limits: { cpus: '1.5', memory: 3584M }

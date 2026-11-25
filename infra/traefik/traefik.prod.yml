@@ -1,0 +1,67 @@
+# Traefik static configuration for production (Fase 5, ADR 0018). Same rules as the local one
+# (file provider only, no Docker socket, no dashboard, tokens never logged), plus HTTPS:
+# port 80 only answers the Let's Encrypt HTTP-01 challenge and redirects everything else.
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+entryPoints:
+  web:
+    address: ':80'
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    address: ':443'
+    transport:
+      respondingTimeouts:
+        readTimeout: 15s
+        writeTimeout: 30s
+        idleTimeout: 90s
+    http:
+      middlewares:
+        - secure-headers@file
+        - hsts@file
+        - rate-limit@file
+        - in-flight@file
+        - body-limit@file
+      tls:
+        certResolver: letsencrypt
+  ping:
+    address: ':8082'
+
+ping:
+  entryPoint: ping
+
+api:
+  dashboard: false
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      # No e-mail: Let's Encrypt no longer sends expiry mail, and none of the owner's data is
+      # sent to a third party. Traefik renews 30 days before expiry.
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web
+
+providers:
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+log:
+  level: INFO
+  format: json
+
+accessLog:
+  format: json
+  fields:
+    # The path carries single-use tokens from e-mailed links (?t=…): never log it (Fase 2A).
+    names:
+      RequestPath: drop
+    headers:
+      defaultMode: drop

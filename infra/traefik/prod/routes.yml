@@ -1,0 +1,52 @@
+# Production routes (Fase 5, ADR 0018): same routing as infra/traefik/dynamic/routes.yml, on the
+# HTTPS entry point and only for the site's host name (SITE_HOST in the Traefik container).
+# Requests for any other host name (e.g. the bare IP address) get Traefik's 404.
+http:
+  middlewares:
+    # One year, subdomains not included (ariftsx.id itself may host other sites). No preload:
+    # preloading is hard to undo and is the domain owner's decision.
+    hsts:
+      headers:
+        stsSeconds: 31536000
+        stsIncludeSubdomains: false
+
+  routers:
+    web:
+      entryPoints: [websecure]
+      rule: Host(`{{ env "SITE_HOST" }}`) && PathPrefix(`/`)
+      priority: 1
+      middlewares: [retry@file, compress-html@file]
+      service: web
+      tls:
+        certResolver: letsencrypt
+
+    static:
+      entryPoints: [websecure]
+      rule: Host(`{{ env "SITE_HOST" }}`) && PathPrefix(`/_next/static/`)
+      priority: 50
+      middlewares: [retry@file, compress-static@file]
+      service: web
+      tls:
+        certResolver: letsencrypt
+
+    # Internal endpoints (cache revalidation) never reach the web server from the internet.
+    block-internal:
+      entryPoints: [websecure]
+      rule: Host(`{{ env "SITE_HOST" }}`) && PathPrefix(`/api/internal`)
+      priority: 100
+      service: noop@internal
+      tls:
+        certResolver: letsencrypt
+
+  services:
+    web:
+      loadBalancer:
+        servers:
+          - url: http://web-1:3000
+          - url: http://web-2:3000
+        healthCheck:
+          path: /api/health
+          interval: 10s
+          timeout: 8s
+        responseForwarding:
+          flushInterval: 100ms
